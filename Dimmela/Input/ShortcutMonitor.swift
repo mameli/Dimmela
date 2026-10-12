@@ -17,7 +17,6 @@ final class ShortcutMonitor {
     private static let space: Int64 = 49
 
     private var tap: CFMachPort?
-    private var source: CFRunLoopSource?
     /// The shortcut's space is down: its repeats and release belong to Dimmela.
     private var spaceHeld = false
 
@@ -49,20 +48,8 @@ final class ShortcutMonitor {
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
         self.tap = tap
-        self.source = source
         logger.info("Watching fn+space")
         return true
-    }
-
-    func stop() {
-        guard let tap else { return }
-        CGEvent.tapEnable(tap: tap, enable: false)
-        CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
-        CFMachPortInvalidate(tap)
-        self.tap = nil
-        source = nil
-        spaceHeld = false
-        logger.info("Stopped watching fn+space")
     }
 
     /// Whether the event is the shortcut's own and must not reach the frontmost app.

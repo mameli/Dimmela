@@ -9,9 +9,9 @@
 - [x] Holding `fn+space` records; releasing after 300 ms or more transcribes and pastes the Transcript at the cursor
 - [ ] The pasted text ends with a trailing space and the previous clipboard content is restored
 - [x] The menu-bar icon reflects idle, recording and processing; the menu shows model state and Quit
-- [ ] AirPods do not switch to call mode while recording
+- [x] AirPods do not switch to call mode while recording
 - [ ] Switching microphone between Dictations keeps dictation working
-- [ ] Dimmela reports clearly when Accessibility permission is missing instead of failing silently
+- [x] Dimmela reports clearly when Accessibility permission is missing instead of failing silently
 - [x] Dictation controller tests (Swift Testing) cover the Hold path through injected `transcribe`, `paste` and clock fakes
 - [ ] CI runs `swift test` for the core and an unsigned Debug build of the app
 - [x] A manual test checklist exists in the repo and covers this slice
@@ -33,3 +33,11 @@
   - notification when Accessibility is missing
 - CI runs only once the repo has a GitHub remote.
 - Design note: a fresh `AVAudioEngine` per Dictation. The microphone indicator shows only while dictating and device switches need no handling. If the first syllables get cut, keep one engine warm.
+
+### 2026-10-13: second manual pass
+
+- Verified with AirPods: no call-mode switch, the trailing space is there, and the Accessibility notification shows.
+- Skipped by choice: the microphone switch between Dictations. The user never does it; a fresh engine per Dictation should cover it anyway.
+- Still open:
+  - clipboard restored after the paste: not checked yet
+  - CI: needs a GitHub remote
