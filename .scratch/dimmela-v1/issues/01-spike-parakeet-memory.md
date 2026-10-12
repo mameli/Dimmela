@@ -15,7 +15,7 @@
 
 ## Comments
 
-### Results (2026-10-12, M3 Pro 18 GB, macOS 26, FluidAudio 0.17.5, Parakeet TDT v3 int8)
+### Results (2026-10-12, M3 Pro 18 GB, macOS 26, FluidAudio 0.17.5, Parakeet TDT 0.6B v3 CoreML, default `.int8` precision, which loads the original `Encoder.mlmodelc`: actually 6-bit LUT palettized, 425 MB)
 
 Spike code: `.scratch/dimmela-v1/spike-01/` (SwiftUI `MenuBarExtra` shell, SPM executable). Regenerate the audio with `say -v Alice -f audio/<name>.txt -o audio/<name>.wav --data-format=LEI16@16000` (Italian TTS: 6.7 s and 55.6 s). Run with `.build/release/Spike <model-folder> audio/short.wav audio/long.wav`. Memory is the process `phys_footprint`, the same figure `footprint` and Activity Monitor report, read by the app and cross-checked with `footprint`.
 
@@ -45,3 +45,5 @@ Spike code: `.scratch/dimmela-v1/spike-01/` (SwiftUI `MenuBarExtra` shell, SPM e
 - **Memory.** Both targets are met with a wide margin: under 60 MB without the model and under 450 MB with it loaded.
 - **Model unloading (ticket 13).** Keeping Parakeet loaded costs about 25–50 MB of process footprint, and a warm reload takes 0.2 s. The unload-after-inactivity option therefore buys almost nothing. Proposal: drop it from ticket 13 and keep the model always loaded.
 - **First load.** The one-time Neural Engine compile (about 17 s here; Takku saw minutes on first download) belongs in onboarding (ticket 12), as planned.
+
+**Encoder variant to evaluate.** FluidAudio also offers `.int8V2` (`Encoder_v2.mlmodelc`, int8 linear per channel, 568 MB), which fixes token corruption that the palettized encoder shows in some contexts (FluidAudio issue #760). Handy runs the same base model as GGUF Q8_0. Compare the two encoders on real Italian dictation in ticket 02 before choosing the default.
