@@ -6,13 +6,30 @@
 
 **Status:** ready-for-agent
 
-- [ ] Holding `fn+space` records; releasing after 300 ms or more transcribes and pastes the Transcript at the cursor
+- [x] Holding `fn+space` records; releasing after 300 ms or more transcribes and pastes the Transcript at the cursor
 - [ ] The pasted text ends with a trailing space and the previous clipboard content is restored
-- [ ] The menu-bar icon reflects idle, recording and processing; the menu shows model state and Quit
+- [x] The menu-bar icon reflects idle, recording and processing; the menu shows model state and Quit
 - [ ] AirPods do not switch to call mode while recording
 - [ ] Switching microphone between Dictations keeps dictation working
 - [ ] Dimmela reports clearly when Accessibility permission is missing instead of failing silently
-- [ ] Dictation controller tests (Swift Testing) cover the Hold path through injected `transcribe`, `paste` and clock fakes
+- [x] Dictation controller tests (Swift Testing) cover the Hold path through injected `transcribe`, `paste` and clock fakes
 - [ ] CI runs `swift test` for the core and an unsigned Debug build of the app
-- [ ] A manual test checklist exists in the repo and covers this slice
-- [ ] Footprint idle with the model loaded is re-measured and noted
+- [x] A manual test checklist exists in the repo and covers this slice
+- [x] Footprint idle with the model loaded is re-measured and noted
+
+## Comments
+
+### 2026-10-13: implemented (commit e295103)
+
+- Verified by hand: `fn+space` Hold in TextEdit pastes the Transcript.
+- Verified by the smoke test: `-transcribeFile` on 6 s of Italian runs in 94 ms.
+- Footprint with Parakeet loaded: 38 MB idle and 46 MB right after a transcription.
+- The model was seeded from Takku's cache. The first-launch download path (same FluidAudio call as Takku) has not been exercised on Dimmela yet; ticket 12 covers it.
+- Still to check by hand, from `docs/TESTING.md`:
+  - clipboard restored after the paste
+  - trailing space
+  - AirPods staying out of call mode
+  - microphone switch between Dictations
+  - notification when Accessibility is missing
+- CI runs only once the repo has a GitHub remote.
+- Design note: a fresh `AVAudioEngine` per Dictation. The microphone indicator shows only while dictating and device switches need no handling. If the first syllables get cut, keep one engine warm.
