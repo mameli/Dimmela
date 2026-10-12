@@ -1,0 +1,7 @@
+// Copy to Config/Local.xcconfig (ignored by git) to sign with a stable identity: macOS then
+// keeps the microphone and Accessibility permissions across builds.
+//
+// A self-signed code signing certificate in your login keychain (here the one made for Takku).
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = Takku
+DEVELOPMENT_TEAM =

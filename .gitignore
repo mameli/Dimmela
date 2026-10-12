@@ -4,3 +4,5 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 .scratch/dimmela-v1/spike-01/audio/*.wav
+Config/Local.xcconfig
+build/

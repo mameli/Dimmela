@@ -1,0 +1,86 @@
+import AppKit
+import ApplicationServices
+import DimmelaCore
+import Observation
+import UserNotifications
+import os
+
+private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "app")
+
+/// Wires the platform pieces to the Dictation controller and holds what the menu shows.
+@MainActor
+@Observable
+final class AppModel {
+    let speechModel = SpeechModel()
+    private(set) var controller: DictationController!
+    private(set) var accessibilityGranted = AXIsProcessTrusted()
+    private(set) var microphonePermission = MicrophoneRecorder.permission
+
+    @ObservationIgnored private let recorder = MicrophoneRecorder()
+    @ObservationIgnored private let shortcut = ShortcutMonitor()
+    @ObservationIgnored private var permissionPoll: Task<Void, Never>?
+
+    init() {
+        controller = DictationController(boundaries: DictationBoundaries(
+            startRecording: { [recorder] in try recorder.start() },
+            stopRecording: { [recorder] in recorder.stop() },
+            transcribe: { [speechModel] samples in try await speechModel.transcribe(samples) },
+            paste: { text in try await Paster.paste(text) },
+            report: { problem in Self.show(problem) }
+        ))
+        shortcut.onDown = { [unowned self] shift, time in controller.shortcutDown(shift: shift, at: time) }
+        shortcut.onUp = { [unowned self] time in
+            Task { await self.controller.shortcutUp(at: time) }
+        }
+    }
+
+    func launch() {
+        #if DEBUG
+        if SmokeTest.runIfRequested(model: speechModel) { return }
+        #endif
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
+        Task {
+            if microphonePermission == .notDetermined {
+                _ = await MicrophoneRecorder.requestPermission()
+                microphonePermission = MicrophoneRecorder.permission
+            }
+        }
+        Task { try? await speechModel.prepare() }
+        if !shortcut.start() {
+            requestAccessibility()
+        }
+    }
+
+    /// Shows the system prompt, then waits for the grant: macOS gives no callback.
+    func requestAccessibility() {
+        // The value of kAXTrustedCheckOptionPrompt, a C global Swift 6 refuses to read.
+        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        guard permissionPoll == nil else { return }
+        permissionPoll = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard let self, AXIsProcessTrusted() else { continue }
+                accessibilityGranted = true
+                if shortcut.start() { break }
+            }
+            self?.permissionPoll = nil
+        }
+    }
+
+    func openMicrophoneSettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+    }
+
+    private static func show(_ problem: DictationProblem) {
+        let message = switch problem {
+        case .microphoneUnavailable(let detail): "Can't record: \(detail)"
+        case .transcriptionFailed(let detail): "Can't transcribe: \(detail)"
+        case .pasteFailed(let detail): "Can't paste: \(detail)"
+        }
+        logger.error("\(message, privacy: .public)")
+        let content = UNMutableNotificationContent()
+        content.title = "Dimmela"
+        content.body = message
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+    }
+}

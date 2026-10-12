@@ -1,0 +1,27 @@
+// Shared settings of the Dimmela target.
+PRODUCT_NAME = Dimmela
+PRODUCT_BUNDLE_IDENTIFIER = app.dimmela.Dimmela
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+MACOSX_DEPLOYMENT_TARGET = 15.0
+SWIFT_VERSION = 6.0
+ARCHS = arm64
+
+INFOPLIST_FILE = Config/Info.plist
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/../Frameworks
+COMBINE_HIDPI_IMAGES = YES
+
+// Release only: in Debug a self-signed certificate has no Team ID and library validation
+// would refuse Xcode's Dimmela.debug.dylib.
+ENABLE_HARDENED_RUNTIME[config=Release] = YES
+CODE_SIGN_ENTITLEMENTS = Config/Dimmela.entitlements
+
+// Without Local.xcconfig the app is signed ad hoc: it builds, but macOS asks for the
+// microphone and Accessibility permissions again after every build.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"
