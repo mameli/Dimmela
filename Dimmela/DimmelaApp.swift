@@ -9,7 +9,8 @@ struct DimmelaApp: App {
         MenuBarExtra {
             MenuContent(model: delegate.model)
         } label: {
-            Image(systemName: delegate.model.controller.phase.symbol)
+            Image(systemName: delegate.model.accessibilityGranted
+                ? delegate.model.controller.phase.symbol : "exclamationmark.triangle")
         }
     }
 }
@@ -28,6 +29,7 @@ private struct MenuContent: View {
     var body: some View {
         Text(status)
         if !model.accessibilityGranted {
+            Text("fn+Space needs Accessibility")
             Button("Allow Accessibility…") { model.requestAccessibility() }
         }
         if model.microphonePermission == .denied || model.microphonePermission == .restricted {

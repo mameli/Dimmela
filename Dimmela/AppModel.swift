@@ -46,22 +46,52 @@ final class AppModel {
             }
         }
         Task { try? await speechModel.prepare() }
-        if !shortcut.start() {
-            requestAccessibility()
+        // Posted when any app is added to or removed from Accessibility.
+        DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("com.apple.accessibility.api"), object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                // The new value is readable a moment after the notification.
+                try? await Task.sleep(for: .milliseconds(500))
+                self?.syncAccessibility()
+            }
         }
+        syncAccessibility()
+        if !accessibilityGranted { requestAccessibility() }
     }
 
-    /// Shows the system prompt, then waits for the grant: macOS gives no callback.
+    /// Shows the system prompt and watches for the grant.
     func requestAccessibility() {
         // The value of kAXTrustedCheckOptionPrompt, a C global Swift 6 refuses to read.
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        pollUntilGranted()
+    }
+
+    /// Starts or stops the shortcut to match the Accessibility permission. Without it macOS
+    /// stops delivering keys, so `fn+space` would just do nothing: say so instead.
+    private func syncAccessibility() {
+        let wasGranted = accessibilityGranted
+        if AXIsProcessTrusted() && shortcut.start() {
+            accessibilityGranted = true
+        } else {
+            shortcut.stop()
+            accessibilityGranted = false
+            if wasGranted {
+                Self.notify("Dimmela lost Accessibility: fn+Space does nothing until you allow it again.")
+            }
+            pollUntilGranted()
+        }
+    }
+
+    /// A fallback for the notification above, while the permission is missing.
+    private func pollUntilGranted() {
         guard permissionPoll == nil else { return }
         permissionPoll = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(2))
-                guard let self, AXIsProcessTrusted() else { continue }
-                accessibilityGranted = true
-                if shortcut.start() { break }
+                guard let self else { return }
+                if accessibilityGranted { break }
+                syncAccessibility()
             }
             self?.permissionPoll = nil
         }
@@ -78,6 +108,10 @@ final class AppModel {
         case .pasteFailed(let detail): "Can't paste: \(detail)"
         }
         logger.error("\(message, privacy: .public)")
+        notify(message)
+    }
+
+    private static func notify(_ message: String) {
         let content = UNMutableNotificationContent()
         content.title = "Dimmela"
         content.body = message
