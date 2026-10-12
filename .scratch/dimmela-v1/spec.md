@@ -40,8 +40,8 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 
 11. As a user, I want my speech transcribed locally with Parakeet TDT v3, so that plain dictation works offline and costs nothing.
 12. As a user, I want Italian and the occasional English term recognised without choosing a language, so that mixed speech just works.
-13. As a user, I want the speech model kept loaded by default, so that every Dictation is fast.
-14. As a user, I want an option to unload the model after a period of inactivity, so that I can trade the first Dictation's latency for memory.
+13. As a user, I want the speech model always kept loaded, so that every Dictation is fast.
+14. As a user, I want the model loaded at launch, so that my first Dictation after login doesn't wait for it.
 15. As a user, I want leading and trailing silence trimmed by voice activity detection, so that pauses don't slow transcription or produce junk text.
 16. As a user, I want Dimmela to record without voice processing, so that my AirPods don't switch to call mode when I dictate.
 17. As a user, I want recording to keep working when I plug in or switch microphones, so that a device change doesn't silently break dictation.
@@ -220,7 +220,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 - **Voice activity detection:** FluidAudio's Silero VAD trims leading and trailing silence and reports "no speech".
 - **Transcriber:**
   - It is an actor that keeps Parakeet loaded and serialises requests.
-  - It can optionally unload after a configurable idle time, reloading on the next Dictation.
+  - It never unloads the model: the spike (ticket 01) measured 25–50 MB of footprint to keep it loaded, so unloading buys nothing.
   - It exposes the model state: not downloaded, downloading, preparing, ready.
 - **Paster:**
   - It saves the pasteboard, writes the text, posts `⌘V` through CGEvent, and restores the pasteboard after a short delay.
@@ -232,7 +232,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
   - The state icon shows idle, recording and processing.
   - The menu has a Default Mode picker, a History submenu (copy final text, copy Transcript, "Post-process again with…"), Settings, Check for updates, Report a problem, and Quit.
 - **Settings window:**
-  - **General:** launch at login, model unload timeout.
+  - **General:** launch at login.
   - **Transcription:** model state, download, delete.
   - **Post-processing:** base URL, model, API key in Keychain, connection test.
   - **Modes:** Mode sources, discovered skills and prompt files, enable, reorder, Default Mode.
@@ -295,6 +295,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 - **Feedback:** start/stop sounds.
 - **Platforms and distribution:** Intel Macs, macOS 14 or earlier, App Store distribution and sandboxing.
 - **Shared code:** a package shared with Takku.
+- **Model unloading:** unloading the model after inactivity (the spike showed it saves almost no memory).
 
 ## Further Notes
 
