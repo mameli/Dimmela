@@ -7,8 +7,11 @@ It is a lighter alternative to [Handy](https://handy.computer): with the speech 
 Apple Silicon, macOS 15 or later.
 
 ```sh
-brew install --cask mameli/dimmela/dimmela
+brew tap mameli/dimmela
+brew install --cask dimmela
 ```
+
+Or download `Dimmela.zip` from the [latest release](https://github.com/mameli/Dimmela/releases/latest), open it and move Dimmela to Applications.
 
 ## How it works
 
