@@ -7,7 +7,7 @@
 **Status:** ready-for-agent
 
 - [x] Holding `fn+space` records; releasing after 300 ms or more transcribes and pastes the Transcript at the cursor
-- [ ] The pasted text ends with a trailing space and the previous clipboard content is restored
+- [x] The pasted text ends with a trailing space and the previous clipboard content is restored
 - [x] The menu-bar icon reflects idle, recording and processing; the menu shows model state and Quit
 - [x] AirPods do not switch to call mode while recording
 - [ ] Switching microphone between Dictations keeps dictation working
@@ -38,6 +38,4 @@
 
 - Verified with AirPods: no call-mode switch, the trailing space is there, and the Accessibility notification shows.
 - Skipped by choice: the microphone switch between Dictations. The user never does it; a fresh engine per Dictation should cover it anyway.
-- Still open:
-  - clipboard restored after the paste: not checked yet
-  - CI: needs a GitHub remote
+- Clipboard restore verified. Still open: CI (needs a GitHub remote).
