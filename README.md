@@ -4,7 +4,7 @@
 
 <h1 align="center">Dimmela</h1>
 
-<p align="center"><a href="https://github.com/mameli/Dimmela/releases/latest"><b>Download the latest version</b></a> · macOS 15+ · Apple Silicon</p>
+<p align="center"><a href="https://dimmela.app">dimmela.app</a> · <a href="https://github.com/mameli/Dimmela/releases/latest"><b>Download the latest version</b></a> · macOS 15+ · Apple Silicon</p>
 
 A native macOS menu-bar app for dictation. Hold or tap `fn+Space`, speak, and Dimmela pastes the text where you are typing. Speech is transcribed on your Mac by Parakeet v3 on the Neural Engine. Optionally, an LLM rewrites each Dictation with your own prompts and skills.
 
