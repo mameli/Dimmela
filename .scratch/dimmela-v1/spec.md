@@ -323,3 +323,5 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 **Change after ticket 07 (2026-10-13).** The user dropped `shift+fn+space`: every Dictation starts with the Default Mode (which can be none), and `shift` now toggles the Mode list, which the arrows browse and a digit or `Return` closes.
 
 **Change after v0.1.1 (2026-10-13).** The Mode chosen during a Dictation, with a digit or the arrows, becomes the Default Mode for the next Dictations. `0` makes it none. The choice sticks as soon as it is made, even if the Dictation is then cancelled.
+
+**Change after v0.1.2 (2026-10-13).** The Vocabulary lives in `~/.dimmela/vocabulary.md`, created at launch with the syntax on top and the entries once written in Settings. Settings › General shows the file and opens it in the user's editor; the Vocabulary tab is gone. The file is read at every Dictation.

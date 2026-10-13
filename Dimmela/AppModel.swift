@@ -65,6 +65,11 @@ final class AppModel {
     }
 
     func launch() {
+        do {
+            try AppSettings.createVocabularyFileIfNeeded()
+        } catch {
+            logger.error("Vocabulary file not created: \(error, privacy: .public)")
+        }
         #if DEBUG
         if SmokeTest.runIfRequested(model: speechModel, detector: speechDetector) { return }
         #endif

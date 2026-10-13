@@ -11,8 +11,9 @@ enum AppSettings {
     /// The enabled Modes' identifiers, in the user's order, one per line.
     static let enabledModesKey = "enabledModes"
     static let defaultModeKey = "defaultMode"
-    /// The Vocabulary as the user writes it: one `- term = variants | description` per line.
-    static let vocabularyKey = "vocabulary"
+    /// Where the Vocabulary was kept before it moved to a file; copied into the file when it is
+    /// created, and left in place for older versions still installed.
+    private static let legacyVocabularyKey = "vocabulary"
     /// Set when the user closes the welcome window with Done.
     static let onboardingDoneKey = "onboardingDone"
     static let checkForUpdatesKey = "checkForUpdates"
@@ -63,8 +64,24 @@ enum AppSettings {
         set { defaults.set(newValue?.id ?? "", forKey: defaultModeKey) }
     }
 
+    /// The Vocabulary file, one `- term = variants | description` per line, edited in any editor.
+    static var vocabularyFile: URL {
+        URL.homeDirectory.appending(path: ".dimmela/vocabulary.md")
+    }
+
+    /// Read at every Dictation, so edits apply at once.
     static var vocabulary: Vocabulary {
-        Vocabulary(text: defaults.string(forKey: vocabularyKey) ?? "")
+        Vocabulary(text: (try? String(contentsOf: vocabularyFile, encoding: .utf8)) ?? "")
+    }
+
+    /// Creates the Vocabulary file if it is missing, with the entries once written in Settings.
+    static func createVocabularyFileIfNeeded() throws {
+        let path = vocabularyFile.path(percentEncoded: false)
+        guard !FileManager.default.fileExists(atPath: path) else { return }
+        try FileManager.default.createDirectory(at: vocabularyFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let legacy = defaults.string(forKey: legacyVocabularyKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let text = Vocabulary.fileTemplate + (legacy.isEmpty ? "" : legacy + "\n")
+        try text.write(to: vocabularyFile, atomically: true, encoding: .utf8)
     }
 
     /// The Modes found in the Mode sources now.

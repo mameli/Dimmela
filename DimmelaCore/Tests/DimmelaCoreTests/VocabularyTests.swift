@@ -38,6 +38,14 @@ struct VocabularyEntryTests {
         ])
     }
 
+    @Test("the new Vocabulary file explains the syntax but adds no entries")
+    func fileTemplate() {
+        #expect(Vocabulary.fileTemplate.hasPrefix("# Vocabulary\n"))
+        #expect(Vocabulary.fileTemplate.contains(Vocabulary.example))
+        #expect(Vocabulary(text: Vocabulary.fileTemplate).entries.isEmpty)
+        #expect(Vocabulary(text: Vocabulary.fileTemplate + "- Jira = ira\n").entries.map(\.term) == ["Jira"])
+    }
+
     @Test("the example explains the syntax but adds no entries")
     func example() {
         #expect(Vocabulary.example.contains("`- Jira = gira, ira | the issue tracker at work`"))

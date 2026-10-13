@@ -96,10 +96,11 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 
 ### Vocabulary (ticket 09)
 
-- [ ] Settings › Vocabulary: write `- Jira = ira, gira | the issue tracker at work`; the count shows 1 entry. The text is still there after reopening Settings and after relaunching.
-- [ ] Dictate "apro ira" with Default Mode None: "apro Jira" is pasted. A word that only contains a variant ("Lira", "girare") is untouched.
+- [ ] At launch `~/.dimmela/vocabulary.md` exists: the syntax on top, then the entries once written in Settings (if any).
+- [ ] Settings › General › Vocabulary shows the file and its number of entries; Edit Vocabulary… opens it in the editor for Markdown files. After saving and coming back, the count is updated.
+- [ ] Add `- Jira = ira, gira | the issue tracker at work` and dictate "apro ira" with Default Mode None, without relaunching: "apro Jira" is pasted. A word that only contains a variant ("Lira", "girare") is untouched.
 - [ ] With a Default Mode, the History's Copy Transcript shows the corrected term.
-- [ ] Lines that do not start with `- ` are ignored, so notes can sit in the list.
+- [ ] Lines that do not start with `- ` are ignored, so notes can sit in the file.
 
 ### Fillers (ticket 10)
 

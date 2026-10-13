@@ -1,8 +1,8 @@
 import Foundation
 
 /// The user's terms that speech recognition gets wrong: each entry is the correct term,
-/// optionally with the variants usually heard instead and a short description. Written in
-/// Settings as a list, one entry per line (ported from Takku).
+/// optionally with the variants usually heard instead and a short description. Written as a
+/// list in a Markdown file, one entry per line (ported from Takku).
 public struct Vocabulary: Equatable, Sendable {
     public struct Entry: Equatable, Sendable {
         public let term: String
@@ -16,14 +16,17 @@ public struct Vocabulary: Equatable, Sendable {
         }
     }
 
-    /// Shown in Settings when the Vocabulary is empty. The examples sit inside lines of text, so
-    /// nothing in it counts until the user adds list items.
+    /// How to write entries. The examples sit inside lines of text, so nothing in it counts until
+    /// the user adds list items.
     public static let example = """
         Names, acronyms and technical words that speech recognition gets wrong. One entry per line, \
         starting with `- `: the correct term, then after `=` the variants usually heard instead \
         (optional, comma-separated), then after `|` a short description (optional). \
         Example: `- Jira = gira, ira | the issue tracker at work`
         """
+
+    /// What a new Vocabulary file starts with.
+    public static let fileTemplate = "# Vocabulary\n\n\(example)\n\n"
 
     public let entries: [Entry]
 

@@ -81,6 +81,43 @@ struct UpdatesToggle: View {
     }
 }
 
+/// Where the Vocabulary file is, how many entries it has, and a button to edit it in the
+/// user's editor for Markdown.
+struct VocabularyFileRow: View {
+    @State private var count = AppSettings.vocabulary.entries.count
+    @State private var error: String?
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: "~/.dimmela/vocabulary.md")
+                Text(count == 1 ? "1 entry" : "\(count) entries")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Edit Vocabulary…", action: edit)
+        }
+        // Back from the editor: the entries may have changed.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            count = AppSettings.vocabulary.entries.count
+        }
+        if let error {
+            Text(error).foregroundStyle(.secondary)
+        }
+    }
+
+    private func edit() {
+        do {
+            try AppSettings.createVocabularyFileIfNeeded()
+            NSWorkspace.shared.open(AppSettings.vocabularyFile)
+            error = nil
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+}
+
 struct GeneralSettings: View {
     var body: some View {
         Form {
@@ -91,6 +128,14 @@ struct GeneralSettings: View {
                 LaunchAtLoginToggle()
             } footer: {
                 Text("Dimmela loads the speech model when it starts, so it is ready for the first Dictation after login.")
+                    .foregroundStyle(.secondary)
+            }
+            Section {
+                VocabularyFileRow()
+            } header: {
+                Text("Vocabulary")
+            } footer: {
+                Text("Names and terms speech recognition gets wrong, one per line: `- Jira = gira, ira | the issue tracker at work`. Dimmela reads the file at every Dictation.")
                     .foregroundStyle(.secondary)
             }
             Section {
