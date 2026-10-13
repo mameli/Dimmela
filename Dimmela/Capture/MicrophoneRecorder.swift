@@ -39,8 +39,9 @@ final class MicrophoneRecorder: Sendable {
         await AVCaptureDevice.requestAccess(for: .audio)
     }
 
-    /// Starts recording; `onLevel` gets the loudness (0...1) of each block of audio, on the audio thread.
-    func start(onLevel: @escaping @Sendable (Float) -> Void = { _ in }) throws {
+    /// Starts recording; `onLoudness` gets the loudness in dB of each block of audio, on the audio
+    /// thread.
+    func start(onLoudness: @escaping @Sendable (Float) -> Void = { _ in }) throws {
         guard Self.permission == .authorized else { throw Failure.permissionDenied }
         stopEngine()
         _ = samples.drain()
@@ -58,7 +59,7 @@ final class MicrophoneRecorder: Sendable {
         ), let converter = AVAudioConverter(from: mono, to: target) else { throw Failure.converter }
 
         input.installTap(onBus: 0, bufferSize: 4096, format: format, block: Self.tapBlock(
-            mono: mono, converter: converter, target: target, samples: samples, onLevel: onLevel
+            mono: mono, converter: converter, target: target, samples: samples, onLoudness: onLoudness
         ))
         engine.prepare()
         try engine.start()
@@ -83,7 +84,7 @@ final class MicrophoneRecorder: Sendable {
     /// Built outside any actor: the block is called on the audio thread.
     private static func tapBlock(
         mono: AVAudioFormat, converter: AVAudioConverter, target: AVAudioFormat, samples: SampleBuffer,
-        onLevel: @escaping @Sendable (Float) -> Void
+        onLoudness: @escaping @Sendable (Float) -> Void
     ) -> AVAudioNodeTapBlock {
         return { buffer, _ in
             guard let input = mixDown(buffer, to: mono) else { return }
@@ -104,7 +105,7 @@ final class MicrophoneRecorder: Sendable {
             guard error == nil, let channel = output.floatChannelData?[0] else { return }
             let converted = UnsafeBufferPointer(start: channel, count: Int(output.frameLength))
             samples.append(converted)
-            onLevel(level(of: converted))
+            onLoudness(loudness(of: converted))
         }
     }
 }
@@ -129,12 +130,11 @@ private func mixDown(_ buffer: AVAudioPCMBuffer, to mono: AVAudioFormat) -> AVAu
     return output
 }
 
-/// RMS loudness mapped from -50 dB (silence) to -10 dB (loud speech) onto 0...1.
-private func level(of samples: UnsafeBufferPointer<Float>) -> Float {
-    guard !samples.isEmpty else { return 0 }
+/// RMS loudness in dB (0 is full scale); the overlay scales it to the microphone in use.
+private func loudness(of samples: UnsafeBufferPointer<Float>) -> Float {
+    guard !samples.isEmpty else { return -100 }
     let meanSquare = samples.reduce(0) { $0 + $1 * $1 } / Float(samples.count)
-    let decibels = 10 * log10(max(meanSquare, 1e-10))
-    return min(max((decibels + 50) / 40, 0), 1)
+    return 10 * log10(max(meanSquare, 1e-10))
 }
 
 /// The samples recorded so far, written by the audio thread and taken by the caller.

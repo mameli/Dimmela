@@ -29,8 +29,8 @@ final class AppModel {
         AppSettings.registerDefaults()
         controller = DictationController(boundaries: DictationBoundaries(
             startRecording: { [recorder, weak self] in
-                try recorder.start { level in
-                    Task { @MainActor in self?.controller.microphoneLevel(level) }
+                try recorder.start { decibels in
+                    Task { @MainActor in self?.controller.microphoneLoudness(decibels) }
                 }
             },
             stopRecording: { [recorder] in recorder.stop() },

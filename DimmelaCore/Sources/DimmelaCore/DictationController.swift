@@ -115,6 +115,7 @@ public final class DictationController {
     @ObservationIgnored private let boundaries: DictationBoundaries
     @ObservationIgnored private var pressedAt: TimeInterval = 0
     @ObservationIgnored private var isLocked = false
+    @ObservationIgnored private var levelMeter = LevelMeter()
     /// The current Dictation's processing, cancelled by `Esc`.
     @ObservationIgnored private var processing: Task<Void, Never>?
 
@@ -131,6 +132,7 @@ public final class DictationController {
                 phase = .recording
                 pressedAt = time
                 isLocked = false
+                levelMeter = LevelMeter()
                 mode = boundaries.defaultMode()
                 modeChoices = Array(boundaries.enabledModes().prefix(9))
             } catch {
@@ -143,10 +145,10 @@ public final class DictationController {
         }
     }
 
-    /// The microphone's loudness from the recorder; kept only while recording.
-    public func microphoneLevel(_ level: Float) {
+    /// The loudness of a block of audio from the recorder, in dB; shown only while recording.
+    public func microphoneLoudness(_ decibels: Float) {
         guard phase == .recording else { return }
-        self.level = min(max(level, 0), 1)
+        level = levelMeter.level(for: decibels)
     }
 
     /// Chooses this Dictation's Mode and closes the list: 0 for none, 1–9 for the Mode at that
