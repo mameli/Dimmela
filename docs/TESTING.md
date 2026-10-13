@@ -33,3 +33,12 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Remove Dimmela from Accessibility and dictate: a notification explains the paste needs Accessibility.
 - [ ] `fn+space` with `⌘`, `⌃` or `⌥` held does not start a Dictation.
 - [ ] Footprint idle with the model loaded (`footprint <pid>`) stays well under 450 MB.
+
+### Lock and Esc (ticket 03)
+
+- [ ] A quick tap of `fn+space` starts a Lock: the icon stays on recording with no key held; the next tap ends it and the Transcript is pasted.
+- [ ] Holding `fn+space` for about a second still works as a Hold.
+- [ ] `Esc` while holding `fn+space`, during a Lock, or while the icon shows processing: nothing is pasted and the icon goes back to idle.
+- [ ] The `Esc` that cancels a Dictation does not reach the frontmost app (e.g. it does not close a dialog or leave full screen).
+- [ ] With no Dictation in progress `Esc` works normally everywhere.
+- [ ] `fn+space` pressed while the icon shows processing does not start a new Dictation.

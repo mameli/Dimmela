@@ -4,7 +4,8 @@ import os
 
 private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "shortcut")
 
-/// Watches the keyboard for the Dictation shortcut, `fn+space` (with or without `shift`), through
+/// Watches the keyboard for the Dictation shortcut, `fn+space` (with or without `shift`), and for
+/// `Esc` while a Dictation is in progress, through
 /// a CGEventTap: Carbon hot keys cannot see `fn` or the key release. The shortcut's own key
 /// events are swallowed so no space reaches the frontmost app. Needs Accessibility, which the
 /// paste needs anyway.
@@ -13,12 +14,18 @@ final class ShortcutMonitor {
     /// `shift` held at the press; time in seconds since boot.
     var onDown: (_ shift: Bool, _ time: TimeInterval) -> Void = { _, _ in }
     var onUp: (_ time: TimeInterval) -> Void = { _ in }
+    var onEscape: () -> Void = {}
+    /// Whether `Esc` cancels a Dictation now; otherwise it goes to the frontmost app.
+    var capturesEscape: () -> Bool = { false }
 
     private static let space: Int64 = 49
+    private static let escape: Int64 = 53
 
     private var tap: CFMachPort?
     /// The shortcut's space is down: its repeats and release belong to Dimmela.
     private var spaceHeld = false
+    /// `Esc` went down as Dimmela's: its release must not reach the frontmost app alone.
+    private var escapeHeld = false
 
     var isRunning: Bool { tap != nil }
 
@@ -72,6 +79,16 @@ final class ShortcutMonitor {
             // Whatever the modifiers now: `fn` may already be up.
             spaceHeld = false
             onUp(Self.seconds(event))
+            return true
+        case .keyDown where event.getIntegerValueField(.keyboardEventKeycode) == Self.escape:
+            guard escapeHeld || capturesEscape() else { return false }
+            if !escapeHeld {
+                escapeHeld = true
+                onEscape()
+            }
+            return true
+        case .keyUp where escapeHeld && event.getIntegerValueField(.keyboardEventKeycode) == Self.escape:
+            escapeHeld = false
             return true
         default:
             return false

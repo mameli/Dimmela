@@ -47,7 +47,7 @@ private struct MenuContent: View {
         case .failed(let detail): "Speech model unavailable: \(detail)"
         case .ready:
             switch model.controller.phase {
-            case .idle: "Ready: hold fn+Space to dictate"
+            case .idle: "Ready: hold or tap fn+Space to dictate"
             case .recording: "Listening…"
             case .processing: "Transcribing…"
             }

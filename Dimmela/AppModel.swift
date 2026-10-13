@@ -28,10 +28,17 @@ final class AppModel {
             paste: { text in try await Paster.paste(text) },
             report: { problem in Self.show(problem) }
         ))
-        shortcut.onDown = { [unowned self] shift, time in controller.shortcutDown(shift: shift, at: time) }
+        // Tasks started on the main actor run in the order the keys arrived.
+        shortcut.onDown = { [unowned self] shift, time in
+            Task { await self.controller.shortcutDown(shift: shift, at: time) }
+        }
         shortcut.onUp = { [unowned self] time in
             Task { await self.controller.shortcutUp(at: time) }
         }
+        shortcut.onEscape = { [unowned self] in
+            Task { await self.controller.escape() }
+        }
+        shortcut.capturesEscape = { [unowned self] in controller.capturesEscape }
     }
 
     func launch() {

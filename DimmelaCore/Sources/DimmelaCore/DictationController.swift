@@ -46,43 +46,101 @@ public final class DictationController {
 
     public private(set) var phase: Phase = .idle
 
+    /// Whether `Esc` belongs to Dimmela right now (it cancels the Dictation) instead of the
+    /// frontmost app.
+    public var capturesEscape: Bool { phase != .idle }
+
+    /// A release this soon after the press turns the Dictation into a Lock.
+    public static let lockThreshold: TimeInterval = 0.3
+
     @ObservationIgnored private let boundaries: DictationBoundaries
+    @ObservationIgnored private var pressedAt: TimeInterval = 0
+    @ObservationIgnored private var isLocked = false
+    /// The current Dictation's processing, cancelled by `Esc`.
+    @ObservationIgnored private var processing: Task<Void, Never>?
 
     public init(boundaries: DictationBoundaries) {
         self.boundaries = boundaries
     }
 
-    public func shortcutDown(shift: Bool, at time: TimeInterval) {
-        guard phase == .idle else { return }
-        do {
-            try boundaries.startRecording()
-            phase = .recording
-        } catch {
-            boundaries.report(.microphoneUnavailable(String(describing: error)))
+    /// Starts a Dictation, or ends a Lock. When it ends one, returns once the Dictation is over.
+    public func shortcutDown(shift: Bool, at time: TimeInterval) async {
+        switch phase {
+        case .idle:
+            do {
+                try boundaries.startRecording()
+                phase = .recording
+                pressedAt = time
+                isLocked = false
+            } catch {
+                boundaries.report(.microphoneUnavailable(String(describing: error)))
+            }
+        case .recording where isLocked:
+            await finish()
+        case .recording, .processing:
+            return
         }
     }
 
-    /// Returns when the Dictation is over: its text pasted, or the problem reported.
+    /// Ends a Hold, or turns a short tap into a Lock. Returns when the Dictation is over: its
+    /// text pasted, the problem reported, or cancelled.
     public func shortcutUp(at time: TimeInterval) async {
-        guard phase == .recording else { return }
-        phase = .processing
-        defer { phase = .idle }
+        guard phase == .recording, !isLocked else { return }
+        if time - pressedAt < Self.lockThreshold {
+            isLocked = true
+            return
+        }
+        await finish()
+    }
 
+    /// Cancels the Dictation in progress: nothing is pasted.
+    public func escape() async {
+        switch phase {
+        case .idle:
+            return
+        case .recording:
+            _ = await boundaries.stopRecording()
+            phase = .idle
+        case .processing:
+            processing?.cancel()
+            processing = nil
+            phase = .idle
+        }
+    }
+
+    private func finish() async {
+        phase = .processing
+        let task = Task { await process() }
+        processing = task
+        await task.value
+    }
+
+    /// Once cancelled it leaves everything alone: a new Dictation may already be running.
+    private func process() async {
         let samples = await boundaries.stopRecording()
         let transcript: String
         do {
             transcript = try await boundaries.transcribe(samples)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
+            guard !Task.isCancelled else { return }
             boundaries.report(.transcriptionFailed(String(describing: error)))
-            return
+            return end()
         }
-        guard !transcript.isEmpty else { return }
+        guard !Task.isCancelled else { return }
+        guard !transcript.isEmpty else { return end() }
 
         do {
             try await boundaries.paste(transcript + " ")
         } catch {
             boundaries.report(.pasteFailed(String(describing: error)))
         }
+        end()
+    }
+
+    private func end() {
+        guard !Task.isCancelled else { return }
+        processing = nil
+        phase = .idle
     }
 }
