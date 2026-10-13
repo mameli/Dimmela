@@ -37,12 +37,16 @@ A folder the user points Dimmela at, where it looks for skills and prompt files 
 _Avoid_: library, skills folder
 
 **Default Mode** (`defaultMode`):
-The Mode applied when the user starts a Dictation with the Post-processing shortcut and picks no other Mode.
+The Mode every Dictation starts with, unless the user picks another during it. It can be none: the Dictation then gives the Transcript alone.
 _Avoid_: active mode, selected prompt
 
 **Mode digit**:
 The position 1–9 of an enabled Mode, which the user presses during a Dictation to apply that Mode; 0 means no Post-processing.
 _Avoid_: slot, hotkey number
+
+**Mode list** (`isModeListVisible`):
+The numbered list of the Mode digits shown during a Dictation: `shift` opens and closes it, the arrows move through it, a digit or `Return` closes it.
+_Avoid_: picker, selector, menu
 
 **Filler**:
 A purely vocal sound with no meaning ("ehm", "uhm", "mmh") that Dimmela removes from the Transcript. Words with meaning ("cioè", "tipo") are never Fillers.

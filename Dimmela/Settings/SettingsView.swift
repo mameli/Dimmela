@@ -127,7 +127,7 @@ private struct ModeSettings: View {
                 }
             }
             Section {
-                Picker("Default Mode (shift+fn+Space)", selection: $defaultModeID) {
+                Picker("Default Mode", selection: $defaultModeID) {
                     Text("None").tag("")
                     ForEach(enabledModes) { Text($0.name).tag($0.id) }
                 }

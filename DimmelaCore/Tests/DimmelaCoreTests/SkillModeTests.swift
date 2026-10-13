@@ -11,7 +11,7 @@ struct SkillModeTests {
     private func dictate(with mode: URL) async -> DictationController {
         fake.defaultMode = Mode(id: mode.path(percentEncoded: false))
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: true, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 11)
         return controller
     }

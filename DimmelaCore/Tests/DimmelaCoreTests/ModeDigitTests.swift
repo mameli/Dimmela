@@ -21,7 +21,7 @@ struct ModeDigitTests {
     @Test("a digit while recording applies the enabled Mode at that position")
     func digit() async {
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         controller.modeDigit(2)
         #expect(controller.mode == modes[1])
         await controller.shortcutUp(at: 11)
@@ -29,11 +29,11 @@ struct ModeDigitTests {
         #expect(fake.pasted == ["Testo rifinito. "])
     }
 
-    @Test("0 means no Post-processing, even after shift chose the Default Mode")
+    @Test("0 means no Post-processing, even with a Default Mode")
     func zero() async {
         fake.defaultMode = modes[0]
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: true, at: 10)
+        await controller.shortcutDown(at: 10)
         controller.modeDigit(0)
         await controller.shortcutUp(at: 11)
         #expect(fake.provider.requests.isEmpty)
@@ -43,7 +43,7 @@ struct ModeDigitTests {
     @Test("the last digit wins; a digit with no enabled Mode is ignored")
     func lastWins() async {
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         controller.modeDigit(1)
         controller.modeDigit(3)
         controller.modeDigit(7)
@@ -55,10 +55,10 @@ struct ModeDigitTests {
     @Test("digits work during a Lock")
     func lock() async {
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 10.1)
         controller.modeDigit(2)
-        await controller.shortcutDown(shift: false, at: 20)
+        await controller.shortcutDown(at: 20)
         #expect(fake.provider.message(0, "system") == "Mode english.")
     }
 
@@ -70,7 +70,7 @@ struct ModeDigitTests {
         controller.modeDigit(1)
         #expect(controller.mode == nil)
 
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(controller.capturesDigits)
 
         let release = Task { await controller.shortcutUp(at: 11) }
@@ -87,42 +87,96 @@ struct ModeDigitTests {
     func nine() async {
         fake.enabledModes = (1...11).map { Mode(id: folder.write("m\($0).md", "M\($0)").path(percentEncoded: false)) }
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(controller.modeChoices.count == 9)
         controller.modeDigit(9)
         #expect(controller.mode == fake.enabledModes[8])
     }
 
-    @Test("the Mode list shows while shift is held or after a digit, and hides at the end")
-    func listVisibility() async {
+    @Test("shift opens and closes the Mode list during a Dictation; a digit chooses and closes it")
+    func shiftToggles() async {
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(!controller.isModeListVisible)
 
-        controller.shiftChanged(isDown: true)
+        controller.shiftPressed()
         #expect(controller.isModeListVisible)
-        controller.shiftChanged(isDown: false)
+        controller.shiftPressed()
         #expect(!controller.isModeListVisible)
 
+        controller.shiftPressed()
+        controller.modeDigit(2)
+        #expect(!controller.isModeListVisible)
+        #expect(controller.mode == modes[1])
+    }
+
+    @Test("a digit with the list closed chooses the Mode and leaves the list closed")
+    func digitWithListClosed() async {
+        let controller = fake.controllerWired()
+        await controller.shortcutDown(at: 10)
         controller.modeDigit(1)
-        #expect(controller.isModeListVisible)
+        #expect(controller.mode == modes[0])
+        #expect(!controller.isModeListVisible)
+    }
+
+    @Test("the arrows move through the list, from Transcript to the last Mode, and Return closes it")
+    func arrows() async {
+        fake.defaultMode = modes[0]
+        let controller = fake.controllerWired()
+        await controller.shortcutDown(at: 10)
+        controller.shiftPressed()
+
+        controller.moveModeSelection(by: 1)
+        #expect(controller.mode == modes[1])
+        controller.moveModeSelection(by: 5)
+        #expect(controller.mode == modes[2])
+        controller.moveModeSelection(by: -1)
+        controller.moveModeSelection(by: -1)
+        controller.moveModeSelection(by: -1)
+        #expect(controller.mode == nil)
+        controller.moveModeSelection(by: -1)
+        #expect(controller.mode == nil)
+        controller.moveModeSelection(by: 2)
+
+        controller.confirmModeList()
+        #expect(!controller.isModeListVisible)
+        await controller.shortcutUp(at: 11)
+        #expect(fake.provider.message(0, "system") == "Mode english.")
+    }
+
+    @Test("the arrows and Return belong to Dimmela only while the list is open")
+    func listKeysCapture() async {
+        let controller = fake.controllerWired()
+        #expect(!controller.capturesModeListKeys)
+        await controller.shortcutDown(at: 10)
+        #expect(!controller.capturesModeListKeys)
+        controller.moveModeSelection(by: 1)
+        #expect(controller.mode == nil)
+
+        controller.shiftPressed()
+        #expect(controller.capturesModeListKeys)
+        controller.confirmModeList()
+        #expect(!controller.capturesModeListKeys)
+    }
+
+    @Test("the list closes when the Dictation ends, and shift with no Dictation opens nothing")
+    func listLifetime() async {
+        let controller = fake.controllerWired()
+        controller.shiftPressed()
+        #expect(!controller.isModeListVisible)
+
+        await controller.shortcutDown(at: 10)
+        controller.shiftPressed()
         await controller.shortcutUp(at: 11)
         #expect(!controller.isModeListVisible)
     }
 
-    @Test("starting with shift+fn+space shows the list until shift is released")
-    func shiftAtStart() async {
+    @Test("with no enabled Modes there is no list to open")
+    func noModes() async {
+        fake.enabledModes = []
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: true, at: 10)
-        #expect(controller.isModeListVisible)
-        controller.shiftChanged(isDown: false)
-        #expect(!controller.isModeListVisible)
-    }
-
-    @Test("shift with no Dictation shows nothing")
-    func shiftWhenIdle() {
-        let controller = fake.controllerWired()
-        controller.shiftChanged(isDown: true)
+        await controller.shortcutDown(at: 10)
+        controller.shiftPressed()
         #expect(!controller.isModeListVisible)
     }
 }

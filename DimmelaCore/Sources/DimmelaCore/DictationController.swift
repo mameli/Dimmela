@@ -19,7 +19,7 @@ public struct DictationBoundaries {
     /// Puts the text in the frontmost app.
     public var paste: @MainActor (String) async throws -> Void
     public var report: @MainActor (DictationProblem) -> Void
-    /// The Mode `shift+fn+space` applies, if the user chose one.
+    /// The Mode every Dictation starts with; nil for the Transcript alone.
     public var defaultMode: @MainActor () -> Mode?
     /// The enabled Modes in the user's order; the first nine get the digits 1–9.
     public var enabledModes: @MainActor () -> [Mode]
@@ -61,10 +61,7 @@ public final class DictationController {
     public private(set) var phase: Phase = .idle {
         didSet {
             if phase != .recording { level = 0 }
-            if phase != .recording {
-                showsModeListForDigit = false
-                isShiftDown = false
-            }
+            if phase != .recording { isModeListVisible = false }
             if phase == .idle {
                 mode = nil
                 modeChoices = []
@@ -81,18 +78,17 @@ public final class DictationController {
     /// The Modes the digits 1–9 choose during this Dictation, in order.
     public private(set) var modeChoices: [Mode] = []
 
-    /// Whether the overlay lists the Mode choices: while `shift` is held, or once a digit was
-    /// pressed, during recording.
-    public var isModeListVisible: Bool {
-        phase == .recording && !modeChoices.isEmpty && (isShiftDown || showsModeListForDigit)
-    }
+    /// Whether the overlay lists the Mode choices: opened and closed with `shift` while
+    /// recording, closed by a digit or `Return`.
+    public private(set) var isModeListVisible = false
 
     /// Whether the digit keys belong to Dimmela right now (they choose the Mode) instead of the
     /// frontmost app.
     public var capturesDigits: Bool { phase == .recording }
 
-    private var isShiftDown = false
-    private var showsModeListForDigit = false
+    /// Whether the arrows and `Return` belong to Dimmela right now (they move through the Mode
+    /// list) instead of the frontmost app.
+    public var capturesModeListKeys: Bool { isModeListVisible }
 
     /// Whether `Esc` belongs to Dimmela right now (it cancels the Dictation) instead of the
     /// frontmost app.
@@ -112,7 +108,7 @@ public final class DictationController {
     }
 
     /// Starts a Dictation, or ends a Lock. When it ends one, returns once the Dictation is over.
-    public func shortcutDown(shift: Bool, at time: TimeInterval) async {
+    public func shortcutDown(at time: TimeInterval) async {
         switch phase {
         case .idle:
             do {
@@ -120,9 +116,8 @@ public final class DictationController {
                 phase = .recording
                 pressedAt = time
                 isLocked = false
-                mode = shift ? boundaries.defaultMode() : nil
+                mode = boundaries.defaultMode()
                 modeChoices = Array(boundaries.enabledModes().prefix(9))
-                isShiftDown = shift
             } catch {
                 boundaries.report(.microphoneUnavailable(String(describing: error)))
             }
@@ -139,21 +134,37 @@ public final class DictationController {
         self.level = min(max(level, 0), 1)
     }
 
-    /// Chooses this Dictation's Mode: 0 for none, 1–9 for the Mode at that position. A digit with
-    /// no Mode is ignored.
+    /// Chooses this Dictation's Mode and closes the list: 0 for none, 1–9 for the Mode at that
+    /// position. A digit with no Mode is ignored.
     public func modeDigit(_ digit: Int) {
         guard phase == .recording else { return }
-        showsModeListForDigit = true
         if digit == 0 {
             mode = nil
         } else if modeChoices.indices.contains(digit - 1) {
             mode = modeChoices[digit - 1]
+        } else {
+            return
         }
+        isModeListVisible = false
     }
 
-    public func shiftChanged(isDown: Bool) {
-        guard phase == .recording else { return }
-        isShiftDown = isDown
+    /// Opens the Mode list, or closes it if open.
+    public func shiftPressed() {
+        guard phase == .recording, !modeChoices.isEmpty else { return }
+        isModeListVisible.toggle()
+    }
+
+    /// Moves the choice up (negative) or down the open list: Transcript first, then the Modes.
+    public func moveModeSelection(by offset: Int) {
+        guard isModeListVisible else { return }
+        let rows: [Mode?] = [nil] + modeChoices
+        let current = rows.firstIndex(of: mode) ?? 0
+        mode = rows[min(max(current + offset, 0), rows.count - 1)]
+    }
+
+    /// Keeps the chosen Mode and closes the list.
+    public func confirmModeList() {
+        isModeListVisible = false
     }
 
     /// Ends a Hold, or turns a short tap into a Lock. Returns when the Dictation is over: its

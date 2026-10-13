@@ -49,22 +49,22 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] The key is in Keychain Access under "Dimmela: provider API key", not in Dimmela's preferences.
 - [ ] Settings › Modes: Add Folder… with the `handy-config` folder; its prompt files are listed, README excluded.
 - [ ] Enable some Modes, drag to reorder, choose a Default Mode; the menu's Default Mode picker shows the same.
-- [ ] `shift+fn+space` in TextEdit: the LLM's answer is pasted. Plain `fn+space` still pastes only the Transcript.
+- [ ] With a Default Mode, `fn+space` in TextEdit pastes the LLM's answer; with Default Mode None it pastes only the Transcript.
 - [ ] Edit the Default Mode's file (e.g. "answer in uppercase"); the next Dictation follows the edit without relaunching.
-- [ ] Turn Wi-Fi off and dictate with `shift+fn+space`: the Transcript is pasted and a notification explains why.
+- [ ] Turn Wi-Fi off and dictate with a Default Mode: the Transcript is pasted and a notification explains why.
 - [ ] Rename the Default Mode's file and dictate: the Transcript is pasted and a notification explains why.
 
 ### Skills as Modes (ticket 05)
 
 - [ ] Settings › Modes › Add Folder… with `~/.claude/skills` (⌘⇧G to type the path, ⌘⇧. to show hidden folders): skills are listed by name, also those that are symbolic links; coding skills appear only under Available.
-- [ ] Enable `mameli-x-voice`, make it the Default Mode, dictate in Italian with `shift+fn+space`: an English X post is pasted, with no preamble or quotes around it.
+- [ ] Enable `mameli-x-voice`, make it the Default Mode, dictate in Italian: an English X post is pasted, with no preamble or quotes around it.
 - [ ] A skill with `references/` (e.g. `stop-slop`) works as a Mode.
 - [ ] Rename an enabled skill's folder: Settings shows it as Missing, and dictating with it pastes the Transcript with a notification.
 
 ### Overlay (ticket 06)
 
 - [ ] `fn+space`: a dark pill appears at the bottom centre of the screen with the pointer, with red bars that follow the voice and "Transcript".
-- [ ] `shift+fn+space` with a Default Mode: the pill shows the Mode's name.
+- [ ] With a Default Mode, the pill shows the Mode's name.
 - [ ] After recording, the bars become three pulsing white dots until the paste; then the pill disappears.
 - [ ] `Esc` hides the pill at once.
 - [ ] Dictating into TextEdit, the cursor stays in TextEdit and the paste lands there; the pill cannot be clicked.
@@ -73,10 +73,11 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 
 ### Mode digits and Mode list (ticket 07)
 
-- [ ] During a Hold, press `2`: the list of Modes appears above the pill with the second highlighted, the pill shows its name, and the LLM's answer for that Mode is pasted.
-- [ ] `shift+fn+space` then `0`: only the Transcript is pasted.
+- [ ] During a Hold, press `2`: the pill shows the second Mode's name (no list opens) and the LLM's answer for that Mode is pasted.
+- [ ] With a Default Mode, dictate and press `0`: only the Transcript is pasted.
 - [ ] Press `1` then `3`: the third Mode is used. A digit beyond the enabled Modes changes nothing.
 - [ ] In a Lock, digits work the same way.
 - [ ] The digits pressed during a Dictation never appear in TextEdit; with no Dictation they type normally, also right after the paste.
-- [ ] Holding `shift` during a Dictation shows the list; releasing it hides it (unless a digit was pressed).
+- [ ] `shift` during a Dictation opens the list with the current Mode highlighted; `shift` again closes it.
+- [ ] With the list open, ↑/↓ move the highlight (from Transcript to the last Mode) and the pill follows; `Return` or a digit closes the list. Arrows and `Return` never reach TextEdit while the list is open, and work normally otherwise.
 - [ ] With more than nine enabled Modes, only the first nine are listed.

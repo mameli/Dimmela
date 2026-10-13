@@ -37,8 +37,8 @@ final class AppModel {
             chatClient: { try ChatClient.configured() }
         ))
         // Tasks started on the main actor run in the order the keys arrived.
-        shortcut.onDown = { [unowned self] shift, time in
-            Task { await self.controller.shortcutDown(shift: shift, at: time) }
+        shortcut.onDown = { [unowned self] time in
+            Task { await self.controller.shortcutDown(at: time) }
         }
         shortcut.onUp = { [unowned self] time in
             Task { await self.controller.shortcutUp(at: time) }
@@ -49,7 +49,10 @@ final class AppModel {
         shortcut.capturesEscape = { [unowned self] in controller.capturesEscape }
         shortcut.onDigit = { [unowned self] digit in controller.modeDigit(digit) }
         shortcut.capturesDigits = { [unowned self] in controller.capturesDigits }
-        shortcut.onShift = { [unowned self] isDown in controller.shiftChanged(isDown: isDown) }
+        shortcut.onShift = { [unowned self] in controller.shiftPressed() }
+        shortcut.onArrow = { [unowned self] offset in controller.moveModeSelection(by: offset) }
+        shortcut.onReturn = { [unowned self] in controller.confirmModeList() }
+        shortcut.capturesModeListKeys = { [unowned self] in controller.capturesModeListKeys }
     }
 
     func launch() {

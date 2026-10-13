@@ -10,7 +10,7 @@ struct HoldDictationTests {
     func holdAndRelease() async {
         let controller = fake.controllerWired()
 
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(controller.phase == .recording)
         #expect(fake.recordingStarted == 1)
 
@@ -24,7 +24,7 @@ struct HoldDictationTests {
     @Test("the Dictation is processing while the speech model works")
     func processingPhase() async {
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 11)
         #expect(fake.phaseDuringTranscription == .processing)
     }
@@ -33,7 +33,7 @@ struct HoldDictationTests {
     func trimmed() async {
         fake.transcript = .success("  Ciao.\n")
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 11)
         #expect(fake.pasted == ["Ciao. "])
     }
@@ -42,7 +42,7 @@ struct HoldDictationTests {
     func emptyTranscript() async {
         fake.transcript = .success("   ")
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 11)
         #expect(fake.pasted.isEmpty)
         #expect(fake.problems.isEmpty)
@@ -53,7 +53,7 @@ struct HoldDictationTests {
     func transcriptionFails() async {
         fake.transcript = .failure(Failure())
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 11)
         #expect(fake.pasted.isEmpty)
         #expect(fake.problems == [.transcriptionFailed("boom")])
@@ -64,7 +64,7 @@ struct HoldDictationTests {
     func pasteFails() async {
         fake.pasteError = Failure()
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         await controller.shortcutUp(at: 11)
         #expect(fake.problems == [.pasteFailed("boom")])
         #expect(controller.phase == .idle)
@@ -74,7 +74,7 @@ struct HoldDictationTests {
     func microphoneFails() async {
         fake.startError = Failure()
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(controller.phase == .idle)
         #expect(fake.problems == [.microphoneUnavailable("boom")])
 

@@ -4,15 +4,15 @@ import os
 
 private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "shortcut")
 
-/// Watches the keyboard for the Dictation shortcut, `fn+space` (with or without `shift`), and for
-/// `Esc`, the digits and `shift` while a Dictation is in progress, through
+/// Watches the keyboard for the Dictation shortcut, `fn+space`, and while a Dictation is in
+/// progress for `Esc`, the digits, `shift`, the arrows and `Return`, through
 /// a CGEventTap: Carbon hot keys cannot see `fn` or the key release. The shortcut's own key
 /// events are swallowed so no space reaches the frontmost app. Needs Accessibility, which the
 /// paste needs anyway.
 @MainActor
 final class ShortcutMonitor {
-    /// `shift` held at the press; time in seconds since boot.
-    var onDown: (_ shift: Bool, _ time: TimeInterval) -> Void = { _, _ in }
+    /// Time in seconds since boot.
+    var onDown: (_ time: TimeInterval) -> Void = { _ in }
     var onUp: (_ time: TimeInterval) -> Void = { _ in }
     var onEscape: () -> Void = {}
     /// Whether `Esc` cancels a Dictation now; otherwise it goes to the frontmost app.
@@ -20,11 +20,20 @@ final class ShortcutMonitor {
     var onDigit: (Int) -> Void = { _ in }
     /// Whether the digit keys choose a Mode now; otherwise they go to the frontmost app.
     var capturesDigits: () -> Bool = { false }
-    var onShift: (_ isDown: Bool) -> Void = { _ in }
+    /// `shift` went down (its release is of no interest).
+    var onShift: () -> Void = {}
+    /// ↑ is -1, ↓ is +1.
+    var onArrow: (_ offset: Int) -> Void = { _ in }
+    var onReturn: () -> Void = {}
+    /// Whether the arrows and `Return` move through the Mode list now.
+    var capturesModeListKeys: () -> Bool = { false }
 
     private static let space: Int64 = 49
     private static let escape: Int64 = 53
     /// The digit keys of the top row, by key code (the same position on every layout).
+    private static let arrows: [Int64: Int] = [126: -1, 125: 1]
+    /// Return and the keypad's Enter.
+    private static let returns: Set<Int64> = [36, 76]
     private static let digits: [Int64: Int] = [29: 0, 18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]
 
     private var tap: CFMachPort?
@@ -34,6 +43,9 @@ final class ShortcutMonitor {
     private var escapeHeld = false
     /// Digit keys that went down as Dimmela's: their releases are swallowed too.
     private var digitsHeld: Set<Int64> = []
+    /// Arrow and Return keys that went down as Dimmela's.
+    private var listKeysHeld: Set<Int64> = []
+    private var isShiftDown = false
 
     var isRunning: Bool { tap != nil }
 
@@ -82,7 +94,7 @@ final class ShortcutMonitor {
                   flags.isDisjoint(with: [.maskCommand, .maskControl, .maskAlternate])
             else { return false }
             spaceHeld = true
-            onDown(flags.contains(.maskShift), Self.seconds(event))
+            onDown(Self.seconds(event))
             return true
         case .keyUp where spaceHeld && event.getIntegerValueField(.keyboardEventKeycode) == Self.space:
             // Whatever the modifiers now: `fn` may already be up.
@@ -107,8 +119,25 @@ final class ShortcutMonitor {
         case .keyUp where digitsHeld.contains(event.getIntegerValueField(.keyboardEventKeycode)):
             digitsHeld.remove(event.getIntegerValueField(.keyboardEventKeycode))
             return true
+        case .keyDown where Self.arrows[event.getIntegerValueField(.keyboardEventKeycode)] != nil
+            || Self.returns.contains(event.getIntegerValueField(.keyboardEventKeycode)):
+            let code = event.getIntegerValueField(.keyboardEventKeycode)
+            guard listKeysHeld.contains(code) || capturesModeListKeys() else { return false }
+            listKeysHeld.insert(code)
+            // Arrows repeat while held, to run down the list.
+            if let offset = Self.arrows[code] {
+                onArrow(offset)
+            } else if event.getIntegerValueField(.keyboardEventAutorepeat) == 0 {
+                onReturn()
+            }
+            return true
+        case .keyUp where listKeysHeld.contains(event.getIntegerValueField(.keyboardEventKeycode)):
+            listKeysHeld.remove(event.getIntegerValueField(.keyboardEventKeycode))
+            return true
         case .flagsChanged:
-            onShift(event.flags.contains(.maskShift))
+            let shift = event.flags.contains(.maskShift)
+            if shift && !isShiftDown { onShift() }
+            isShiftDown = shift
             return false
         default:
             return false

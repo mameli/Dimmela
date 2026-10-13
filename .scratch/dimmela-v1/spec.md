@@ -14,8 +14,8 @@ Dimmela is a native macOS menu-bar app for Apple Silicon. It does what I use Han
 
 - `fn+space` starts a Dictation. Holding the shortcut makes it a Hold; a short tap makes it a Lock, which keeps recording hands-free until the next tap. `Esc` cancels.
 - Parakeet TDT v3 runs locally on the Neural Engine and turns the audio into a Transcript. Dimmela applies my Vocabulary, removes Fillers, and pastes the text into the frontmost app.
-- `shift+fn+space` does the same, then runs Post-processing with my Default Mode.
-- During any Dictation I can press `1`–`9` to pick a Mode for that Dictation only, or `0` for no Post-processing. A small overlay shows what I'm choosing.
+- Every Dictation runs Post-processing with my Default Mode, which can be none (the Transcript alone).
+- During any Dictation I can press `1`–`9` to pick a Mode for that Dictation only, or `0` for no Post-processing. `shift` opens a Mode list that I can browse with the arrows. A small overlay shows what I'm choosing.
 - Modes come from folders I already have: my prompt files and my skills. I enable the ones I want and order them, and the order gives each one its digit.
 - The last few Dictations stay in the History, from where I can copy them or Post-process them again with another Mode.
 
@@ -33,7 +33,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 6. As a user, I want a cancelled Dictation to leave no trace in the History, so that the History holds only text I actually wanted.
 7. As a user, I want `Esc` to reach the frontmost app normally when no Dictation is in progress, so that Dimmela doesn't break `Esc` everywhere else.
 8. As a user, I want a Dictation with no detected speech to paste nothing and make no LLM call, so that an accidental tap costs nothing.
-9. As a user, I want the shortcuts fixed to `fn+space`, `shift+fn+space` and `Esc`, so that there is nothing to configure.
+9. As a user, I want a single fixed shortcut, `fn+space`, plus `Esc`, so that there is nothing to configure or remember.
 10. As a user, I want Dimmela to ignore a new Dictation shortcut while the previous Dictation is still being processed, so that two Dictations never race each other's paste.
 
 ### Transcription
@@ -62,9 +62,9 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 
 ### Post-processing and Modes
 
-26. As a user, I want `shift+fn+space` to apply my Default Mode, so that my most common rewrite needs no extra key.
+26. As a user, I want every Dictation to start with my Default Mode (or none), so that my most common rewrite needs no extra key.
 27. As a user, I want to press a digit `1`–`9` during a Dictation (Hold or Lock) to apply that Mode to this Dictation only, so that I can pick the right Mode while I speak.
-28. As a user, I want `0` during a Dictation to mean "no Post-processing", so that I can skip the Default Mode after starting with `shift`.
+28. As a user, I want `0` during a Dictation to mean "no Post-processing", so that I can skip the Default Mode.
 29. As a user, I want the last digit I press during a Dictation to win, so that I can correct a wrong pick.
 30. As a user, I want digits pressed during a Dictation not to reach the frontmost app, so that they don't end up in my document.
 31. As a user, I want digits to behave normally when no Dictation is in progress, so that Dimmela doesn't interfere with typing.
@@ -89,7 +89,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 47. As a user, I want a small pill at the bottom of the screen while I'm recording, so that I know Dimmela is listening.
 48. As a user, I want the pill to show the microphone level, so that I can see my voice is being picked up.
 49. As a user, I want the pill to show the current Mode (or that there is none), so that I know what will happen to my text.
-50. As a user, I want the numbered list of Modes to appear above the pill when I press a digit or hold `shift` during a Dictation, so that I can see the digits only when I need them.
+50. As a user, I want `shift` to open and close the numbered Mode list above the pill during a Dictation, the arrows to move through it, and a digit or `Return` to close it, so that I see the list only when I need it.
 51. As a user, I want the pill to show that Dimmela is processing after the recording ends, so that I know to wait for the paste.
 52. As a user, I want the overlay never to take focus from the app I'm typing in, so that the paste lands in the right place.
 
@@ -143,7 +143,8 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 **Dictation controller.** This is the single deep module and the only test seam. It is a state machine that owns the whole Dictation lifecycle.
 - **States:** idle → recording → processing → idle. A Dictation can be cancelled from recording or from processing.
 - **Inputs:** abstract events with timestamps:
-  - shortcut down, with a flag saying whether `shift` was held
+  - shortcut down
+  - `shift` pressed, arrows, `Return`
   - shortcut up
   - Mode digit (0–9)
   - `Esc`
@@ -161,8 +162,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
   - A shortcut up that comes 300 ms or more after the down ends a Hold and starts processing.
   - A shortcut up that comes sooner turns the Dictation into a Lock. The next shortcut down ends the Lock.
 - **Mode rule:**
-  - Starting with `shift` selects the Default Mode.
-  - Starting without `shift` selects no Mode.
+  - Every Dictation starts with the Default Mode, or none.
   - Every digit during recording overrides the selection: `0` means none, `1`–`9` mean the enabled Mode at that position, and the last digit wins.
   - A digit that maps to no enabled Mode is ignored.
 - **Processing pipeline:**
@@ -177,7 +177,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
   - phase
   - microphone level
   - current Mode name or none
-  - whether the Mode list is visible (after a digit or while `shift` is held)
+  - whether the Mode list is visible (toggled by `shift`, closed by a digit or `Return`)
 - **Event interception:** the controller tells the platform layer whether digits and `Esc` should be swallowed. That is true only while a Dictation is in progress.
 - **Concurrency:** while processing, a new shortcut down is ignored.
 
@@ -210,7 +210,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 
 - **Shortcut monitor:**
   - It uses a CGEventTap and reads the `fn` key through the secondary-fn modifier flag.
-  - It emits shortcut down/up (with `shift`), digits and `Esc` to the controller, and swallows digits and `Esc` only while the controller says a Dictation is in progress.
+  - It emits shortcut down/up, `shift` presses, digits, arrows, `Return` and `Esc` to the controller. It swallows `Esc` and digits only while a Dictation is in progress, and arrows and `Return` only while the Mode list is open.
   - It requires Accessibility, which paste needs anyway.
   - It re-enables the tap if the system disables it.
 - **Microphone recorder:**
@@ -263,7 +263,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 - **Behaviours covered through the controller:**
   - Hold vs Lock
   - `Esc` in each phase
-  - `shift` and the Default Mode
+  - the Default Mode and the Mode list (`shift`, arrows, `Return`)
   - digits (including `0`, last-wins, and unmapped digits)
   - no speech and empty Transcript
   - Vocabulary substitution
@@ -303,7 +303,7 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 1. A spike that loads Parakeet with FluidAudio in a minimal app and measures memory against the targets. This step decides whether the project keeps its promise.
 2. A minimal Dictation: menu bar, `fn+space` Hold, Transcript pasted.
 3. Lock and `Esc`.
-4. Post-processing, Mode sources, Default Mode, `shift+fn+space`.
+4. Post-processing, Mode sources, Default Mode.
 5. Overlay and Mode digits.
 6. History.
 7. Vocabulary and Fillers.
@@ -319,3 +319,5 @@ Memory targets are under 60 MB without the speech model loaded and under 450 MB 
 - "Post-process again with…" copies instead of pasting.
 - Only the first nine enabled Modes get digits.
 - A new shortcut is ignored while a Dictation is processing.
+
+**Change after ticket 07 (2026-10-13).** The user dropped `shift+fn+space`: every Dictation starts with the Default Mode (which can be none), and `shift` now toggles the Mode list, which the arrows browse and a digit or `Return` closes.

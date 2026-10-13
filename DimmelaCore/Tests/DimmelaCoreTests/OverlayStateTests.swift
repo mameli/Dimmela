@@ -17,7 +17,7 @@ struct OverlayStateTests {
         controller.microphoneLevel(0.8)
         #expect(controller.level == 0)
 
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         controller.microphoneLevel(0.6)
         #expect(controller.level == 0.6)
 
@@ -34,7 +34,7 @@ struct OverlayStateTests {
     @Test("the level is clamped between 0 and 1")
     func clamped() async {
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         controller.microphoneLevel(1.7)
         #expect(controller.level == 1)
         controller.microphoneLevel(-0.2)
@@ -49,7 +49,7 @@ struct OverlayStateTests {
         let controller = fake.controllerWired()
         #expect(controller.mode == nil)
 
-        await controller.shortcutDown(shift: true, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(controller.mode == prompt)
 
         let release = Task { await controller.shortcutUp(at: 11) }
@@ -63,11 +63,10 @@ struct OverlayStateTests {
         #expect(controller.mode == nil)
     }
 
-    @Test("a Dictation without shift shows no Mode")
+    @Test("a Dictation with no Default Mode shows no Mode")
     func noMode() async {
-        fake.defaultMode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: false, at: 10)
+        await controller.shortcutDown(at: 10)
         #expect(controller.mode == nil)
     }
 
@@ -75,7 +74,7 @@ struct OverlayStateTests {
     func cancel() async {
         fake.defaultMode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
         let controller = fake.controllerWired()
-        await controller.shortcutDown(shift: true, at: 10)
+        await controller.shortcutDown(at: 10)
         controller.microphoneLevel(0.5)
         await controller.escape()
         #expect(controller.mode == nil)
