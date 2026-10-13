@@ -6,5 +6,11 @@
 
 **Status:** ready-for-agent
 
-- [ ] Launch at login can be toggled from Settings › General, including the requires-approval state
-- [ ] After login Dimmela starts in the menu bar and loads the model without user action
+- [x] Launch at login can be toggled from Settings › General, including the requires-approval state
+- [x] After login Dimmela starts in the menu bar and loads the model without user action
+
+## Comments
+
+### 2026-10-13: done (commit 81fa5a6)
+
+Verified by hand by the user. Ported Takku's `SMAppService` toggle, in Settings › General and in the welcome window. The release build in /Applications needs it turned on again: it registers the app at its own path.
