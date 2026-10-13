@@ -11,6 +11,8 @@ open build/DerivedData/Build/Products/Debug/Dimmela.app
 
 Copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` first, so macOS keeps the permissions across builds.
 
+The Debug build (signed with the local certificate) and the released app (signed with Developer ID) are different apps for macOS: each needs its own Microphone and Accessibility grant. When switching from one to the other, remove Dimmela from Privacy & Security › Accessibility (and Microphone if needed) and allow it again.
+
 ## Smoke test (Debug builds)
 
 Transcribe a file without microphone or keyboard. It prints the Transcript, the time and the memory footprint:
