@@ -15,8 +15,16 @@ enum AppSettings {
     static let vocabularyKey = "vocabulary"
     /// Set when the user closes the welcome window with Done.
     static let onboardingDoneKey = "onboardingDone"
+    static let checkForUpdatesKey = "checkForUpdates"
 
     private static var defaults: UserDefaults { .standard }
+
+    /// The values a setting has before the user changes it. Called once at launch.
+    static func registerDefaults() {
+        defaults.register(defaults: [checkForUpdatesKey: true])
+    }
+
+    static var checkForUpdates: Bool { defaults.bool(forKey: checkForUpdatesKey) }
 
     static var provider: Provider {
         Provider(

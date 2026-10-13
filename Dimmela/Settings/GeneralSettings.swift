@@ -67,6 +67,20 @@ struct LaunchAtLoginToggle: View {
     }
 }
 
+/// The daily question to GitHub about a newer release (from Takku).
+struct UpdatesToggle: View {
+    @AppStorage(AppSettings.checkForUpdatesKey) private var checkForUpdates = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Toggle("Check for updates", isOn: $checkForUpdates)
+            Text("Once a day Dimmela asks GitHub for the latest version; nothing about you or your Dictations is sent.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 struct GeneralSettings: View {
     var body: some View {
         Form {
@@ -78,6 +92,9 @@ struct GeneralSettings: View {
             } footer: {
                 Text("Dimmela loads the speech model when it starts, so it is ready for the first Dictation after login.")
                     .foregroundStyle(.secondary)
+            }
+            Section {
+                UpdatesToggle()
             }
         }
         .formStyle(.grouped)

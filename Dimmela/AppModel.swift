@@ -12,6 +12,7 @@ private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "app")
 @Observable
 final class AppModel {
     let speechModel = SpeechModel()
+    let updates = UpdateChecker()
     @ObservationIgnored private let speechDetector = SpeechDetector()
     let history = History(directory: URL.applicationSupportDirectory.appending(path: "Dimmela/History", directoryHint: .isDirectory))
     private(set) var controller: DictationController!
@@ -25,6 +26,7 @@ final class AppModel {
     @ObservationIgnored private var overlay: OverlayPanel?
 
     init() {
+        AppSettings.registerDefaults()
         controller = DictationController(boundaries: DictationBoundaries(
             startRecording: { [recorder, weak self] in
                 try recorder.start { level in
@@ -66,6 +68,7 @@ final class AppModel {
         if SmokeTest.runIfRequested(model: speechModel, detector: speechDetector) { return }
         #endif
         overlay = OverlayPanel(controller: controller)
+        updates.start()
         Task { try? await speechModel.prepare() }
         Task { await speechDetector.prepare() }
         Task { await refreshNotifications() }

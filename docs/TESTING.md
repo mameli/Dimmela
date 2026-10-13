@@ -130,3 +130,8 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 - [ ] Log out and back in: Dimmela is in the menu bar and the menu says Ready without opening it by hand.
 - [ ] Turn it off: Dimmela leaves the Login Items.
 - [ ] The welcome window has the same toggle under Optional.
+
+### Update check and problem report (ticket 14)
+
+- [ ] With a GitHub release of `mameli/Dimmela` newer than the running version, the menu shows "Dimmela X is available…" and opens the release page. Turned off in Settings › General, no request is made.
+- [ ] Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.

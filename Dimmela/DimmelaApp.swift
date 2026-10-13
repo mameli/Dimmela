@@ -67,6 +67,10 @@ private struct MenuContent: View {
                 openWindow(id: WelcomeView.windowID)
             }
         }
+        if let release = model.updates.available {
+            Button("Dimmela \(release.version) is available…") { model.updates.openReleasePage() }
+        }
+        Button("Report a Problem…") { ProblemReporter.report() }
         Button("Settings…") {
             // No Dock icon: without activating, the window would stay behind the others.
             NSApplication.shared.activate()

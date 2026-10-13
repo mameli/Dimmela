@@ -1,0 +1,58 @@
+name: Bug report
+description: Something in Dimmela doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Don't paste what you dictated**: issues are public. Describe the problem instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Hold fn+Space in TextEdit and speak
+        2. …
+  - type: input
+    id: version
+    attributes:
+      label: Dimmela version
+      description: Shown in Dimmela Settings › General.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: "macOS 26.1, MacBook Air M2 16 GB"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installed with
+      options:
+        - Homebrew
+        - Zip from the release page
+        - Built from source
+  - type: input
+    id: postprocessing
+    attributes:
+      label: Post-processing model
+      description: For example anthropic/claude-haiku-5.5 (remote), or Not used. No API keys.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        In the Dimmela menu, **Report a Problem…** writes a report and shows it in Finder: check it, then drag the file here. It also opens this form with the fields above filled in.
+        If Dimmela doesn't open, run this in Terminal and paste the output (check it first):
+        `/usr/bin/log show --last 3d --style compact --predicate 'subsystem == "app.dimmela.Dimmela"'`
