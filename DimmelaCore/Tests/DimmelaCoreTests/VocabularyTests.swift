@@ -38,6 +38,18 @@ struct VocabularyEntryTests {
         ])
     }
 
+    @Test("the preview names the first terms read, then how many more")
+    func preview() {
+        #expect(Vocabulary(text: "").preview == nil)
+        #expect(Vocabulary(text: "- Jira").preview == "Jira")
+        #expect(Vocabulary(text: "- Jira\n- Claude").preview == "Jira and Claude")
+        #expect(Vocabulary(text: "- Jira\n- Claude\n- OpenRouter").preview == "Jira, Claude and OpenRouter")
+        let six = (1...6).map { "- Term\($0)" }.joined(separator: "\n")
+        #expect(Vocabulary(text: six).preview == "Term1, Term2, Term3, Term4 and 2 more")
+        let five = (1...5).map { "- Term\($0)" }.joined(separator: "\n")
+        #expect(Vocabulary(text: five).preview == "Term1, Term2, Term3, Term4 and 1 more")
+    }
+
     @Test("the new Vocabulary file explains the syntax but adds no entries")
     func fileTemplate() {
         #expect(Vocabulary.fileTemplate.hasPrefix("# Vocabulary\n"))

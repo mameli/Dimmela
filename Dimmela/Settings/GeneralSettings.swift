@@ -1,4 +1,5 @@
 import AppKit
+import DimmelaCore
 import ServiceManagement
 import SwiftUI
 
@@ -81,11 +82,11 @@ struct UpdatesToggle: View {
     }
 }
 
-/// Where the Vocabulary file is, how many entries it has, and a menu of the apps that can edit
-/// it, the system's default for Markdown first. Apps that only show text (browsers, Instruments,
+/// What Dimmela read from the Vocabulary file (how many terms, the first ones) and a menu of the
+/// apps that can edit it, the system's default for Markdown first. Apps that only show text (browsers, Instruments,
 /// Pages…) are left out.
 struct VocabularyFileRow: View {
-    @State private var count = AppSettings.vocabulary.entries.count
+    @State private var vocabulary = AppSettings.vocabulary
     @State private var error: String?
     /// The apps that can open the file, read when the row appears.
     @State private var editors: [URL] = []
@@ -94,10 +95,18 @@ struct VocabularyFileRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: "~/.dimmela/vocabulary.md")
-                Text(count == 1 ? "1 entry" : "\(count) entries")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                switch vocabulary.entries.count {
+                case 0: Text("No terms yet")
+                case 1: Text("1 term")
+                case let count: Text("\(count) terms")
+                }
+                if let preview = vocabulary.preview {
+                    Text(verbatim: preview)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
             }
             Spacer()
             Menu("Edit Vocabulary With") {
@@ -118,7 +127,7 @@ struct VocabularyFileRow: View {
         .onAppear(perform: findEditors)
         // Back from the editor: the entries may have changed.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            count = AppSettings.vocabulary.entries.count
+            vocabulary = AppSettings.vocabulary
         }
         if let error {
             Text(error).foregroundStyle(.secondary)
@@ -191,7 +200,7 @@ struct GeneralSettings: View {
             } header: {
                 Text("Vocabulary")
             } footer: {
-                Text("Names and terms speech recognition gets wrong, one per line: `- Jira = gira, ira | the issue tracker at work`. Dimmela reads the file at every Dictation.")
+                Text("In ~/.dimmela/vocabulary.md, one per line: `- Jira = gira, ira | the issue tracker at work`. The variants are fixed in the Transcript; Post-processing gets the terms too. Dimmela reads the file at every Dictation.")
                     .foregroundStyle(.secondary)
             }
             Section {

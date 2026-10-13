@@ -46,6 +46,18 @@ public struct Vocabulary: Equatable, Sendable {
         self.entries = entries
     }
 
+    /// The first terms read from the file, then how many more: "Jira, Claude, OpenRouter, Handy
+    /// and 3 more". Shows at a glance whether the lines were written right. `nil` if there are none.
+    public var preview: String? {
+        let terms = entries.map(\.term)
+        switch terms.count {
+        case 0: return nil
+        case 1: return terms[0]
+        case 2...4: return terms.dropLast().joined(separator: ", ") + " and " + terms.last!
+        default: return terms.prefix(4).joined(separator: ", ") + " and \(terms.count - 4) more"
+        }
+    }
+
     /// What Post-processing adds after the Mode's instructions: the terms with their
     /// description and variants, and the rule for using them. `nil` if there are no entries.
     var promptBlock: String? {
