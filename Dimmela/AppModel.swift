@@ -62,7 +62,9 @@ final class AppModel {
         if SmokeTest.runIfRequested(model: speechModel) { return }
         #endif
         overlay = OverlayPanel(controller: controller)
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, error in
+            logger.notice("Notifications allowed: \(granted, privacy: .public) \(String(describing: error), privacy: .public)")
+        }
         Task {
             if microphonePermission == .notDetermined {
                 _ = await MicrophoneRecorder.requestPermission()
@@ -125,6 +127,8 @@ final class AppModel {
         let content = UNMutableNotificationContent()
         content.title = "Dimmela"
         content.body = message
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)) { error in
+            if let error { logger.error("Notification not shown: \(error, privacy: .public)") }
+        }
     }
 }
