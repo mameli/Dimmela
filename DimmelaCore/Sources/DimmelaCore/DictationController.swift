@@ -8,6 +8,8 @@ public enum DictationProblem: Equatable, Sendable {
     case pasteFailed(String)
     /// The Transcript was pasted instead of the LLM's answer.
     case postProcessingFailed(String)
+    /// Post-processing a History entry again gave no text.
+    case postProcessingAgainFailed(String)
 }
 
 /// The platform pieces a Dictation needs, injected so the controller can be driven in tests.
@@ -25,6 +27,8 @@ public struct DictationBoundaries {
     public var enabledModes: @MainActor () -> [Mode]
     /// The client for the configured provider; throws when there is none.
     public var chatClient: @MainActor () throws -> ChatClient
+    /// Where completed Dictations are kept.
+    public var history: History
 
     public init(
         startRecording: @escaping @MainActor () throws -> Void,
@@ -34,6 +38,7 @@ public struct DictationBoundaries {
         report: @escaping @MainActor (DictationProblem) -> Void,
         defaultMode: @escaping @MainActor () -> Mode?,
         enabledModes: @escaping @MainActor () -> [Mode],
+        history: History,
         chatClient: @escaping @MainActor () throws -> ChatClient
     ) {
         self.startRecording = startRecording
@@ -43,6 +48,7 @@ public struct DictationBoundaries {
         self.report = report
         self.defaultMode = defaultMode
         self.enabledModes = enabledModes
+        self.history = history
         self.chatClient = chatClient
     }
 }
@@ -227,12 +233,25 @@ public final class DictationController {
             guard !Task.isCancelled else { return }
         }
 
+        // Kept even if the paste fails: the text can still be copied from the History.
+        try? boundaries.history.add(transcript: transcript, text: text, mode: mode, samples: samples)
         do {
             try await boundaries.paste(text + " ")
         } catch {
             boundaries.report(.pasteFailed(String(describing: error)))
         }
         end()
+    }
+
+    /// Post-processes a History entry's Transcript with `mode`; nil, with the problem reported,
+    /// if it fails.
+    public func postProcessAgain(_ entry: HistoryEntry, with mode: Mode) async -> String? {
+        do {
+            return try await postProcess(entry.transcript, with: mode)
+        } catch {
+            boundaries.report(.postProcessingAgainFailed(Self.describe(error)))
+            return nil
+        }
     }
 
     private func postProcess(_ transcript: String, with mode: Mode) async throws -> String {

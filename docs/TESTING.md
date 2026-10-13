@@ -81,3 +81,11 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] `shift` during a Dictation opens the list with the current Mode highlighted; `shift` again closes it.
 - [ ] With the list open, ↑/↓ move the highlight (from Transcript to the last Mode) and the pill follows; `Return` or a digit closes the list. Arrows and `Return` never reach TextEdit while the list is open, and work normally otherwise.
 - [ ] With more than nine enabled Modes, only the first nine are listed.
+
+### History (ticket 08)
+
+- [ ] After a Dictation, the menu has a History submenu; the entry shows time, Mode and the start of the text.
+- [ ] Copy Text and Copy Transcript put the right text on the clipboard (Copy Transcript only when they differ).
+- [ ] Post-process Again With another Mode: a notification says the new text is on the clipboard, and ⌘V pastes it.
+- [ ] After six Dictations only five entries are listed; `~/Library/Application Support/Dimmela/History` holds five folders, each with `entry.json` and a playable `audio.wav`.
+- [ ] A Dictation cancelled with `Esc` does not appear. The History is still there after quitting and reopening Dimmela.

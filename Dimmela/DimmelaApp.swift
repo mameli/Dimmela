@@ -41,6 +41,13 @@ private struct MenuContent: View {
             Button("Allow the Microphone…") { model.openMicrophoneSettings() }
         }
         Divider()
+        if !model.history.entries.isEmpty {
+            Menu("History") {
+                ForEach(model.history.entries) { entry in
+                    HistoryMenu(model: model, entry: entry, modes: AppSettings.lines(of: enabled).map(Mode.init(id:)))
+                }
+            }
+        }
         Picker("Default Mode", selection: $defaultModeID) {
             Text("None").tag("")
             ForEach(AppSettings.lines(of: enabled).map(Mode.init(id:))) { Text($0.name).tag($0.id) }
@@ -70,6 +77,35 @@ private struct MenuContent: View {
             case .processing: "Transcribing…"
             }
         }
+    }
+}
+
+private struct HistoryMenu: View {
+    let model: AppModel
+    let entry: HistoryEntry
+    let modes: [Mode]
+
+    var body: some View {
+        Menu(title) {
+            Button("Copy Text") { model.copy(entry.text) }
+            if entry.text != entry.transcript {
+                Button("Copy Transcript") { model.copy(entry.transcript) }
+            }
+            if !modes.isEmpty {
+                Menu("Post-process Again With") {
+                    ForEach(modes) { mode in
+                        Button(mode.name) { model.postProcessAgain(entry, with: mode) }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Time, Mode and the start of the text: "10:42 · Clean · Ciao, sto provando…".
+    private var title: String {
+        let time = entry.date.formatted(date: .omitted, time: .shortened)
+        let start = entry.text.count > 40 ? entry.text.prefix(40) + "…" : entry.text
+        return [time, entry.modeName, start].compactMap { $0 }.joined(separator: " · ")
     }
 }
 

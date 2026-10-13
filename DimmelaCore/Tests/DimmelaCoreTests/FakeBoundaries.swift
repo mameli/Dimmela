@@ -14,6 +14,8 @@ final class FakeBoundaries {
     /// Thrown instead of building the chat client, as when no provider is configured.
     var chatClientError: Error?
     let provider = StubTransport()
+    let historyFolder = TemporaryFolder()
+    lazy var history = History(directory: historyFolder.url)
 
     private(set) var recordingStarted = 0
     private(set) var recordingStopped = 0
@@ -57,6 +59,7 @@ final class FakeBoundaries {
             report: { [unowned self] problem in problems.append(problem) },
             defaultMode: { [unowned self] in defaultMode },
             enabledModes: { [unowned self] in enabledModes },
+            history: history,
             chatClient: { [unowned self] in
                 if let chatClientError { throw chatClientError }
                 return ChatClient(

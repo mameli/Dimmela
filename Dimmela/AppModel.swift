@@ -12,6 +12,7 @@ private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "app")
 @Observable
 final class AppModel {
     let speechModel = SpeechModel()
+    let history = History(directory: URL.applicationSupportDirectory.appending(path: "Dimmela/History", directoryHint: .isDirectory))
     private(set) var controller: DictationController!
     private(set) var accessibilityGranted = AXIsProcessTrusted()
     private(set) var microphonePermission = MicrophoneRecorder.permission
@@ -34,6 +35,7 @@ final class AppModel {
             report: { problem in Self.show(problem) },
             defaultMode: { AppSettings.defaultMode },
             enabledModes: { AppSettings.enabledModes },
+            history: history,
             chatClient: { try ChatClient.configured() }
         ))
         // Tasks started on the main actor run in the order the keys arrived.
@@ -93,14 +95,33 @@ final class AppModel {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
     }
 
+    func copy(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    /// Copies the result rather than pasting it: the menu has just taken the focus.
+    func postProcessAgain(_ entry: HistoryEntry, with mode: Mode) {
+        Task {
+            guard let text = await controller.postProcessAgain(entry, with: mode) else { return }
+            copy(text)
+            Self.notify("\(mode.name): the new text is on the clipboard.")
+        }
+    }
+
     private static func show(_ problem: DictationProblem) {
         let message = switch problem {
         case .microphoneUnavailable(let detail): "Can't record: \(detail)"
         case .transcriptionFailed(let detail): "Can't transcribe: \(detail)"
         case .pasteFailed(let detail): "Can't paste: \(detail)"
         case .postProcessingFailed(let detail): "Post-processing failed, the Transcript was pasted instead: \(detail)"
+        case .postProcessingAgainFailed(let detail): "Post-processing failed: \(detail)"
         }
         logger.error("\(message, privacy: .public)")
+        notify(message)
+    }
+
+    private static func notify(_ message: String) {
         let content = UNMutableNotificationContent()
         content.title = "Dimmela"
         content.body = message
