@@ -25,6 +25,8 @@ public struct DictationBoundaries {
     public var defaultMode: @MainActor () -> Mode?
     /// The enabled Modes in the user's order; the first nine get the digits 1–9.
     public var enabledModes: @MainActor () -> [Mode]
+    /// The user's Vocabulary, read at every Dictation.
+    public var vocabulary: @MainActor () -> Vocabulary
     /// The client for the configured provider; throws when there is none.
     public var chatClient: @MainActor () throws -> ChatClient
     /// Where completed Dictations are kept.
@@ -38,6 +40,7 @@ public struct DictationBoundaries {
         report: @escaping @MainActor (DictationProblem) -> Void,
         defaultMode: @escaping @MainActor () -> Mode?,
         enabledModes: @escaping @MainActor () -> [Mode],
+        vocabulary: @escaping @MainActor () -> Vocabulary,
         history: History,
         chatClient: @escaping @MainActor () throws -> ChatClient
     ) {
@@ -48,6 +51,7 @@ public struct DictationBoundaries {
         self.report = report
         self.defaultMode = defaultMode
         self.enabledModes = enabledModes
+        self.vocabulary = vocabulary
         self.history = history
         self.chatClient = chatClient
     }
@@ -210,9 +214,10 @@ public final class DictationController {
     /// Once cancelled it leaves everything alone: a new Dictation may already be running.
     private func process(with mode: Mode?) async {
         let samples = await boundaries.stopRecording()
+        let vocabulary = boundaries.vocabulary()
         let transcript: String
         do {
-            transcript = try await boundaries.transcribe(samples)
+            transcript = vocabulary.correct(try await boundaries.transcribe(samples))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
             guard !Task.isCancelled else { return }
@@ -255,7 +260,8 @@ public final class DictationController {
     }
 
     private func postProcess(_ transcript: String, with mode: Mode) async throws -> String {
-        let instructions = try mode.instructions()
+        let instructions = [try mode.instructions(), boundaries.vocabulary().promptBlock]
+            .compactMap { $0 }.joined(separator: "\n\n")
         return try await boundaries.chatClient().complete([
             ChatMessage(role: .system, content: instructions),
             ChatMessage(role: .user, content: transcript),

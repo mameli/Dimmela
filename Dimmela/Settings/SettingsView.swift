@@ -7,6 +7,7 @@ struct SettingsView: View {
         TabView {
             Tab("Post-processing", systemImage: "sparkles") { PostProcessingSettings() }
             Tab("Modes", systemImage: "list.number") { ModeSettings() }
+            Tab("Vocabulary", systemImage: "character.book.closed") { VocabularySettings() }
         }
         .frame(width: 560, height: 460)
     }
@@ -171,6 +172,31 @@ private struct ModeSettings: View {
         var modes = enabledModes
         modes.move(fromOffsets: offsets, toOffset: destination)
         AppSettings.enabledModes = modes
+    }
+}
+
+private struct VocabularySettings: View {
+    @AppStorage(AppSettings.vocabularyKey) private var text = ""
+
+    private var count: Int { Vocabulary(text: text).entries.count }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(Vocabulary.example)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            TextEditor(text: $text)
+                .font(.system(.body, design: .monospaced))
+                .scrollContentBackground(.hidden)
+                .padding(6)
+                .background(RoundedRectangle(cornerRadius: 6).fill(.background))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.separator))
+            Text(count == 1 ? "1 entry" : "\(count) entries")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
     }
 }
 

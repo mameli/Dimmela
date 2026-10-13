@@ -11,6 +11,8 @@ enum AppSettings {
     /// The enabled Modes' identifiers, in the user's order, one per line.
     static let enabledModesKey = "enabledModes"
     static let defaultModeKey = "defaultMode"
+    /// The Vocabulary as the user writes it: one `- term = variants | description` per line.
+    static let vocabularyKey = "vocabulary"
 
     private static var defaults: UserDefaults { .standard }
 
@@ -45,6 +47,10 @@ enum AppSettings {
     static var defaultMode: Mode? {
         guard let id = defaults.string(forKey: defaultModeKey), !id.isEmpty else { return nil }
         return enabledModes.first { $0.id == id }
+    }
+
+    static var vocabulary: Vocabulary {
+        Vocabulary(text: defaults.string(forKey: vocabularyKey) ?? "")
     }
 
     /// The Modes found in the Mode sources now.

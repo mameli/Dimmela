@@ -89,3 +89,10 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Post-process Again With another Mode: a notification says the new text is on the clipboard, and ⌘V pastes it.
 - [ ] After six Dictations only five entries are listed; `~/Library/Application Support/Dimmela/History` holds five folders, each with `entry.json` and a playable `audio.wav`.
 - [ ] A Dictation cancelled with `Esc` does not appear. The History is still there after quitting and reopening Dimmela.
+
+### Vocabulary (ticket 09)
+
+- [ ] Settings › Vocabulary: write `- Jira = ira, gira | the issue tracker at work`; the count shows 1 entry. The text is still there after reopening Settings and after relaunching.
+- [ ] Dictate "apro ira" with Default Mode None: "apro Jira" is pasted. A word that only contains a variant ("Lira", "girare") is untouched.
+- [ ] With a Default Mode, the History's Copy Transcript shows the corrected term.
+- [ ] Lines that do not start with `- ` are ignored, so notes can sit in the list.

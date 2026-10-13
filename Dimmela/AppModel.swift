@@ -35,6 +35,7 @@ final class AppModel {
             report: { problem in Self.show(problem) },
             defaultMode: { AppSettings.defaultMode },
             enabledModes: { AppSettings.enabledModes },
+            vocabulary: { AppSettings.vocabulary },
             history: history,
             chatClient: { try ChatClient.configured() }
         ))
