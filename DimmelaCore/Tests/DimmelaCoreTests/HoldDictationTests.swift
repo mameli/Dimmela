@@ -90,4 +90,15 @@ struct HoldDictationTests {
         #expect(fake.recordingStopped == 0)
         #expect(controller.phase == .idle)
     }
+
+    @Test("a recording with no audio at all is reported as a microphone problem")
+    func noAudio() async {
+        fake.samples = []
+        let controller = fake.controllerWired()
+        await controller.shortcutDown(at: 10)
+        await controller.shortcutUp(at: 11)
+        #expect(fake.problems == [.microphoneUnavailable("No audio came from the microphone.")])
+        #expect(fake.transcribed.isEmpty)
+        #expect(fake.pasted.isEmpty)
+    }
 }

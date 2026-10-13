@@ -31,6 +31,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] No space is typed by the shortcut itself, also when holding it for several seconds.
 - [ ] Copy something before dictating: after the paste the clipboard still holds it.
 - [ ] Dictate with AirPods connected: they stay in high-quality mode (no call-mode audio drop).
+- [ ] Dictate with the MacBook's built-in microphone (three channels) and with a one-channel microphone (AirPods): both are transcribed.
 - [ ] Switch the input device in System Settings between two Dictations: the second still works.
 - [ ] Remove Dimmela from Accessibility and dictate: a notification explains the paste needs Accessibility.
 - [ ] `fn+space` with `⌘`, `⌃` or `⌥` held does not start a Dictation.

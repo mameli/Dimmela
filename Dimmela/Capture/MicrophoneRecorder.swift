@@ -49,12 +49,16 @@ final class MicrophoneRecorder: Sendable {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else { throw Failure.noInput }
-        guard let target = AVAudioFormat(
+        // The channels are averaged here, then the converter only changes the sample rate: it cannot
+        // mix down more than two channels, and the MacBook's built-in microphone has three.
+        guard let mono = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32, sampleRate: format.sampleRate, channels: 1, interleaved: false
+        ), let target = AVAudioFormat(
             commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 1, interleaved: false
-        ), let converter = AVAudioConverter(from: format, to: target) else { throw Failure.converter }
+        ), let converter = AVAudioConverter(from: mono, to: target) else { throw Failure.converter }
 
         input.installTap(onBus: 0, bufferSize: 4096, format: format, block: Self.tapBlock(
-            converter: converter, target: target, samples: samples, onLevel: onLevel
+            mono: mono, converter: converter, target: target, samples: samples, onLevel: onLevel
         ))
         engine.prepare()
         try engine.start()
@@ -78,10 +82,11 @@ final class MicrophoneRecorder: Sendable {
 
     /// Built outside any actor: the block is called on the audio thread.
     private static func tapBlock(
-        converter: AVAudioConverter, target: AVAudioFormat, samples: SampleBuffer,
+        mono: AVAudioFormat, converter: AVAudioConverter, target: AVAudioFormat, samples: SampleBuffer,
         onLevel: @escaping @Sendable (Float) -> Void
     ) -> AVAudioNodeTapBlock {
         return { buffer, _ in
+            guard let input = mixDown(buffer, to: mono) else { return }
             let ratio = target.sampleRate / buffer.format.sampleRate
             let capacity = AVAudioFrameCount((Double(buffer.frameLength) * ratio).rounded(.up)) + 32
             guard let output = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: capacity) else { return }
@@ -94,7 +99,7 @@ final class MicrophoneRecorder: Sendable {
                 }
                 consumed = true
                 status.pointee = .haveData
-                return buffer
+                return input
             }
             guard error == nil, let channel = output.floatChannelData?[0] else { return }
             let converted = UnsafeBufferPointer(start: channel, count: Int(output.frameLength))
@@ -102,6 +107,26 @@ final class MicrophoneRecorder: Sendable {
             onLevel(level(of: converted))
         }
     }
+}
+
+/// The average of all the buffer's channels, as one channel at the same sample rate.
+private func mixDown(_ buffer: AVAudioPCMBuffer, to mono: AVAudioFormat) -> AVAudioPCMBuffer? {
+    let frames = Int(buffer.frameLength)
+    let channels = Int(buffer.format.channelCount)
+    guard let source = buffer.floatChannelData,
+          let output = AVAudioPCMBuffer(pcmFormat: mono, frameCapacity: buffer.frameLength),
+          let destination = output.floatChannelData?[0]
+    else { return nil }
+    output.frameLength = buffer.frameLength
+    let stride = buffer.format.isInterleaved ? channels : 1
+    for frame in 0..<frames {
+        var sum: Float = 0
+        for channel in 0..<channels {
+            sum += buffer.format.isInterleaved ? source[0][frame * stride + channel] : source[channel][frame]
+        }
+        destination[frame] = sum / Float(channels)
+    }
+    return output
 }
 
 /// RMS loudness mapped from -50 dB (silence) to -10 dB (loud speech) onto 0...1.

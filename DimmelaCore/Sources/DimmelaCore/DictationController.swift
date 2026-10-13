@@ -219,6 +219,12 @@ public final class DictationController {
     /// Once cancelled it leaves everything alone: a new Dictation may already be running.
     private func process(with mode: Mode?) async {
         let recorded = await boundaries.stopRecording()
+        // Nothing at all, not even silence: the microphone did not deliver.
+        guard !recorded.isEmpty else {
+            guard !Task.isCancelled else { return }
+            boundaries.report(.microphoneUnavailable("No audio came from the microphone."))
+            return end()
+        }
         // The silence before and after the speech is cut. Without a detector, all of it is kept.
         var samples = recorded
         do {
