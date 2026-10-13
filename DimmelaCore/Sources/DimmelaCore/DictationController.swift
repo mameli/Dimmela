@@ -21,6 +21,8 @@ public struct DictationBoundaries {
     public var report: @MainActor (DictationProblem) -> Void
     /// The Mode `shift+fn+space` applies, if the user chose one.
     public var defaultMode: @MainActor () -> Mode?
+    /// The enabled Modes in the user's order; the first nine get the digits 1–9.
+    public var enabledModes: @MainActor () -> [Mode]
     /// The client for the configured provider; throws when there is none.
     public var chatClient: @MainActor () throws -> ChatClient
 
@@ -31,6 +33,7 @@ public struct DictationBoundaries {
         paste: @escaping @MainActor (String) async throws -> Void,
         report: @escaping @MainActor (DictationProblem) -> Void,
         defaultMode: @escaping @MainActor () -> Mode?,
+        enabledModes: @escaping @MainActor () -> [Mode],
         chatClient: @escaping @MainActor () throws -> ChatClient
     ) {
         self.startRecording = startRecording
@@ -39,6 +42,7 @@ public struct DictationBoundaries {
         self.paste = paste
         self.report = report
         self.defaultMode = defaultMode
+        self.enabledModes = enabledModes
         self.chatClient = chatClient
     }
 }
@@ -57,7 +61,14 @@ public final class DictationController {
     public private(set) var phase: Phase = .idle {
         didSet {
             if phase != .recording { level = 0 }
-            if phase == .idle { mode = nil }
+            if phase != .recording {
+                showsModeListForDigit = false
+                isShiftDown = false
+            }
+            if phase == .idle {
+                mode = nil
+                modeChoices = []
+            }
         }
     }
 
@@ -66,6 +77,22 @@ public final class DictationController {
 
     /// The Mode of the Dictation in progress; nil for the Transcript alone.
     public private(set) var mode: Mode?
+
+    /// The Modes the digits 1–9 choose during this Dictation, in order.
+    public private(set) var modeChoices: [Mode] = []
+
+    /// Whether the overlay lists the Mode choices: while `shift` is held, or once a digit was
+    /// pressed, during recording.
+    public var isModeListVisible: Bool {
+        phase == .recording && !modeChoices.isEmpty && (isShiftDown || showsModeListForDigit)
+    }
+
+    /// Whether the digit keys belong to Dimmela right now (they choose the Mode) instead of the
+    /// frontmost app.
+    public var capturesDigits: Bool { phase == .recording }
+
+    private var isShiftDown = false
+    private var showsModeListForDigit = false
 
     /// Whether `Esc` belongs to Dimmela right now (it cancels the Dictation) instead of the
     /// frontmost app.
@@ -94,6 +121,8 @@ public final class DictationController {
                 pressedAt = time
                 isLocked = false
                 mode = shift ? boundaries.defaultMode() : nil
+                modeChoices = Array(boundaries.enabledModes().prefix(9))
+                isShiftDown = shift
             } catch {
                 boundaries.report(.microphoneUnavailable(String(describing: error)))
             }
@@ -108,6 +137,23 @@ public final class DictationController {
     public func microphoneLevel(_ level: Float) {
         guard phase == .recording else { return }
         self.level = min(max(level, 0), 1)
+    }
+
+    /// Chooses this Dictation's Mode: 0 for none, 1–9 for the Mode at that position. A digit with
+    /// no Mode is ignored.
+    public func modeDigit(_ digit: Int) {
+        guard phase == .recording else { return }
+        showsModeListForDigit = true
+        if digit == 0 {
+            mode = nil
+        } else if modeChoices.indices.contains(digit - 1) {
+            mode = modeChoices[digit - 1]
+        }
+    }
+
+    public func shiftChanged(isDown: Bool) {
+        guard phase == .recording else { return }
+        isShiftDown = isDown
     }
 
     /// Ends a Hold, or turns a short tap into a Lock. Returns when the Dictation is over: its

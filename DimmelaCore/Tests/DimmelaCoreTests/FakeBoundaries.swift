@@ -10,6 +10,7 @@ final class FakeBoundaries {
     var startError: Error?
     var pasteError: Error?
     var defaultMode: Mode?
+    var enabledModes: [Mode] = []
     /// Thrown instead of building the chat client, as when no provider is configured.
     var chatClientError: Error?
     let provider = StubTransport()
@@ -55,6 +56,7 @@ final class FakeBoundaries {
             },
             report: { [unowned self] problem in problems.append(problem) },
             defaultMode: { [unowned self] in defaultMode },
+            enabledModes: { [unowned self] in enabledModes },
             chatClient: { [unowned self] in
                 if let chatClientError { throw chatClientError }
                 return ChatClient(

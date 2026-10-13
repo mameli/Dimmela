@@ -33,6 +33,7 @@ final class AppModel {
             paste: { text in try await Paster.paste(text) },
             report: { problem in Self.show(problem) },
             defaultMode: { AppSettings.defaultMode },
+            enabledModes: { AppSettings.enabledModes },
             chatClient: { try ChatClient.configured() }
         ))
         // Tasks started on the main actor run in the order the keys arrived.
@@ -46,6 +47,9 @@ final class AppModel {
             Task { await self.controller.escape() }
         }
         shortcut.capturesEscape = { [unowned self] in controller.capturesEscape }
+        shortcut.onDigit = { [unowned self] digit in controller.modeDigit(digit) }
+        shortcut.capturesDigits = { [unowned self] in controller.capturesDigits }
+        shortcut.onShift = { [unowned self] isDown in controller.shiftChanged(isDown: isDown) }
     }
 
     func launch() {

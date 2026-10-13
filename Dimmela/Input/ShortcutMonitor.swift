@@ -5,7 +5,7 @@ import os
 private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "shortcut")
 
 /// Watches the keyboard for the Dictation shortcut, `fn+space` (with or without `shift`), and for
-/// `Esc` while a Dictation is in progress, through
+/// `Esc`, the digits and `shift` while a Dictation is in progress, through
 /// a CGEventTap: Carbon hot keys cannot see `fn` or the key release. The shortcut's own key
 /// events are swallowed so no space reaches the frontmost app. Needs Accessibility, which the
 /// paste needs anyway.
@@ -17,15 +17,23 @@ final class ShortcutMonitor {
     var onEscape: () -> Void = {}
     /// Whether `Esc` cancels a Dictation now; otherwise it goes to the frontmost app.
     var capturesEscape: () -> Bool = { false }
+    var onDigit: (Int) -> Void = { _ in }
+    /// Whether the digit keys choose a Mode now; otherwise they go to the frontmost app.
+    var capturesDigits: () -> Bool = { false }
+    var onShift: (_ isDown: Bool) -> Void = { _ in }
 
     private static let space: Int64 = 49
     private static let escape: Int64 = 53
+    /// The digit keys of the top row, by key code (the same position on every layout).
+    private static let digits: [Int64: Int] = [29: 0, 18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]
 
     private var tap: CFMachPort?
     /// The shortcut's space is down: its repeats and release belong to Dimmela.
     private var spaceHeld = false
     /// `Esc` went down as Dimmela's: its release must not reach the frontmost app alone.
     private var escapeHeld = false
+    /// Digit keys that went down as Dimmela's: their releases are swallowed too.
+    private var digitsHeld: Set<Int64> = []
 
     var isRunning: Bool { tap != nil }
 
@@ -34,6 +42,7 @@ final class ShortcutMonitor {
     func start() -> Bool {
         guard tap == nil else { return true }
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue) | CGEventMask(1 << CGEventType.keyUp.rawValue)
+            | CGEventMask(1 << CGEventType.flagsChanged.rawValue)
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -90,6 +99,17 @@ final class ShortcutMonitor {
         case .keyUp where escapeHeld && event.getIntegerValueField(.keyboardEventKeycode) == Self.escape:
             escapeHeld = false
             return true
+        case .keyDown where Self.digits[event.getIntegerValueField(.keyboardEventKeycode)] != nil:
+            let code = event.getIntegerValueField(.keyboardEventKeycode)
+            guard digitsHeld.contains(code) || capturesDigits() else { return false }
+            if digitsHeld.insert(code).inserted { onDigit(Self.digits[code]!) }
+            return true
+        case .keyUp where digitsHeld.contains(event.getIntegerValueField(.keyboardEventKeycode)):
+            digitsHeld.remove(event.getIntegerValueField(.keyboardEventKeycode))
+            return true
+        case .flagsChanged:
+            onShift(event.flags.contains(.maskShift))
+            return false
         default:
             return false
         }

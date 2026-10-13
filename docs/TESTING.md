@@ -70,3 +70,13 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Dictating into TextEdit, the cursor stays in TextEdit and the paste lands there; the pill cannot be clicked.
 - [ ] With two displays, the pill shows on the one with the pointer; it also shows over a full-screen app.
 - [ ] With Reduce Motion on, the bars still move but without animation and the dots stay still.
+
+### Mode digits and Mode list (ticket 07)
+
+- [ ] During a Hold, press `2`: the list of Modes appears above the pill with the second highlighted, the pill shows its name, and the LLM's answer for that Mode is pasted.
+- [ ] `shift+fn+space` then `0`: only the Transcript is pasted.
+- [ ] Press `1` then `3`: the third Mode is used. A digit beyond the enabled Modes changes nothing.
+- [ ] In a Lock, digits work the same way.
+- [ ] The digits pressed during a Dictation never appear in TextEdit; with no Dictation they type normally, also right after the paste.
+- [ ] Holding `shift` during a Dictation shows the list; releasing it hides it (unless a digit was pressed).
+- [ ] With more than nine enabled Modes, only the first nine are listed.

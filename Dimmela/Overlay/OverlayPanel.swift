@@ -9,7 +9,9 @@ import SwiftUI
 final class OverlayPanel {
     private let controller: DictationController
     private let panel: NSPanel
-    private static let size = NSSize(width: 320, height: 56)
+    /// Room for the pill and, above it, the list of nine Modes; the empty part is transparent
+    /// and lets clicks through.
+    private static let size = NSSize(width: 340, height: 360)
 
     init(controller: DictationController) {
         self.controller = controller
@@ -58,6 +60,20 @@ private struct OverlayView: View {
     let controller: DictationController
 
     var body: some View {
+        VStack(spacing: 8) {
+            Spacer(minLength: 0)
+            if controller.isModeListVisible {
+                ModeList(choices: controller.modeChoices, selected: controller.mode)
+                    .transition(.opacity)
+            }
+            pill
+        }
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(.easeOut(duration: 0.12), value: controller.isModeListVisible)
+    }
+
+    private var pill: some View {
         HStack(spacing: 10) {
             if controller.phase == .processing {
                 PulsingDots()
@@ -73,7 +89,42 @@ private struct OverlayView: View {
         .frame(height: 36)
         .background(Capsule().fill(.black.opacity(0.82)))
         .overlay(Capsule().strokeBorder(.white.opacity(0.12)))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// The Modes the digits choose, numbered; the current one highlighted. 0 is the Transcript alone.
+private struct ModeList: View {
+    let choices: [Mode]
+    let selected: Mode?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            row(digit: 0, name: "Transcript", isSelected: selected == nil)
+            ForEach(Array(choices.enumerated()), id: \.offset) { index, mode in
+                row(digit: index + 1, name: mode.name, isSelected: mode == selected)
+            }
+        }
+        .padding(6)
+        .frame(width: 240)
+        .background(RoundedRectangle(cornerRadius: 12).fill(.black.opacity(0.82)))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12)))
+    }
+
+    private func row(digit: Int, name: String, isSelected: Bool) -> some View {
+        HStack(spacing: 10) {
+            Text(verbatim: "\(digit)")
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 14)
+            Text(name)
+                .font(.system(size: 13))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(RoundedRectangle(cornerRadius: 7).fill(isSelected ? .white.opacity(0.18) : .clear))
     }
 }
 
