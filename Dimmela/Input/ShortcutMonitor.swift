@@ -30,10 +30,10 @@ final class ShortcutMonitor {
 
     private static let space: Int64 = 49
     private static let escape: Int64 = 53
-    /// The digit keys of the top row, by key code (the same position on every layout).
     private static let arrows: [Int64: Int] = [126: -1, 125: 1]
     /// Return and the keypad's Enter.
     private static let returns: Set<Int64> = [36, 76]
+    /// The digit keys of the top row, by key code (the same position on every layout).
     private static let digits: [Int64: Int] = [29: 0, 18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]
 
     private var tap: CFMachPort?
