@@ -6,6 +6,14 @@
 
 **Status:** ready-for-agent
 
-- [ ] A daily check against GitHub Releases shows an update menu item when a newer version exists
-- [ ] "Report a problem" collects recent logs and opens a pre-filled report
-- [ ] Version comparison is covered by core tests
+- [x] A daily check against GitHub Releases shows an update menu item when a newer version exists
+- [x] "Report a problem" collects recent logs and opens a pre-filled report
+- [x] Version comparison is covered by core tests
+
+## Comments
+
+### 2026-10-13: done (commit 0f8c3f6)
+
+- Verified by hand by the user.
+- Ported from Takku: `AppVersion`, `ProblemReport`, `UpdateChecker`, `ProblemReporter` and the GitHub bug form.
+- Post-processing is described by model and local/remote only.
