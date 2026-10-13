@@ -1,0 +1,1772 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dimmela · Dictation for your Mac</title>
+<meta name="description" content="Hold fn Space, speak, let go. Dimmela types it wherever your cursor is. Transcribed on your Mac by Parakeet on the Neural Engine, rewritten by your own prompts if you like. Free and open source.">
+<meta name="theme-color" content="#5ee079" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b2a17" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dimmela.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Dimmela">
+<meta property="og:title" content="Dimmela · Just say it.">
+<meta property="og:description" content="A native macOS menu-bar app for dictation. Local transcription, your own prompts as Modes, about 40 MB of memory.">
+<meta property="og:image" content="https://dimmela.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Dimmela: Just say it. Dictation for your Mac.">
+<meta property="og:url" content="https://dimmela.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Dimmela · Just say it.">
+<meta name="twitter:description" content="A native macOS menu-bar app for dictation. Local transcription, your own prompts as Modes, about 40 MB of memory.">
+<meta name="twitter:image" content="https://dimmela.app/og.png">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Dimmela",
+  "description": "A native macOS menu-bar app for dictation. Speech is transcribed on your Mac by Parakeet v3 on the Neural Engine; an optional LLM rewrites each Dictation with your own prompts and skills.",
+  "url": "https://dimmela.app/",
+  "image": "https://dimmela.app/icon.png",
+  "screenshot": "https://dimmela.app/og.png",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS 15 or later (Apple Silicon)",
+  "downloadUrl": "https://github.com/mameli/Dimmela/releases/latest/download/Dimmela.zip",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Filippo Mameli", "url": "https://github.com/mameli" }
+}
+</script>
+<style>
+:root {
+  --g-hi: #74ee8e;
+  --g: #5ee079;
+  --g-lo: #39c970;
+  --mint: #cefeee;
+  --ink: #04220f;
+
+  --bg: #fbfbfd;
+  --bg-2: #f2f3f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-2: #6e6e73;
+  --text-3: #8e8e93;
+  --line: rgba(0, 0, 0, .08);
+  --accent: #128a3e;
+  --red: #ff3b30;
+
+  --key: linear-gradient(#ffffff, #f4f4f6);
+  --key-text: #3a3a3c;
+  --key-shadow: 0 0 0 .5px rgba(0,0,0,.14), 0 1px 0 rgba(0,0,0,.10), 0 3px 6px -2px rgba(0,0,0,.16);
+
+  --hero-bg:
+    radial-gradient(90% 70% at 50% -10%, #8ff5a4 0%, transparent 60%),
+    radial-gradient(70% 60% at 100% 100%, #2fbf68 0%, transparent 70%),
+    linear-gradient(180deg, var(--g-hi) 0%, var(--g) 45%, var(--g-lo) 100%);
+  --hero-ink: var(--ink);
+  --hero-ink-2: rgba(4, 34, 15, .78);
+  --hero-btn-bg: #0b120d;
+  --hero-btn-text: #fff;
+  --hero-chip: rgba(255, 255, 255, .42);
+
+  --wall:
+    radial-gradient(60% 70% at 15% 15%, #d4f7df 0%, transparent 60%),
+    radial-gradient(60% 70% at 90% 20%, #cdebff 0%, transparent 60%),
+    radial-gradient(80% 80% at 50% 110%, #8fe5ac 0%, transparent 70%),
+    #e8f5ec;
+  --window: #ffffff;
+  --window-bar: #f6f6f6;
+  --menubar: rgba(255,255,255,.55);
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --gutter: clamp(16px, 4vw, 32px);
+  --spring: cubic-bezier(.2, .9, .25, 1);
+  --spring-dur: .9s;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --bg-2: #0c0c0d;
+    --surface: #161617;
+    --text: #f5f5f7;
+    --text-2: #a1a1a6;
+    --text-3: #7c7c80;
+    --line: rgba(255, 255, 255, .1);
+    --accent: #6fe68b;
+    --key: linear-gradient(#3a3a3c, #2c2c2e);
+    --key-text: #e5e5ea;
+    --key-shadow: 0 0 0 .5px rgba(255,255,255,.08), 0 1px 0 rgba(0,0,0,.6), 0 3px 6px -2px rgba(0,0,0,.6);
+    --hero-bg:
+      radial-gradient(80% 70% at 50% -10%, #1f8a48 0%, transparent 62%),
+      radial-gradient(70% 60% at 100% 100%, #0f4a28 0%, transparent 70%),
+      linear-gradient(180deg, #0f3a22 0%, #0b2a17 55%, #061a0e 100%);
+    --hero-ink: #effff3;
+    --hero-ink-2: rgba(232, 255, 238, .74);
+    --hero-btn-bg: #ffffff;
+    --hero-btn-text: #04220f;
+    --hero-chip: rgba(255, 255, 255, .1);
+    --wall:
+      radial-gradient(60% 70% at 15% 15%, #17432a 0%, transparent 60%),
+      radial-gradient(60% 70% at 90% 20%, #102d45 0%, transparent 60%),
+      radial-gradient(80% 80% at 50% 110%, #1d6b3c 0%, transparent 70%),
+      #0b1a12;
+    --window: #1e1e1f;
+    --window-bar: #2a2a2b;
+    --menubar: rgba(20,20,20,.5);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000; --bg-2: #0c0c0d; --surface: #161617; --text: #f5f5f7; --text-2: #a1a1a6; --text-3: #7c7c80;
+  --line: rgba(255,255,255,.1); --accent: #6fe68b;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 1.0625rem/1.55 var(--font);
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; }
+kbd {
+  font: 600 .82em/1 var(--font);
+  letter-spacing: 0;
+  display: inline-block;
+  padding: .32em .5em .3em;
+  border-radius: .45em;
+  background: var(--key);
+  color: var(--key-text);
+  box-shadow: var(--key-shadow);
+  vertical-align: .08em;
+  white-space: nowrap;
+}
+.wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding-inline: var(--gutter); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- type scale ---------- */
+h1, h2, h3 { font-family: var(--font-display); margin: 0; font-weight: 700; }
+.display {
+  font-size: clamp(3.6rem, 11vw, 9rem);
+  line-height: .9;
+  letter-spacing: -0.055em;
+}
+h2 {
+  font-size: clamp(2.3rem, 5.6vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+h3 { font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; font-weight: 650; }
+.eyebrow {
+  margin: 0 0 14px;
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--accent);
+}
+.sub {
+  margin: 22px 0 0;
+  font-size: clamp(1.12rem, 1.8vw, 1.32rem);
+  line-height: 1.45;
+  letter-spacing: -0.016em;
+  color: var(--text-2);
+  max-width: 40ch;
+  text-wrap: pretty;
+}
+.sub strong { color: var(--text); font-weight: 600; }
+.section-head { max-width: 760px; }
+.section-head.center { margin-inline: auto; text-align: center; }
+.section-head.center .sub { margin-inline: auto; }
+section { position: relative; }
+.pad { padding-block: clamp(96px, 14vw, 176px); }
+
+/* ---------- reveal ---------- */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity .7s ease calc(var(--d, 0) * 1ms), transform var(--spring-dur) var(--spring) calc(var(--d, 0) * 1ms);
+}
+.js [data-reveal].in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] { transform: none; transition: opacity .4s ease; }
+}
+
+/* ---------- nav ---------- */
+.nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 50;
+  height: 56px;
+  display: flex; align-items: center;
+  transition: background-color .3s ease, box-shadow .3s ease, color .3s ease;
+  color: var(--hero-ink);
+}
+.nav::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  opacity: 0; transition: opacity .3s ease;
+}
+.nav.scrolled { color: var(--text); }
+.nav.scrolled::before { opacity: 1; }
+.nav.scrolled::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -12px; height: 12px; pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--bg) 40%, transparent), transparent);
+}
+.nav .wrap { display: flex; align-items: center; gap: 28px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650; letter-spacing: -0.02em; font-size: 1.05rem; }
+.brand img { width: 28px; height: 28px; }
+.nav-links { display: flex; gap: 26px; margin-left: auto; font-size: .9rem; }
+.nav-links a { text-decoration: none; opacity: .78; transition: opacity .15s; }
+.nav-links a:hover { opacity: 1; }
+.nav-cta {
+  text-decoration: none; font-size: .85rem; font-weight: 600;
+  padding: 7px 14px; border-radius: 999px;
+  background: var(--hero-btn-bg); color: var(--hero-btn-text);
+  transition: transform .1s ease-out, background-color .3s;
+}
+.nav.scrolled .nav-cta { background: var(--text); color: var(--bg); }
+.nav-cta:active { transform: scale(.96); }
+@media (max-width: 720px) { .nav-links { display: none; } .nav-cta { margin-left: auto; } }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 52px; padding: 0 26px; border-radius: 999px;
+  font-size: 1.05rem; font-weight: 600; letter-spacing: -0.015em;
+  text-decoration: none; border: 0; cursor: pointer;
+  transition: transform .12s ease-out, box-shadow .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(.97); transition-duration: 80ms; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn-primary { background: var(--hero-btn-bg); color: var(--hero-btn-text); box-shadow: 0 10px 30px -10px rgba(0,30,10,.45); }
+.brew {
+  display: inline-flex; align-items: center; gap: 12px;
+  min-height: 52px; padding: 0 8px 0 20px; border-radius: 999px;
+  background: var(--hero-chip);
+  -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+  font: 500 .92rem/1 var(--mono); letter-spacing: -0.01em;
+  color: var(--hero-ink);
+}
+.brew { max-width: 100%; }
+.brew code { white-space: nowrap; min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 16px 0; }
+.brew code::-webkit-scrollbar { display: none; }
+@media (max-width: 480px) { .brew { font-size: .78rem; padding-left: 16px; } }
+.brew code span { opacity: .55; }
+.copy {
+  position: relative;
+  width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 0; cursor: pointer; color: inherit;
+  background: rgba(255,255,255,.4);
+  transition: transform .1s ease-out, background-color .2s;
+}
+.copy:active { transform: scale(.9); }
+.copy svg { width: 17px; height: 17px; grid-area: 1 / 1; transition: opacity .2s, transform .35s var(--spring); }
+.copy .ok { opacity: 0; transform: scale(.5); }
+.copy.done .ok { opacity: 1; transform: none; }
+.copy.done .cp { opacity: 0; transform: scale(.5); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .copy { background: rgba(255,255,255,.12); } }
+
+/* ---------- hero ---------- */
+.hero {
+  min-height: max(100svh, 760px);
+  background: var(--hero-bg);
+  color: var(--hero-ink);
+  overflow: hidden;
+  isolation: isolate;
+  padding: 120px 0 300px;
+  display: flex; align-items: flex-start;
+}
+.hero-inner { position: relative; z-index: 2; text-align: center; }
+.hero-icon {
+  width: 120px; height: 120px; margin: 0 auto 30px;
+  filter: drop-shadow(0 18px 30px rgba(0, 60, 20, .35));
+}
+.hero h1 { color: var(--hero-ink); }
+.hero .lede {
+  margin: 26px auto 0;
+  max-width: 30ch;
+  font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--hero-ink-2);
+  text-wrap: balance;
+}
+.hero .lede kbd { font-size: .78em; }
+.hero-actions { margin-top: 38px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.hero-meta { margin: 20px 0 0; font-size: .88rem; color: var(--hero-ink-2); font-weight: 500; }
+.hero-meta span + span::before { content: "·"; margin: 0 .55em; opacity: .6; }
+
+.cable { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+.cable .base { fill: none; stroke: #fff; stroke-linecap: round; filter: drop-shadow(0 8px 10px rgba(0, 50, 18, .28)); }
+.cable .shade { fill: none; stroke: rgba(0, 50, 20, .09); stroke-linecap: round; }
+.cable .hit { fill: none; stroke: transparent; stroke-width: 44; pointer-events: stroke; cursor: grab; touch-action: none; }
+.hero.plucking, .hero.plucking .hit { cursor: grabbing; }
+.remote {
+  position: absolute; left: 0; top: 0; z-index: 1;
+  width: 118px; height: 38px; border-radius: 19px;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f3f2 60%, #e3e7e5 100%);
+  box-shadow: 0 10px 22px -6px rgba(0, 50, 18, .35), inset 0 1px 0 #fff, inset 0 -2px 3px rgba(0,0,0,.06);
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  cursor: grab; touch-action: none;
+  opacity: 0;
+  will-change: transform;
+}
+.remote i { width: 3px; height: 16px; border-radius: 2px; background: #1c1f1d; transform: scaleY(.25); }
+.remote::after {
+  content: ""; position: absolute; inset: -14px -10px; border-radius: 30px; z-index: -1;
+  background: radial-gradient(closest-side, rgba(206, 254, 238, .9), transparent);
+  opacity: var(--glow, 0);
+}
+.pluck-hint {
+  position: absolute; z-index: 2; left: 0; top: 0;
+  font-size: .8rem; font-weight: 600; color: var(--hero-ink-2);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity .6s ease;
+}
+.pluck-hint.show { opacity: .9; }
+
+/* ---------- demo ---------- */
+.demo { background: var(--bg); }
+.demo .section-head { margin-bottom: 56px; }
+.live {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 26px; padding: 7px 14px 7px 12px; border-radius: 999px;
+  background: var(--bg-2); color: var(--text-2);
+  font-size: .85rem; font-weight: 500;
+  transition: background-color .3s, color .3s;
+}
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); transition: background-color .3s, box-shadow .3s; }
+.live.on { color: var(--text); }
+.live.on i { background: var(--g); box-shadow: 0 0 0 4px color-mix(in srgb, var(--g) 25%, transparent); }
+
+.stage { position: relative; max-width: 940px; margin: 0 auto; }
+.screen {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--wall);
+  box-shadow: 0 0 0 1px var(--line), 0 40px 80px -30px rgba(0, 30, 10, .35), 0 12px 24px -12px rgba(0,0,0,.12);
+  user-select: none; -webkit-user-select: none;
+}
+.menubar {
+  position: absolute; inset: 0 0 auto 0; height: 28px; z-index: 3;
+  display: flex; align-items: center; gap: 18px;
+  padding: 0 14px;
+  font-size: 12.5px; font-weight: 500; letter-spacing: -0.005em;
+  background: var(--menubar);
+  -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+  color: var(--text);
+}
+.menubar b { font-weight: 700; }
+.menubar .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.mb-icon {
+  width: 22px; height: 14px;
+  background-color: currentColor;
+  -webkit-mask: url(menubar.png) center / contain no-repeat; mask: url(menubar.png) center / contain no-repeat;
+  transition: background-color .15s;
+}
+.mb-icon.rec { background-color: var(--red); }
+.mb-icon.busy { animation: busy 1s ease-in-out infinite alternate; }
+@keyframes busy { from { opacity: 1; } to { opacity: .35; } }
+@media (max-width: 640px) { .menubar .extra { display: none; } }
+
+.window {
+  position: absolute; inset: 58px 13% 92px;
+  border-radius: 12px;
+  background: var(--window);
+  box-shadow: 0 0 0 .5px rgba(0,0,0,.18), 0 22px 50px -12px rgba(0,0,0,.28);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.titlebar {
+  height: 40px; flex: none;
+  display: flex; align-items: center; gap: 8px; padding: 0 14px;
+  background: var(--window-bar);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+}
+.titlebar i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.12); }
+.titlebar i:nth-child(2) { background: #febc2e; }
+.titlebar i:nth-child(3) { background: #28c840; margin-right: 10px; }
+.titlebar .clear {
+  margin-left: auto; border: 0; background: none; cursor: pointer;
+  font-size: 12px; font-weight: 500; color: var(--text-3);
+  padding: 4px 8px; border-radius: 6px;
+}
+.titlebar .clear:hover { background: var(--line); color: var(--text-2); }
+.note { flex: 1; overflow: auto; padding: 22px 28px; font-size: 15px; line-height: 1.6; letter-spacing: -0.01em; scrollbar-width: thin; }
+.note-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
+.note-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-body .ph { color: var(--text-3); }
+.pasted { border-radius: 4px; animation: flash 1.6s ease-out; }
+@keyframes flash { 0% { background: color-mix(in srgb, var(--g) 45%, transparent); } 100% { background: transparent; } }
+.caret { display: inline-block; width: 2px; height: 1.15em; margin-left: 1px; vertical-align: -.2em; background: var(--accent); animation: blink 1.06s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.ov {
+  position: absolute; left: 0; right: 0; bottom: 16px; z-index: 4;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.pill {
+  height: 36px; padding: 0 16px;
+  display: flex; align-items: center; gap: 10px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, .82);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 10px 24px -8px rgba(0,0,0,.4);
+  color: #fff;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+.pill .bars, .pill .dots { display: flex; align-items: center; gap: 3px; height: 18px; flex: none; }
+.pill .bars i { width: 3px; height: 18px; border-radius: 2px; background: var(--red); transform: scaleY(.22); }
+.pill .dots { display: none; gap: 4px; }
+.pill .dots i { width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: dot 1.6s ease-in-out infinite; }
+.pill .dots i:nth-child(2) { animation-delay: .53s; }
+.pill .dots i:nth-child(3) { animation-delay: 1.07s; }
+@keyframes dot { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .pill .dots i { animation: none; opacity: .8; } }
+.pill.busy .bars { display: none; }
+.pill.busy .dots { display: flex; }
+.pill .label { font-size: 13px; font-weight: 500; letter-spacing: -0.005em; transition: opacity .12s; }
+.modelist {
+  width: 240px; padding: 6px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .82);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 14px 30px -10px rgba(0,0,0,.45);
+  color: #fff;
+  transform-origin: 50% 100%;
+  opacity: 0; visibility: hidden;
+}
+.ml-item { display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 8px; border-radius: 7px; font-size: 13px; }
+.ml-item .d, .ml-row .d { width: 14px; font: 600 12px/1 var(--mono); color: rgba(255,255,255,.6); text-align: center; flex: none; }
+.ml-item.sel { background: rgba(255,255,255,.18); }
+
+.said {
+  min-height: 3.4em;
+  margin: 26px auto 0; max-width: 760px;
+  text-align: center;
+  font-size: clamp(1rem, 1.6vw, 1.15rem); line-height: 1.5; letter-spacing: -0.015em;
+  color: var(--text-2);
+  text-wrap: balance;
+}
+.said .you { font-size: .78em; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); margin-right: .4em; }
+.said .w { opacity: .14; transition: opacity .18s ease, color .18s ease; color: var(--text); }
+.said .w.on { opacity: 1; }
+.said .w.f { font-style: italic; color: var(--text-3); text-decoration: line-through; text-decoration-color: transparent; transition: opacity .18s, text-decoration-color .4s ease .4s; }
+.said .w.f.on { text-decoration-color: currentColor; }
+.said .msg { color: var(--text-2); }
+.said .msg b { color: var(--text); font-weight: 600; }
+
+.keys {
+  margin: 22px auto 0;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  user-select: none; -webkit-user-select: none;
+}
+.keyrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.key {
+  position: relative;
+  min-width: 54px; height: 54px; padding: 0 14px;
+  border: 0; border-radius: 11px;
+  background: var(--key); color: var(--key-text);
+  box-shadow: var(--key-shadow);
+  font-size: 13px; font-weight: 500;
+  display: inline-flex; align-items: flex-end; justify-content: flex-start;
+  padding-bottom: 9px;
+  cursor: pointer;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out, filter 90ms;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+.key.down, .key:active { transform: translateY(1.5px) scale(.975); box-shadow: 0 0 0 .5px rgba(0,0,0,.18), 0 0 1px rgba(0,0,0,.2); filter: brightness(.96); }
+.key:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.k-fn { flex-direction: column; align-items: flex-start; justify-content: space-between; padding-top: 9px; touch-action: none; }
+.k-fn svg { width: 12px; height: 12px; }
+.k-space { width: min(340px, 52vw); justify-content: center; align-items: center; padding-bottom: 0; color: var(--text-3); touch-action: none; }
+.k-space.down { color: var(--accent); }
+.k-digit { flex-direction: column; align-items: center; justify-content: center; padding: 0 10px; min-width: 76px; gap: 2px; }
+.k-digit b { font-size: 17px; font-weight: 500; line-height: 1; }
+.k-digit small { font-size: 10.5px; color: var(--text-3); line-height: 1.1; }
+.k-digit.sel small { color: var(--accent); font-weight: 600; }
+.keys .legend { margin: 0; font-size: .82rem; color: var(--text-3); text-align: center; max-width: 52ch; text-wrap: balance; }
+.key { transition: transform 90ms ease-out, box-shadow 90ms ease-out, filter 90ms, opacity .25s ease; }
+.keys[data-state="idle"] .key:not([data-in~="idle"]),
+.keys[data-state="rec"] .key:not([data-in~="rec"]),
+.keys[data-state="list"] .key:not([data-in~="list"]),
+.keys[data-state="busy"] .key { opacity: .42; }
+.k-return { min-width: 76px; justify-content: flex-end; }
+.arrows { display: flex; flex-direction: column; gap: 4px; }
+.k-arrow { min-width: 54px; height: 25px; padding: 0; border-radius: 7px; align-items: center; justify-content: center; font-size: 9px; }
+.steps {
+  list-style: none; margin: 10px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+  font-size: .9rem; color: var(--text-2);
+}
+.steps li {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 14px 7px 8px; border-radius: 999px;
+  background: var(--bg-2);
+  transition: background-color .25s ease, color .25s ease, opacity .25s ease;
+}
+.steps .n {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font-size: .75rem; font-weight: 700; background: color-mix(in srgb, var(--text) 10%, transparent);
+  transition: background-color .25s ease, color .25s ease;
+}
+.steps kbd { font-size: .78em; }
+.steps li.on { background: color-mix(in srgb, var(--g) 22%, transparent); color: var(--text); }
+.steps li.on .n { background: var(--g-lo); color: #04220f; }
+.steps li.done { opacity: .55; }
+@media (max-width: 640px) {
+  .screen { aspect-ratio: 4 / 5; border-radius: 18px; }
+  .window { inset: 48px 12px 82px; }
+  .note { padding: 18px; }
+  .k-digit { min-width: 0; flex: 1 1 0; padding: 0 4px; }
+  .keyrow.digits { width: 100%; flex-wrap: nowrap; }
+  .k-space { width: auto; flex: 1; }
+  .keyrow.main { width: 100%; flex-wrap: nowrap; }
+  .k-return { min-width: 0; padding: 0 8px 9px; }
+  .k-arrow { min-width: 40px; }
+  .steps { flex-direction: column; align-items: stretch; }
+  .key { min-width: 48px; }
+}
+
+/* ---------- hold / lock ---------- */
+.modes-of-talk { background: var(--bg-2); }
+.trio { margin-top: 64px; display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 18px; }
+@media (max-width: 900px) { .trio { grid-template-columns: minmax(0, 1fr); } }
+.card {
+  background: var(--surface);
+  border-radius: 26px;
+  padding: 30px;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.card p { margin: 10px 0 0; color: var(--text-2); font-size: 1rem; line-height: 1.5; }
+.card .tag { font: 600 .78rem/1 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.card h3 { margin-top: 10px; font-size: 1.65rem; letter-spacing: -0.03em; }
+.tl { margin-top: 26px; max-width: 360px; }
+.tl svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tl .track { stroke: var(--line); stroke-width: 4; stroke-linecap: round; }
+.tl .rec { stroke: var(--red); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.4s cubic-bezier(.45,0,.2,1) .35s; }
+.tl .press { fill: var(--text); }
+.tl .lbl { font: 600 11px var(--font); fill: var(--text-3); letter-spacing: .02em; }
+.tl .hold-bar { fill: color-mix(in srgb, var(--text) 10%, transparent); }
+.card.in .tl .rec { stroke-dashoffset: 0; }
+.card .kk { margin-top: 20px; display: flex; gap: 6px; align-items: center; color: var(--text-3); font-size: .9rem; }
+
+/* ---------- modes ---------- */
+.modes-grid { margin-top: 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+@media (max-width: 900px) { .modes-grid { grid-template-columns: minmax(0, 1fr); } }
+.sources { padding: 8px 0; }
+.src-head { display: flex; align-items: center; gap: 10px; padding: 18px 24px 10px; font: 500 .85rem/1.2 var(--mono); color: var(--text-2); }
+.src-head svg { width: 18px; height: 18px; color: #3ba4f5; flex: none; }
+.src-row { display: flex; align-items: center; gap: 14px; padding: 11px 24px; }
+.src-row + .src-row { border-top: 1px solid var(--line); margin-left: 24px; padding-left: 0; }
+.src-row .nm { font-weight: 600; font-size: .98rem; letter-spacing: -0.015em; }
+.src-row .fl { font: 400 .78rem/1.3 var(--mono); color: var(--text-3); }
+.src-row .tx { min-width: 0; flex: 1; }
+.src-row .tx > * { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.switch {
+  flex: none; width: 46px; height: 28px; border-radius: 14px; border: 0; padding: 0; cursor: pointer;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  position: relative;
+  transition: background-color .25s ease;
+}
+.switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.2), 0 0 0 .5px rgba(0,0,0,.06);
+  transition: transform .4s var(--spring), width .15s ease;
+}
+.switch:active::after { width: 29px; }
+.switch[aria-checked="true"] { background: #34c759; }
+.switch[aria-checked="true"]::after { transform: translateX(18px); }
+.switch[aria-checked="true"]:active::after { transform: translateX(13px); }
+.switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.desk {
+  border-radius: 26px;
+  background: var(--wall);
+  box-shadow: 0 0 0 1px var(--line);
+  min-height: 460px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 36px 20px;
+  position: relative;
+}
+.desk .hint { position: absolute; top: 22px; left: 20px; right: 20px; margin: 0; text-align: center; text-wrap: balance; font-size: .85rem; color: var(--text-2); font-weight: 500; }
+.mlist {
+  width: min(290px, 100%); padding: 6px; border-radius: 14px;
+  background: rgba(0,0,0,.82);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 20px 40px -14px rgba(0,0,0,.45);
+  color: #fff;
+}
+.mlist-inner { position: relative; }
+.ml-row {
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 34px; padding: 0 10px; border-radius: 8px;
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px;
+  will-change: transform;
+  outline: none;
+}
+.ml-row.fixed { background: rgba(255,255,255,.18); }
+.ml-row.drag { cursor: grab; touch-action: none; }
+.ml-row.drag:hover, .ml-row.drag:focus-visible { background: rgba(255,255,255,.07); }
+.ml-row.lifted { background: #3a3a3c; box-shadow: 0 10px 24px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12); cursor: grabbing; z-index: 2; }
+.ml-row .src { margin-left: auto; font: 500 10.5px/1 var(--mono); color: rgba(255,255,255,.4); }
+.ml-row .grip { width: 14px; height: 14px; color: rgba(255,255,255,.35); flex: none; }
+.desk .pill { opacity: 1; position: relative; }
+.desk .pill .bars i { transform: scaleY(.3); }
+
+/* ---------- light ---------- */
+.light { background: var(--bg); }
+.big-num {
+  margin-top: 56px;
+  font: 700 clamp(5.5rem, 19vw, 15rem)/.85 var(--font-display);
+  letter-spacing: -0.065em;
+  background: linear-gradient(180deg, var(--g) 10%, var(--g-lo) 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.big-num small { font-size: .32em; letter-spacing: -0.03em; margin-left: .12em; }
+.big-cap { margin-top: 14px; color: var(--text-2); font-size: 1.05rem; }
+.mem { margin-top: 64px; display: grid; gap: 18px; }
+.mem-row { display: grid; grid-template-columns: 110px 1fr 90px; align-items: center; gap: 18px; }
+.mem-name { font-weight: 600; letter-spacing: -0.015em; }
+.mem-track { height: 14px; border-radius: 7px; background: var(--bg-2); overflow: hidden; }
+.mem-bar { height: 100%; width: var(--w); border-radius: 7px; transform-origin: 0 50%; transform: scaleX(0); transition: transform 1.6s cubic-bezier(.2,.9,.25,1) var(--dl, 0s); }
+.mem-bar.g { background: linear-gradient(90deg, var(--g-lo), var(--g)); min-width: 10px; }
+.mem-bar.h { background: color-mix(in srgb, var(--text) 22%, transparent); }
+.mem.in .mem-bar { transform: none; }
+.mem-val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-2); }
+@media (max-width: 640px) { .mem-row { grid-template-columns: 1fr auto; } .mem-track { grid-column: 1 / -1; grid-row: 2; } }
+.stats { margin-top: 72px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 800px) { .stats { grid-template-columns: 1fr; } }
+.stat { padding: 26px 0 0; border-top: 1px solid var(--line); }
+.stat b { display: block; font: 700 2.1rem/1.1 var(--font-display); letter-spacing: -0.04em; }
+.stat span { display: block; margin-top: 8px; color: var(--text-2); font-size: .98rem; }
+.foot { margin-top: 48px; font-size: .82rem; color: var(--text-3); max-width: 70ch; line-height: 1.5; }
+.foot a { color: var(--text-2); }
+
+/* ---------- privacy ---------- */
+.privacy {
+  background: radial-gradient(70% 60% at 75% 40%, #0e2f1c 0%, transparent 70%), #000;
+  color: #f5f5f7;
+  --text: #f5f5f7; --text-2: #a1a1a6; --text-3: #7c7c80; --line: rgba(255,255,255,.1); --accent: #6fe68b; --surface: #161617;
+}
+.privacy-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 64px; align-items: center; }
+@media (max-width: 900px) { .privacy-grid { grid-template-columns: 1fr; } }
+.points { margin: 44px 0 0; padding: 0; list-style: none; display: grid; gap: 26px; }
+.points li { display: grid; grid-template-columns: 40px 1fr; gap: 16px; }
+.points li svg { width: 26px; height: 26px; color: var(--mint); margin-top: 2px; }
+.points b { display: block; font-weight: 600; font-size: 1.08rem; letter-spacing: -0.02em; }
+.points span { display: block; color: var(--text-2); margin-top: 4px; font-size: 1rem; }
+.chip-wrap { display: grid; place-items: center; padding: 30px 0; isolation: isolate; }
+.chip {
+  position: relative;
+  width: min(320px, 76vw); aspect-ratio: 1;
+  border-radius: 44px;
+  background: linear-gradient(145deg, #1d211f 0%, #0c0e0d 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 0 1px rgba(255,255,255,.06), 0 40px 80px -20px rgba(94, 224, 121, .25);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+}
+.chip::before {
+  content: ""; position: absolute; inset: -16px; z-index: -1; border-radius: 52px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 14px, #2b2f2d 14px 22px) top / 70% 10px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 14px, #2b2f2d 14px 22px) bottom / 70% 10px no-repeat,
+    repeating-linear-gradient(0deg, transparent 0 14px, #2b2f2d 14px 22px) left / 10px 70% no-repeat,
+    repeating-linear-gradient(0deg, transparent 0 14px, #2b2f2d 14px 22px) right / 10px 70% no-repeat;
+}
+.wave { display: flex; align-items: center; gap: 7px; height: 110px; }
+.wave i {
+  width: 9px; height: 110px; border-radius: 5px; background: var(--mint);
+  box-shadow: 0 0 18px rgba(206,254,238,.7), 0 0 4px rgba(206,254,238,.9);
+  transform: scaleY(.15);
+}
+.chip .cl { font: 600 .78rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.55); text-align: center; }
+.chip .cl small { display: block; margin-top: 8px; font: 500 .74rem/1 var(--mono); letter-spacing: 0; text-transform: none; color: rgba(206,254,238,.6); }
+
+/* ---------- details ---------- */
+.details { background: var(--bg-2); }
+.tiles { margin-top: 64px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 820px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+.tile { background: var(--surface); border-radius: 22px; padding: 26px 24px 28px; box-shadow: 0 0 0 1px var(--line); }
+.tile .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--g) 18%, transparent); color: var(--accent); }
+.tile .ic svg { width: 22px; height: 22px; }
+.tile h3 { margin-top: 20px; font-size: 1.12rem; }
+.tile p { margin: 8px 0 0; color: var(--text-2); font-size: .95rem; line-height: 1.5; }
+.tile.wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; }
+.tile.wide > div:first-child { max-width: 40ch; }
+@media (max-width: 820px) { .tile.wide { grid-template-columns: minmax(0, 1fr); } }
+.vocab { display: grid; gap: 8px; font-size: .92rem; }
+.vocab div { display: flex; align-items: center; gap: 10px; }
+.vocab s { color: var(--text-3); text-decoration-color: color-mix(in srgb, var(--red) 70%, transparent); }
+.vocab b { font-weight: 600; }
+.vocab svg { width: 14px; height: 14px; color: var(--text-3); flex: none; }
+
+/* ---------- cta ---------- */
+.cta { background: var(--hero-bg); color: var(--hero-ink); text-align: center; overflow: hidden; }
+.cta .display { font-size: clamp(4rem, 15vw, 12rem); }
+.say {
+  margin: 22px 0 0; font-size: clamp(1.1rem, 2vw, 1.35rem); color: var(--hero-ink-2); font-weight: 500; letter-spacing: -0.015em;
+}
+.say i { font-family: var(--mono); font-style: normal; font-size: .85em; opacity: .85; }
+.cta .hero-actions { margin-top: 44px; }
+
+footer { padding: 36px 0 48px; font-size: .82rem; color: var(--text-3); background: var(--bg); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; }
+footer a { color: var(--text-2); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+footer .sp { margin-left: auto; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .nav::before { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .menubar { background: var(--window-bar); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .brew { background: rgba(255,255,255,.8); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .pill, .modelist, .mlist { background: #111; }
+}
+@media (prefers-contrast: more) {
+  .pill, .modelist, .mlist { background: #000; box-shadow: inset 0 0 0 1px #fff; }
+  .card, .tile { box-shadow: 0 0 0 1px var(--text); }
+}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js')</script>
+
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="icon.png" alt="" width="28" height="28">Dimmela</a>
+    <div class="nav-links">
+      <a href="#try">Try it</a>
+      <a href="#modes">Modes</a>
+      <a href="#light">Footprint</a>
+      <a href="#privacy">Privacy</a>
+      <a href="https://github.com/mameli/Dimmela">GitHub</a>
+    </div>
+    <a class="nav-cta" href="https://github.com/mameli/Dimmela/releases/latest/download/Dimmela.zip">Download</a>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero" aria-labelledby="hero-title">
+  <svg class="cable" aria-hidden="true">
+    <path class="base" id="cable-base"/>
+    <path class="shade" id="cable-shade"/>
+    <path class="hit" id="cable-hit"/>
+  </svg>
+  <div class="remote" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="pluck-hint" aria-hidden="true">pull the cable ↘</div>
+
+  <div class="wrap hero-inner">
+    <img class="hero-icon" src="icon.png" alt="Dimmela app icon" width="120" height="120" data-reveal style="--d:0">
+    <h1 id="hero-title" class="display" data-reveal style="--d:90">Just say it.</h1>
+    <p class="lede" data-reveal style="--d:180">Hold <kbd>fn</kbd> <kbd>space</kbd>, speak, let go. Dimmela types it wherever your cursor is.</p>
+    <div class="hero-actions" data-reveal style="--d:270">
+      <a class="btn btn-primary" href="https://github.com/mameli/Dimmela/releases/latest/download/Dimmela.zip">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10m-4.5-4.5L10 13l4.5-4.5M4 17h12"/></svg>
+        Download for Mac
+      </a>
+      <div class="brew">
+        <code><span>$</span> brew install --cask mameli/dimmela/dimmela</code>
+        <button class="copy" type="button" data-copy="brew install --cask mameli/dimmela/dimmela" aria-label="Copy the Homebrew command">
+          <svg class="cp" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.5"/><path d="M13 7V5.5A2.5 2.5 0 0 0 10.5 3h-5A2.5 2.5 0 0 0 3 5.5v5A2.5 2.5 0 0 0 5.5 13H7"/></svg>
+          <svg class="ok" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="hero-meta" data-reveal style="--d:340"><span>Free and open source</span><span>macOS 15+</span><span>Apple Silicon</span></p>
+  </div>
+</section>
+
+<!-- ============ DEMO ============ -->
+<section id="try" class="demo pad" aria-labelledby="try-title">
+  <div class="wrap">
+    <header class="section-head center" data-reveal>
+      <p class="eyebrow">Try it here</p>
+      <h2 id="try-title">Hold fn space.<br>We'll do the talking.</h2>
+      <p class="sub">This is how Dimmela works, played in your browser. Hold <kbd>fn</kbd> <kbd>space</kbd>, let go, and the text lands at the cursor. Want it rewritten? Press <kbd>shift</kbd> while you talk and pick a Mode.</p>
+      <div class="live" id="live"><i></i><span>Click or scroll here to use your keyboard</span></div>
+    </header>
+
+    <div class="stage" data-reveal style="--d:120">
+      <div class="screen" id="screen">
+        <div class="menubar">
+          <b>Notes</b><span class="extra">File</span><span class="extra">Edit</span><span class="extra">Format</span><span class="extra">View</span><span class="extra">Window</span>
+          <div class="right">
+            <span class="mb-icon" id="mb-icon" role="img" aria-label="Dimmela menu bar icon"></span>
+            <span class="extra" id="clock">9:41</span>
+          </div>
+        </div>
+        <div class="window">
+          <div class="titlebar"><i></i><i></i><i></i>Notes<button class="clear" type="button" id="clear">Clear</button></div>
+          <div class="note" id="note">
+            <div class="note-title">Monday</div>
+            <div class="note-body" id="note-body"><span class="ph" id="ph">Your Dictations land here. </span><span class="caret"></span></div>
+          </div>
+        </div>
+        <div class="ov">
+          <div class="modelist" id="modelist" aria-hidden="true"></div>
+          <div class="pill" id="pill" aria-hidden="true">
+            <div class="bars"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="label" id="pill-label">Transcript</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="said" id="said" aria-live="polite"><span class="msg">Hold <b>fn space</b> on your keyboard, or press and hold it below.</span></p>
+
+      <div class="keys" role="group" aria-label="Demo keyboard">
+        <div class="keyrow main">
+          <button class="key" type="button" data-k="esc" data-in="rec list" aria-label="Escape: cancel the Dictation">esc</button>
+          <button class="key" type="button" data-k="shift" data-in="rec list" aria-label="Shift: open or confirm the Mode list">⇧ shift</button>
+          <button class="key k-fn" type="button" tabindex="-1" aria-hidden="true" data-k="fn" data-in="idle rec list">fn<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><circle cx="6" cy="6" r="5"/><path d="M1 6h10M6 1c-2 2.5-2 7.5 0 10M6 1c2 2.5 2 7.5 0 10"/></svg></button>
+          <button class="key k-space" type="button" data-k="space" data-in="idle rec list" aria-label="fn space: press and hold to dictate">hold to dictate</button>
+          <button class="key k-return" type="button" data-k="return" data-in="list" aria-label="Return: confirm the Mode">return</button>
+        </div>
+        <div class="keyrow digits" id="digits">
+          <div class="arrows">
+            <button class="key k-arrow" type="button" data-k="up" data-in="list" aria-label="Up arrow: previous Mode">▲</button>
+            <button class="key k-arrow" type="button" data-k="down" data-in="list" aria-label="Down arrow: next Mode">▼</button>
+          </div>
+        </div>
+        <ol class="steps" id="steps" aria-label="How to choose a Mode">
+          <li data-step="1"><span class="n">1</span><span>Hold <kbd>fn</kbd> <kbd>space</kbd> and talk</span></li>
+          <li data-step="2"><span class="n">2</span><span><kbd>shift</kbd> opens the Modes</span></li>
+          <li data-step="3"><span class="n">3</span><span>A digit or <kbd>▲</kbd> <kbd>▼</kbd> to choose</span></li>
+          <li data-step="4"><span class="n">4</span><span><kbd>shift</kbd> or <kbd>return</kbd> to confirm</span></li>
+        </ol>
+        <p class="legend">Let go to paste. A quick tap of <kbd>fn</kbd> <kbd>space</kbd> Locks it: it keeps listening until the next tap. <kbd>esc</kbd> cancels.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOLD / LOCK ============ -->
+<section class="modes-of-talk pad" aria-labelledby="hl-title">
+  <div class="wrap">
+    <header class="section-head" data-reveal>
+      <p class="eyebrow">One shortcut. Nothing to configure.</p>
+      <h2 id="hl-title">Hold to talk.<br>Tap to keep talking.</h2>
+      <p class="sub">Recording starts the instant you press, so your first word is never cut off while Dimmela works out what you meant.</p>
+    </header>
+    <div class="trio">
+      <article class="card" data-reveal style="--d:0">
+        <span class="tag">Hold</span>
+        <h3>For a quick thought.</h3>
+        <p>Keep <kbd>fn</kbd> <kbd>space</kbd> down while you speak. Let go and it's pasted.</p>
+        <div class="tl"><svg viewBox="0 -8 300 86">
+          <rect class="hold-bar" x="20" y="10" width="220" height="16" rx="8"/>
+          <text class="lbl" x="20" y="6" dy="-2">key held</text>
+          <line class="track" x1="10" y1="50" x2="290" y2="50"/>
+          <line class="rec" x1="20" y1="50" x2="240" y2="50" pathLength="1"/>
+          <circle class="press" cx="20" cy="50" r="6"/>
+          <circle class="press" cx="240" cy="50" r="6"/>
+          <text class="lbl" x="240" y="70" text-anchor="middle">paste</text>
+        </svg></div>
+      </article>
+      <article class="card" data-reveal style="--d:90">
+        <span class="tag">Lock</span>
+        <h3>For when you have a lot to say.</h3>
+        <p>Tap once and talk hands-free, for as long as you like. Tap again to finish.</p>
+        <div class="tl"><svg viewBox="0 -8 300 86">
+          <rect class="hold-bar" x="14" y="10" width="12" height="16" rx="6"/>
+          <rect class="hold-bar" x="264" y="10" width="12" height="16" rx="6"/>
+          <text class="lbl" x="20" y="6" dy="-2" text-anchor="middle">tap</text>
+          <text class="lbl" x="270" y="6" dy="-2" text-anchor="middle">tap</text>
+          <line class="track" x1="10" y1="50" x2="290" y2="50"/>
+          <line class="rec" x1="20" y1="50" x2="270" y2="50" pathLength="1"/>
+          <circle class="press" cx="20" cy="50" r="6"/>
+          <circle class="press" cx="270" cy="50" r="6"/>
+          <text class="lbl" x="145" y="70" text-anchor="middle">hands-free</text>
+        </svg></div>
+      </article>
+      <article class="card" data-reveal style="--d:180">
+        <span class="tag">Esc</span>
+        <h3>Changed your mind?</h3>
+        <p>Press <kbd>esc</kbd> and nothing is pasted, nothing is kept. An accidental tap with no speech costs nothing either.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODES ============ -->
+<section id="modes" class="pad" aria-labelledby="modes-title">
+  <div class="wrap">
+    <header class="section-head" data-reveal>
+      <p class="eyebrow">Modes</p>
+      <h2 id="modes-title">Your prompts and skills,<br>a digit away.</h2>
+      <p class="sub">Point Dimmela at the folders where you keep prompt files and skills (<code>SKILL.md</code>). Turn on the ones that make sense for dictation and drag them into order: the order is the digit. <strong>Edit a file and the next Dictation uses it.</strong></p>
+    </header>
+    <div class="modes-grid">
+      <div class="card sources" id="sources" data-reveal style="--d:0" role="group" aria-label="Mode sources"></div>
+      <div class="desk" data-reveal style="--d:120">
+        <div class="mlist"><div class="mlist-inner" id="mlist" role="list" aria-label="Enabled Modes"></div></div>
+        <div class="pill" aria-hidden="true">
+          <div class="bars"><i></i><i></i><i></i><i></i><i></i></div>
+          <span class="label">Transcript</span>
+        </div>
+        <p class="sr-only" id="ml-status" aria-live="polite"></p>
+      </div>
+    </div>
+    <p class="foot" data-reveal>Post-processing goes to any OpenAI-compatible provider, such as OpenRouter or a model running on your own machine. Every Dictation starts with your Default Mode, which can be none. If the provider is unreachable, you get the Transcript and a notification, so you never lose what you said.</p>
+  </div>
+</section>
+
+<!-- ============ LIGHT ============ -->
+<section id="light" class="light pad" aria-labelledby="light-title">
+  <div class="wrap">
+    <header class="section-head" data-reveal>
+      <p class="eyebrow">Native Swift</p>
+      <h2 id="light-title">Light enough<br>to forget it's there.</h2>
+      <p class="sub">Dimmela sits in the menu bar all day and uses almost nothing while it waits.</p>
+    </header>
+    <div data-reveal>
+      <div class="big-num"><span id="mem-num">40</span><small>MB</small></div>
+      <p class="big-cap">of memory, with the speech model loaded.</p>
+    </div>
+    <div class="mem" id="mem" aria-label="Memory compared with Handy">
+      <div class="mem-row"><span class="mem-name">Dimmela</span><div class="mem-track"><div class="mem-bar g" style="--w:4.44%"></div></div><span class="mem-val">~40 MB</span></div>
+      <div class="mem-row"><span class="mem-name">Handy</span><div class="mem-track"><div class="mem-bar h" style="--w:100%; --dl:.15s"></div></div><span class="mem-val">~900 MB</span></div>
+    </div>
+    <div class="stats">
+      <div class="stat" data-reveal style="--d:0"><b>0% CPU</b><span>while idle. Your battery won't notice it.</span></div>
+      <div class="stat" data-reveal style="--d:90"><b>Loaded at login</b><span>The model is ready before your first Dictation.</span></div>
+      <div class="stat" data-reveal style="--d:180"><b>No Dock icon</b><span>It lives in the menu bar, and only there.</span></div>
+    </div>
+    <p class="foot">Resident memory with Parakeet v3 loaded, compared with <a href="https://handy.computer">Handy</a> running the same model. The model's weights live with the Neural Engine and aren't counted; even counting them, Dimmela stays well under half.</p>
+  </div>
+</section>
+
+<!-- ============ PRIVACY ============ -->
+<section id="privacy" class="privacy pad" aria-labelledby="privacy-title">
+  <div class="wrap privacy-grid">
+    <div>
+      <header class="section-head" data-reveal>
+        <p class="eyebrow">On-device</p>
+        <h2 id="privacy-title">Your voice never leaves your Mac.</h2>
+        <p class="sub">Speech is transcribed by Parakeet v3 on the Neural Engine. No account, no server, and it works offline.</p>
+      </header>
+      <ul class="points">
+        <li data-reveal style="--d:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><div><b>Audio stays local.</b><span>Recordings are transcribed and kept only for your last five Dictations.</span></div></li>
+        <li data-reveal style="--d:80"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><path d="M17 15l3 3-3 3"/></svg><div><b>Post-processing is opt-in.</b><span>Only text is sent, and only to the provider you choose.</span></div></li>
+        <li data-reveal style="--d:160"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2M14 9l2 2"/></svg><div><b>Your key, in your Keychain.</b><span>Not in a preferences file.</span></div></li>
+      </ul>
+    </div>
+    <div class="chip-wrap" data-reveal style="--d:120">
+      <div class="chip" id="chip" aria-hidden="true">
+        <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="cl">Neural Engine<small>parakeet-tdt-0.6b-v3</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DETAILS ============ -->
+<section class="details pad" aria-labelledby="details-title">
+  <div class="wrap">
+    <header class="section-head" data-reveal>
+      <p class="eyebrow">The small things</p>
+      <h2 id="details-title">Built for dictating all day.</h2>
+    </header>
+    <div class="tiles">
+      <article class="tile wide" data-reveal style="--d:0">
+        <div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19 9 5l5 14M6 14h6"/><path d="M15 9h5M15 13h5M15 17h3"/></svg></div>
+          <h3>Vocabulary</h3>
+          <p>Names and terms that speech recognition gets wrong are fixed in the Transcript, then handed to the LLM too.</p>
+        </div>
+        <div class="vocab" aria-label="Vocabulary examples">
+          <div><s>cloud code</s><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg><b>Claude Code</b></div>
+          <div><s>gyra</s><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg><b>Jira</b></div>
+          <div><s>open router</s><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg><b>OpenRouter</b></div>
+        </div>
+      </article>
+      <article class="tile" data-reveal style="--d:0">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/><path d="M4 20 20 4"/></svg></div>
+        <h3>No more “ehm”</h3>
+        <p>Fillers like “uhm” and “mmh” disappear. Words with meaning, like “cioè” or “tipo”, never do.</p>
+      </article>
+      <article class="tile" data-reveal style="--d:80">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4M12 8v4l3 2"/></svg></div>
+        <h3>History</h3>
+        <p>Your last five Dictations, with their audio. Copy one, or Post-process it again with another Mode.</p>
+      </article>
+      <article class="tile" data-reveal style="--d:160">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c-3 3-3 14 0 17M12 3.5c3 3 3 14 0 17"/></svg></div>
+        <h3>Many languages, no setting</h3>
+        <p>Speak Italian, English, and other European languages, and mix them, without picking one first.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta pad" aria-labelledby="cta-title">
+  <div class="wrap">
+    <h2 id="cta-title" class="display" data-reveal>Dimmela.</h2>
+    <p class="say" data-reveal style="--d:90"><i>/ˈdim.me.la/</i> &nbsp;Italian for “tell it to me.”</p>
+    <div class="hero-actions" data-reveal style="--d:180">
+      <a class="btn btn-primary" href="https://github.com/mameli/Dimmela/releases/latest/download/Dimmela.zip">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10m-4.5-4.5L10 13l4.5-4.5M4 17h12"/></svg>
+        Download for Mac
+      </a>
+      <div class="brew">
+        <code><span>$</span> brew install --cask mameli/dimmela/dimmela</code>
+        <button class="copy" type="button" data-copy="brew install --cask mameli/dimmela/dimmela" aria-label="Copy the Homebrew command">
+          <svg class="cp" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.5"/><path d="M13 7V5.5A2.5 2.5 0 0 0 10.5 3h-5A2.5 2.5 0 0 0 3 5.5v5A2.5 2.5 0 0 0 5.5 13H7"/></svg>
+          <svg class="ok" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="hero-meta" data-reveal style="--d:240"><span>macOS 15 or later</span><span>Apple Silicon</span><span>MIT License</span></p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Made in Italy by <a href="https://github.com/mameli">Filippo Mameli</a></span>
+    <a href="https://github.com/mameli/Dimmela">Source on GitHub</a>
+    <a href="https://github.com/mameli/Dimmela/releases">Releases</a>
+    <a href="https://github.com/mameli/Dimmela/issues/new/choose">Report a problem</a>
+    <span class="sp">MIT License</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const RM = matchMedia('(prefers-reduced-motion: reduce)');
+  let reduced = RM.matches;
+  RM.addEventListener?.('change', e => { reduced = e.matches; });
+
+  /* ================= springs =================
+     Damping ratio + response (Apple's parameters). One shared rAF loop steps every
+     active spring, then runs each render hook once per frame. */
+  const active = new Set(), renders = new Set();
+  let raf = 0, lastT = 0;
+  function loop(t) {
+    const dt = Math.min(0.034, (t - lastT) / 1000) || 1 / 60;
+    lastT = t;
+    for (const s of [...active]) s._step(dt);
+    for (const r of renders) r();
+    renders.clear();
+    raf = active.size ? requestAnimationFrame(loop) : 0;
+  }
+  function wake() { if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(loop); } }
+
+  class Spring {
+    constructor(x = 0, o = {}) {
+      this.x = x; this.target = x; this.v = 0;
+      this.damping = o.damping ?? 1; this.response = o.response ?? 0.4;
+      this.eps = o.eps ?? 0.001;
+      this.onUpdate = o.onUpdate; this.render = o.render; this.onRest = o.onRest;
+    }
+    _step(dt) {
+      const k = (2 * Math.PI / this.response) ** 2, c = 4 * Math.PI * this.damping / this.response;
+      const n = 4, h = dt / n;
+      for (let i = 0; i < n; i++) { const a = -k * (this.x - this.target) - c * this.v; this.v += a * h; this.x += this.v * h; }
+      if (Math.abs(this.x - this.target) < this.eps && Math.abs(this.v) < this.eps * 10) {
+        this.x = this.target; this.v = 0; active.delete(this); this._emit(); this.onRest?.(); return;
+      }
+      this._emit();
+    }
+    _emit() { this.onUpdate?.(this.x); if (this.render) renders.add(this.render); }
+    to(target, o = {}) {
+      this.target = target;
+      if (o.velocity !== undefined) this.v = o.velocity;
+      if (o.damping !== undefined) this.damping = o.damping;
+      if (o.response !== undefined) this.response = o.response;
+      if (reduced) { this.set(target); return this; }
+      active.add(this); wake(); return this;
+    }
+    set(x) { this.x = this.target = x; this.v = 0; active.delete(this); this.onUpdate?.(x); this.render?.(); return this; }
+    jump(x) { this.x = this.target = x; this.v = 0; active.delete(this); }
+  }
+
+  // Critically damped spring as a CSS linear() easing, for the scroll reveals.
+  (function cssSpring() {
+    if (!CSS.supports('transition-timing-function', 'linear(0, 1)')) return;
+    const response = 0.62, w = 2 * Math.PI / response, pts = [];
+    let T = 0; while ((1 + w * T) * Math.exp(-w * T) > 0.001) T += 0.01;
+    for (let i = 0; i <= 40; i++) { const t = T * i / 40; pts.push((1 - (1 + w * t) * Math.exp(-w * t)).toFixed(4)); }
+    const r = document.documentElement.style;
+    r.setProperty('--spring', `linear(${pts.join(', ')})`);
+    r.setProperty('--spring-dur', `${T.toFixed(2)}s`);
+  })();
+
+  const rubber = (over, dim, c = 0.55) => (over * dim * c) / (dim + c * Math.abs(over));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  // Velocity from the last ~100 ms of pointer samples.
+  function tracker() {
+    const h = [];
+    return {
+      add(x, y) { const t = performance.now(); h.push({ x, y, t }); while (h.length > 2 && t - h[0].t > 100) h.shift(); },
+      velocity() {
+        if (h.length < 2) return { x: 0, y: 0 };
+        const a = h[0], b = h[h.length - 1], dt = (b.t - a.t) / 1000 || 1 / 60;
+        if (performance.now() - b.t > 80) return { x: 0, y: 0 };
+        return { x: (b.x - a.x) / dt, y: (b.y - a.y) / dt };
+      },
+      reset() { h.length = 0; }
+    };
+  }
+
+  /* ================= reveal + nav ================= */
+  const io = new IntersectionObserver(entries => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+  $$('[data-reveal], .mem').forEach(el => io.observe(el));
+
+  const nav = $('.nav');
+  const onScroll = () => nav.classList.toggle('scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* ================= copy ================= */
+  $$('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); } catch { return; }
+    b.classList.add('done'); b.setAttribute('aria-label', 'Copied');
+    clearTimeout(b._t); b._t = setTimeout(() => { b.classList.remove('done'); b.setAttribute('aria-label', 'Copy the Homebrew command'); }, 1600);
+  }));
+
+  /* ================= hero cable =================
+     A cubic Bézier you can grab anywhere and pluck. The grab point follows the pointer 1:1
+     (rubber-banding past 70px), and on release the control points spring home carrying
+     the pointer's velocity. */
+  (function cable() {
+    const hero = $('.hero'), svg = $('.cable'), base = $('#cable-base'), shade = $('#cable-shade'), hit = $('#cable-hit');
+    const remote = $('.remote'), bars = $$('.remote i'), hint = $('.pluck-hint');
+    let W = 0, H = 0, sw = 12, P = [];
+    const REMOTE_T = 0.58;
+    const o = { x1: 0, y1: 0, x2: 0, y2: 0 };
+    const springs = {};
+    let level = 0, drag = null, popScale = 0.6;
+    const draw = () => {
+      const c1x = P[1].x + springs.x1.x, c1y = P[1].y + springs.y1.x, c2x = P[2].x + springs.x2.x, c2y = P[2].y + springs.y2.x;
+      const d = `M${P[0].x},${P[0].y} C${c1x},${c1y} ${c2x},${c2y} ${P[3].x},${P[3].y}`;
+      base.setAttribute('d', d); hit.setAttribute('d', d);
+      shade.setAttribute('d', d);
+      const xs = [P[0].x, c1x, c2x, P[3].x], ys = [P[0].y, c1y, c2y, P[3].y];
+      const t = REMOTE_T, x = bez(t, xs), y = bez(t, ys), a = Math.atan2(dbez(t, ys), dbez(t, xs));
+      remote.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${a}rad) scale(${popScale})`;
+      // The remote's bars sing with the cable's speed.
+      const sp = drag ? drag.speed : Math.hypot(springs.x1.v, springs.y1.v, springs.x2.v, springs.y2.v) / 1400;
+      level += (Math.min(1, sp) - level) * 0.3;
+      bars.forEach((b, i) => {
+        const w = [0.45, 0.75, 1, 0.75, 0.45][i], rest = i === 2 ? 0.7 : 0.22;
+        b.style.transform = `scaleY(${Math.max(rest * (1 - level), (0.2 + 0.8 * w * level) * (0.8 + 0.2 * Math.sin(performance.now() / 60 + i * 1.7)))})`;
+      });
+      remote.style.setProperty('--glow', level.toFixed(3));
+    };
+    for (const k of Object.keys(o)) springs[k] = new Spring(0, { damping: 0.38, response: 0.55, eps: 0.05, render: draw });
+
+    const bez = (t, p) => { const u = 1 - t; return u * u * u * p[0] + 3 * u * u * t * p[1] + 3 * u * t * t * p[2] + t * t * t * p[3]; };
+    const dbez = (t, p) => { const u = 1 - t; return 3 * u * u * (p[1] - p[0]) + 6 * u * t * (p[2] - p[1]) + 3 * t * t * (p[3] - p[2]); };
+
+    function geometry() {
+      W = hero.clientWidth; H = hero.clientHeight;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const narrow = W < 700, yb = H - (narrow ? 150 : 190);
+      P = narrow
+        ? [{ x: -30, y: yb - 50 }, { x: W * 0.25, y: yb + 150 }, { x: W * 0.72, y: yb - 150 }, { x: W + 30, y: yb + 70 }]
+        : [{ x: -40, y: yb - 60 }, { x: W * 0.32, y: yb + 230 }, { x: W * 0.6, y: yb - 210 }, { x: W + 40, y: yb + 90 }];
+      sw = clamp(W / 110, 9, 14);
+      base.style.strokeWidth = sw; shade.style.strokeWidth = sw * 0.34;
+      shade.style.transform = `translate(0, ${sw * 0.24}px)`;
+      remote.style.width = `${sw * 8.6}px`; remote.style.height = `${sw * 2.8}px`; remote.style.borderRadius = `${sw * 1.4}px`;
+      draw();
+      const hx = bez(0.84, P.map(p => p.x)), hy = bez(0.84, P.map(p => p.y));
+      hint.style.transform = `translate(${clamp(hx - 40, 16, W - hint.offsetWidth - 16)}px, ${hy - sw - 36}px)`;
+    }
+    new ResizeObserver(geometry).observe(hero);
+    geometry();
+
+    // Draw the cable in on load.
+    if (!reduced) {
+      const len = base.getTotalLength();
+      for (const p of [base, shade]) { p.style.strokeDasharray = len; p.style.strokeDashoffset = len; }
+      base.getBoundingClientRect();
+      requestAnimationFrame(() => {
+        for (const p of [base, shade]) { p.style.transition = 'stroke-dashoffset 1.7s cubic-bezier(.55,0,.15,1) .15s'; p.style.strokeDashoffset = 0; }
+      });
+      setTimeout(() => { for (const p of [base, shade]) { p.style.transition = ''; p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; } }, 2000);
+    }
+    const pop = new Spring(0, { response: 0.45, onUpdate: v => { remote.style.opacity = Math.min(1, v * 1.4); popScale = 0.6 + 0.4 * v; draw(); } });
+    setTimeout(() => pop.to(1), reduced ? 0 : 1050);
+    let hinted = false;
+    const hintTimer = setTimeout(() => { if (!hinted) hint.classList.add('show'); }, 2600);
+
+    const tr = tracker();
+    function local(e) { const r = hero.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    function start(e, forcedT) {
+      e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+      hinted = true; clearTimeout(hintTimer); hint.classList.remove('show');
+      const p = local(e);
+      const xs = [P[0].x, P[1].x + springs.x1.x, P[2].x + springs.x2.x, P[3].x];
+      const ys = [P[0].y, P[1].y + springs.y1.x, P[2].y + springs.y2.x, P[3].y];
+      let t = forcedT;
+      if (t === undefined) {
+        let best = 1e12;
+        for (let i = 0; i <= 160; i++) { const s = i / 160, dx = bez(s, xs) - p.x, dy = bez(s, ys) - p.y, d = dx * dx + dy * dy; if (d < best) { best = d; t = s; } }
+      }
+      const tt = clamp(t, 0.12, 0.88), B1 = 3 * (1 - tt) ** 2 * tt, B2 = 3 * (1 - tt) * tt * tt, s = B1 * B1 + B2 * B2;
+      drag = { a: B1 / s, b: B2 / s, sx: p.x, sy: p.y, o: { x1: springs.x1.x, y1: springs.y1.x, x2: springs.x2.x, y2: springs.y2.x }, speed: 0 };
+      tr.reset(); tr.add(p.x, p.y);
+      hero.classList.add('plucking');
+    }
+    function move(e) {
+      if (!drag) return;
+      const p = local(e); tr.add(p.x, p.y);
+      const f = d => Math.abs(d) <= 70 ? d : Math.sign(d) * (70 + rubber(Math.abs(d) - 70, 260));
+      const dx = f(p.x - drag.sx), dy = f(p.y - drag.sy);
+      springs.x1.jump(drag.o.x1 + dx * drag.a); springs.y1.jump(drag.o.y1 + dy * drag.a);
+      springs.x2.jump(drag.o.x2 + dx * drag.b); springs.y2.jump(drag.o.y2 + dy * drag.b);
+      const v = tr.velocity(); drag.speed = Math.hypot(v.x, v.y) / 1600;
+      draw();
+    }
+    function end() {
+      if (!drag) return;
+      const v = tr.velocity(), k = 0.5;
+      springs.x1.to(0, { velocity: v.x * drag.a * k }); springs.y1.to(0, { velocity: v.y * drag.a * k });
+      springs.x2.to(0, { velocity: v.x * drag.b * k }); springs.y2.to(0, { velocity: v.y * drag.b * k });
+      drag = null; hero.classList.remove('plucking');
+    }
+    hit.addEventListener('pointerdown', e => start(e));
+    remote.addEventListener('pointerdown', e => start(e, REMOTE_T));
+    for (const el of [hit, remote]) {
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+    }
+  })();
+
+  /* ================= demo ================= */
+  (function demo() {
+    const MODES = ['Transcript', 'Polish', 'Italiano', 'Email', 'Bullets'];
+    const FILLERS = new Set(['ehm', 'uhm', 'mmh']);
+    const PHRASES = [
+      {
+        say: "ehm hi Marco I'm running about ten minutes late so go ahead and start the meeting without me",
+        out: [
+          "Hi Marco, I'm running about ten minutes late, so go ahead and start the meeting without me.",
+          "Hi Marco, I'm running about ten minutes late. Please go ahead and start the meeting without me.",
+          "Ciao Marco, sono in ritardo di una decina di minuti: inizia pure la riunione senza di me.",
+          "Hi Marco,\n\nI'm running about ten minutes late. Please go ahead and start the meeting without me.\n\nThanks!",
+          "• Running ~10 minutes late\n• Start the meeting without me"
+        ]
+      },
+      {
+        say: "uhm remind me to buy oat milk and to call the dentist before Friday",
+        out: [
+          "Remind me to buy oat milk and to call the dentist before Friday.",
+          "Reminder: buy oat milk and call the dentist before Friday.",
+          "Ricordami di comprare il latte d'avena e di chiamare il dentista entro venerdì.",
+          "Hi,\n\nJust a reminder to buy oat milk and to call the dentist before Friday.\n\nThanks!",
+          "• Buy oat milk\n• Call the dentist (before Friday)"
+        ]
+      },
+      {
+        say: "so the build is green now mmh and we can ship the release tomorrow morning",
+        out: [
+          "So the build is green now, and we can ship the release tomorrow morning.",
+          "The build is green, so we can ship the release tomorrow morning.",
+          "La build ora è verde, quindi possiamo fare il rilascio domani mattina.",
+          "Hi team,\n\nThe build is green now, so we can ship the release tomorrow morning.\n\nThanks!",
+          "• Build is green\n• Release ships tomorrow morning"
+        ]
+      }
+    ];
+    const WEIGHTS = [0.45, 0.75, 1, 0.75, 0.45];
+
+    const screen = $('#screen'), pill = $('#pill'), label = $('#pill-label'), bars = $$('.bars i', pill);
+    const list = $('#modelist'), mb = $('#mb-icon'), said = $('#said'), body = $('#note-body'), note = $('#note');
+    const caret = $('.caret', body), live = $('#live');
+    const keys = Object.fromEntries($$('.keys [data-k]').map(k => [k.dataset.k, k]));
+
+    // Digit keys and the Mode list
+    const digits = $('#digits');
+    MODES.forEach((m, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'key k-digit' + (i === 0 ? ' sel' : ''); b.dataset.digit = i;
+      b.dataset.in = 'rec list';
+      b.setAttribute('aria-label', `${i}: ${m}`);
+      b.innerHTML = `<b>${i}</b><small>${m}</small>`;
+      digits.insertBefore(b, $('.arrows', digits));
+      const r = document.createElement('div');
+      r.className = 'ml-item' + (i === 0 ? ' sel' : '');
+      r.innerHTML = `<span class="d">${i}</span><span>${m}</span>`;
+      list.appendChild(r);
+    });
+    const digitKeys = $$('.k-digit', digits), listItems = $$('.ml-item', list);
+    const touch = matchMedia('(hover: none)').matches;
+    if (touch) said.innerHTML = '<span class="msg">Press and hold <b>fn space</b> below.</span>';
+
+    const S = { state: 'idle', locked: false, pressAt: 0, consumed: false, kbd: false, mode: 0, list: false, chose: false, phrase: 0, words: [], t0: 0, level: 0, jit: [0, 0, 0, 0, 0], vraf: 0 };
+
+    // The keys that do something right now stay lit, and the steps show where you are.
+    const keysEl = $('.keys'), steps = $$('#steps li');
+    function sync() {
+      const st = S.state === 'recording' ? (S.list ? 'list' : 'rec') : S.state === 'idle' ? 'idle' : 'busy';
+      keysEl.dataset.state = st;
+      const step = { idle: 1, rec: 2, list: S.chose ? 4 : 3, busy: 0 }[st];
+      steps.forEach(li => {
+        const n = +li.dataset.step;
+        li.classList.toggle('on', n === step);
+        li.classList.toggle('done', step > 0 && n < step);
+      });
+    }
+
+    // Clock
+    const clock = $('#clock');
+    const tick = () => { const d = new Date(); clock.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
+    tick(); setInterval(tick, 20000);
+
+    // Pill: appears from below, scales from 92%; width springs to fit the Mode name.
+    const pillIn = new Spring(0, { response: 0.32, eps: 0.002, onUpdate: v => {
+      pill.style.opacity = clamp(v, 0, 1);
+      pill.style.transform = `translateY(${(1 - v) * 14}px) scale(${0.92 + 0.08 * v})`;
+    } });
+    const ctx = document.createElement('canvas').getContext('2d');
+    const textW = s => { ctx.font = `500 13px ${getComputedStyle(label).fontFamily}`; return ctx.measureText(s).width; };
+    const pillW = new Spring(16 + 30 + 10 + textW('Transcript') + 16, { response: 0.3, eps: 0.2, onUpdate: w => { pill.style.width = `${w}px`; } });
+    pillW.set(pillW.x);
+    const fitPill = () => { const lead = pill.classList.contains('busy') ? 23 : 27; pillW.to(32 + lead + 10 + Math.ceil(textW(label.textContent))); };
+
+    // Mode list: grows out of the pill (origin at its bottom edge).
+    const listIn = new Spring(0, { response: 0.28, eps: 0.002, onUpdate: v => {
+      list.style.opacity = clamp(v, 0, 1);
+      list.style.visibility = v < 0.01 ? 'hidden' : 'visible';
+      list.style.transform = `translateY(${(1 - v) * 10}px) scale(${0.94 + 0.06 * v})`;
+    } });
+
+    function say(html) { said.innerHTML = html; }
+    function setMode(i) {
+      S.mode = i;
+      label.textContent = MODES[i];
+      fitPill();
+      digitKeys.forEach((k, j) => k.classList.toggle('sel', j === i));
+      listItems.forEach((k, j) => k.classList.toggle('sel', j === i));
+    }
+    function showList(on) { S.list = on; S.chose = false; listIn.to(on ? 1 : 0); sync(); }
+    function choose(i) { setMode(i); S.chose = true; sync(); }
+
+    function buildWords(ph) {
+      const outs = ph.out[0].split(' ');
+      let oi = 0, t = 260;
+      return ph.say.split(' ').map(w => {
+        const filler = FILLERS.has(w.toLowerCase());
+        const o = filler ? '' : outs[oi++];
+        const dur = filler ? 360 : 70 + 24 * w.length;
+        const word = { w, o, filler, start: t, end: t + dur };
+        t += dur + (filler ? 150 : /[,.:]$/.test(o) ? 170 : 35);
+        return word;
+      });
+    }
+
+    function start() {
+      S.state = 'recording'; S.locked = false; S.list = false;
+      const ph = PHRASES[S.phrase % PHRASES.length];
+      S.words = buildWords(ph); S.t0 = performance.now();
+      setMode(0);
+      pill.classList.remove('busy');
+      label.style.opacity = 1;
+      fitPill();
+      pillIn.to(1);
+      mb.className = 'mb-icon rec';
+      say('<span class="you">You say</span>' + S.words.map(w => `<span class="w${w.filler ? ' f' : ''}">${w.w}</span>`).join(' '));
+      const spans = $$('.w', said);
+      S.words.forEach((w, i) => { w.el = spans[i]; });
+      cancelAnimationFrame(S.vraf);
+      S.vraf = requestAnimationFrame(voice);
+      sync();
+    }
+
+    function voice(now) {
+      if (S.state !== 'recording') return;
+      const el = now - S.t0;
+      let target = 0.03;
+      for (const w of S.words) {
+        if (el >= w.start && !w.el.classList.contains('on')) w.el.classList.add('on');
+        if (el >= w.start && el < w.end) {
+          const p = (el - w.start) / (w.end - w.start);
+          target = (w.filler ? 0.3 : 0.8) * Math.sin(Math.PI * p) ** 0.6 * (0.78 + 0.22 * Math.sin(el * 0.045 + w.start));
+        }
+      }
+      S.level += (target - S.level) * (target > S.level ? 0.45 : 0.22);
+      bars.forEach((b, i) => {
+        S.jit[i] += (Math.random() - S.jit[i]) * 0.25;
+        const h = 4 + 14 * S.level * WEIGHTS[i] * (0.8 + 0.4 * S.jit[i]);
+        b.style.transform = `scaleY(${(h / 18).toFixed(3)})`;
+      });
+      S.vraf = requestAnimationFrame(voice);
+    }
+
+    function stopVoice() { cancelAnimationFrame(S.vraf); S.level = 0; }
+
+    function hide() {
+      pillIn.to(0); showList(false);
+      mb.className = 'mb-icon';
+      sync();
+    }
+
+    function finish() {
+      stopVoice();
+      showList(false);
+      const el = performance.now() - S.t0;
+      const spoken = S.words.filter(w => el >= w.start);
+      const realWords = spoken.filter(w => !w.filler);
+      if (!realWords.length) {
+        S.state = 'idle'; hide();
+        say('<span class="msg">No speech detected, so <b>nothing was pasted</b> and no LLM was called.</span>');
+        return;
+      }
+      S.state = 'processing';
+      sync();
+      pill.classList.add('busy');
+      fitPill();
+      mb.className = 'mb-icon busy';
+      const ph = PHRASES[S.phrase % PHRASES.length];
+      const complete = realWords.length === S.words.filter(w => !w.filler).length;
+      let text;
+      if (complete) text = ph.out[S.mode];
+      else {
+        text = realWords.map(w => w.o).join(' ').replace(/[,:]$/, '');
+        if (!/[.!?]$/.test(text)) text += '…';
+      }
+      const fillers = spoken.filter(w => w.filler).map(w => `“${w.w}”`);
+      const mode = S.mode;
+      const delay = reduced ? 300 : mode === 0 ? 420 : 1100 + Math.random() * 400;
+      setTimeout(() => {
+        if (S.state !== 'processing') return;
+        paste(text);
+        S.state = 'idle'; hide();
+        if (complete) S.phrase++;
+        const how = !complete ? 'You stopped early, so <b>only what you said</b> was pasted'
+          : mode === 0 ? 'Pasted the Transcript' : `Pasted with <b>${MODES[mode]}</b>`;
+        const extra = fillers.length ? ` · ${fillers.join(', ')} removed as a Filler` : '';
+        say(`<span class="msg">${how}${extra}.</span>`);
+      }, delay);
+    }
+
+    function cancel() {
+      stopVoice();
+      S.state = 'idle'; hide();
+      say('<span class="msg">Cancelled. <b>Nothing pasted, nothing kept.</b></span>');
+    }
+
+    function paste(text) {
+      const ph = $('#ph'); if (ph) ph.remove();
+      const hasText = $$('.pasted', body).length > 0;
+      const span = document.createElement('span');
+      span.className = 'pasted';
+      span.textContent = (hasText && text.includes('\n') ? '\n' : '') + text + (text.includes('\n') ? '\n' : ' ');
+      body.insertBefore(span, caret);
+      note.scrollTo({ top: note.scrollHeight, behavior: reduced ? 'auto' : 'smooth' });
+    }
+
+    $('#clear').addEventListener('click', () => {
+      $$('.pasted', body).forEach(s => s.remove());
+      if (!$('#ph')) { const p = document.createElement('span'); p.id = 'ph'; p.className = 'ph'; p.textContent = 'Your Dictations land here. '; body.insertBefore(p, caret); }
+    });
+
+    // Shortcut semantics: press starts instantly; a release under 300 ms turns it into a Lock.
+    function press() {
+      keys.space.classList.add('down'); keys.fn.classList.add('down');
+      if (S.state === 'processing') { S.consumed = true; return; }
+      if (S.state === 'recording' && S.locked) { S.consumed = true; finish(); return; }
+      if (S.state === 'idle') { S.consumed = false; S.pressAt = performance.now(); start(); }
+    }
+    function release() {
+      keys.space.classList.remove('down'); keys.fn.classList.remove('down');
+      if (S.consumed) { S.consumed = false; return; }
+      if (S.state !== 'recording' || S.locked) return;
+      if (performance.now() - S.pressAt < 300) {
+        S.locked = true;
+        const p = $('.you', said); if (p) p.textContent = 'Locked · tap fn space to finish ·';
+      } else finish();
+    }
+    // With the Mode list open a digit only moves the selection, and shift or return confirms it;
+    // with the list closed a digit applies its Mode straight away.
+    function pick(i) {
+      if (S.state !== 'recording') { nudge(digitKeys[i]); return; }
+      if (S.list) choose(i); else setMode(i);
+    }
+    function step(d) {
+      if (!S.list) { nudge(d < 0 ? keys.up : keys.down); return; }
+      choose((S.mode + d + MODES.length) % MODES.length);
+    }
+    function shift() {
+      if (S.state !== 'recording') { nudge(keys.shift); return; }
+      showList(!S.list);
+    }
+    function confirm() {
+      if (!S.list) { nudge(keys.return); return; }
+      showList(false);
+    }
+    // A key that can't do anything right now shakes, like a refused password.
+    function nudge(el) {
+      if (!el) return;
+      if (!el._shake) el._shake = new Spring(0, { damping: 0.22, response: 0.22, eps: 0.05, onUpdate: x => { el.style.translate = `${x}px 0`; } });
+      el._shake.to(0, { velocity: -520 });
+      if (S.state === 'idle') say('<span class="msg">Modes are picked <b>while</b> you dictate: hold <b>fn space</b> first, then press <b>shift</b>.</span>');
+      else if (S.state === 'recording' && !S.list) {
+        const p = $('.you', said); if (p) p.textContent = 'Press shift to open the Modes ·';
+      }
+    }
+    function flash(el) { if (!el) return; el.classList.add('down'); setTimeout(() => el.classList.remove('down'), 120); }
+
+    // Pointer: fn space is pressed on pointer-down, not on click. Either keycap works on touch.
+    for (const k of [keys.space, keys.fn]) {
+      k.addEventListener('pointerdown', e => { e.preventDefault(); try { k.setPointerCapture(e.pointerId); } catch {} press(); });
+      k.addEventListener('pointerup', release);
+      k.addEventListener('pointercancel', release);
+      k.addEventListener('contextmenu', e => e.preventDefault());
+    }
+    keys.space.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (S.list) { confirm(); return; }
+      if (!e.repeat) { S.enter = true; press(); }
+    });
+    keys.space.addEventListener('keyup', e => { if (e.key === 'Enter' && S.enter) { S.enter = false; release(); } });
+    keys.esc.addEventListener('click', () => { if (S.state === 'recording') cancel(); else nudge(keys.esc); });
+    keys.shift.addEventListener('click', shift);
+    keys.return.addEventListener('click', confirm);
+    keys.up.addEventListener('click', () => step(-1));
+    keys.down.addEventListener('click', () => step(1));
+    digitKeys.forEach((k, i) => k.addEventListener('click', () => pick(i)));
+    sync();
+
+    // Keyboard: only while the demo is on screen, so space still scrolls the rest of the page.
+    let inView = false;
+    new IntersectionObserver(([e]) => {
+      inView = e.intersectionRatio >= 0.45;
+      live.classList.toggle('on', inView);
+      live.querySelector('span').textContent = inView ? 'Your keyboard is live: hold fn space' : 'Scroll here to use your keyboard';
+    }, { threshold: [0, 0.45, 1] }).observe(screen);
+
+    addEventListener('keydown', e => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target.closest?.('input, textarea, [contenteditable="true"]')) return;
+      const recording = S.state === 'recording';
+      if (e.code === 'Space') {
+        if (!inView && !S.kbd) return;
+        if (e.target.closest?.('button, a') && e.target !== keys.space && !inView) return;
+        e.preventDefault();
+        if (e.repeat) return;
+        S.kbd = true; press();
+      } else if (e.key === 'Escape' && recording) { e.preventDefault(); flash(keys.esc); cancel(); }
+      else if (e.key === 'Shift' && recording && !e.repeat) { flash(keys.shift); shift(); }
+      else if (/^Digit[0-9]$/.test(e.code) && (recording || inView)) {
+        const i = +e.code.slice(5);
+        e.preventDefault();
+        if (i < MODES.length) { flash(digitKeys[i]); pick(i); }
+        else if (recording) nudge(digitKeys[MODES.length - 1]);
+      } else if (recording && S.list && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+        const up = e.key === 'ArrowUp';
+        flash(up ? keys.up : keys.down); step(up ? -1 : 1);
+      } else if (recording && S.list && e.key === 'Enter') { e.preventDefault(); flash(keys.return); confirm(); }
+    });
+    addEventListener('keyup', e => { if (e.code === 'Space' && S.kbd) { S.kbd = false; release(); } });
+    addEventListener('blur', () => { if (S.kbd) { S.kbd = false; release(); } });
+  })();
+
+  /* ================= modes: sources + reorderable list ================= */
+  (function modes() {
+    const SOURCES = [
+      { path: '~/.claude/skills', items: [
+        { id: 'x', name: 'Tweet', file: 'tweet-writer/SKILL.md', kind: 'skill', on: true },
+        { id: 'tr', name: 'Translate', file: 'translator/SKILL.md', kind: 'skill', on: true },
+        { id: 'mn', name: 'Meeting notes', file: 'meeting-notes/SKILL.md', kind: 'skill', on: false },
+        { id: 'cm', name: 'Commit message', file: 'commit-message/SKILL.md', kind: 'skill', on: false }
+      ] },
+      { path: '~/.dimmela/prompts', items: [
+        { id: 'po', name: 'Polish', file: 'polish.md', kind: 'prompt', on: true },
+        { id: 'em', name: 'Email', file: 'email.md', kind: 'prompt', on: true },
+        { id: 'bu', name: 'Bullets', file: 'bullets.md', kind: 'prompt', on: false }
+      ] }
+    ];
+    const items = Object.fromEntries(SOURCES.flatMap(s => s.items).map(i => [i.id, i]));
+    let order = ['po', 'tr', 'em', 'x'];
+    const ROW = 34;
+
+    const src = $('#sources'), ml = $('#mlist'), status = $('#ml-status');
+    const folder = '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3h3.2c.6 0 1.1.2 1.5.6L10.6 5h4.9A2.5 2.5 0 0 1 18 7.5v7a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 2 14.5v-9Z"/></svg>';
+    src.innerHTML = SOURCES.map(s => `
+      <div class="src-head">${folder}${s.path}</div>
+      ${s.items.map(i => `
+        <div class="src-row">
+          <div class="tx"><span class="nm">${i.name}</span><span class="fl">${i.file}</span></div>
+          <button class="switch" type="button" role="switch" aria-checked="${i.on}" aria-label="Use ${i.name} as a Mode" data-id="${i.id}"></button>
+        </div>`).join('')}`).join('');
+
+    const rows = new Map();
+    const fixed = document.createElement('div');
+    fixed.className = 'ml-row fixed'; fixed.setAttribute('role', 'listitem');
+    fixed.innerHTML = '<span class="d">0</span><span>Transcript</span>';
+    ml.appendChild(fixed);
+    const height = new Spring(ROW * (order.length + 1), { response: 0.35, eps: 0.1, onUpdate: h => { ml.style.height = `${h}px`; } });
+    height.set(height.x);
+
+    const grip = '<svg class="grip" viewBox="0 0 14 14" fill="currentColor"><circle cx="5" cy="3" r="1.2"/><circle cx="9" cy="3" r="1.2"/><circle cx="5" cy="7" r="1.2"/><circle cx="9" cy="7" r="1.2"/><circle cx="5" cy="11" r="1.2"/><circle cx="9" cy="11" r="1.2"/></svg>';
+
+    function makeRow(id, y0) {
+      const it = items[id], el = document.createElement('div');
+      el.className = 'ml-row drag'; el.tabIndex = 0; el.setAttribute('role', 'listitem');
+      el.innerHTML = `<span class="d"></span><span class="n">${it.name}</span><span class="src">${it.kind}</span>${grip}`;
+      ml.appendChild(el);
+      const r = { el, id };
+      const paint = () => { el.style.transform = `translateY(${r.y.x}px) scale(${r.s.x})`; el.style.opacity = clamp(r.o.x, 0, 1); };
+      r.y = new Spring(y0, { response: 0.36, eps: 0.05, render: paint });
+      r.s = new Spring(1, { response: 0.3, eps: 0.001, render: paint });
+      r.o = new Spring(0, { response: 0.3, eps: 0.002, render: paint });
+      paint();
+      el.addEventListener('pointerdown', e => grab(e, r));
+      el.addEventListener('keydown', e => {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+        e.preventDefault();
+        const i = order.indexOf(id), j = clamp(i + (e.key === 'ArrowUp' ? -1 : 1), 0, order.length - 1);
+        if (i === j) return;
+        order.splice(i, 1); order.splice(j, 0, id); layout();
+        status.textContent = `${it.name} is now Mode ${j + 1}`;
+      });
+      rows.set(id, r);
+      return r;
+    }
+
+    function layout(skip) {
+      order.forEach((id, i) => {
+        const r = rows.get(id) || makeRow(id, (i + 1) * ROW);
+        r.el.querySelector('.d').textContent = i + 1;
+        r.el.setAttribute('aria-label', `${i + 1}: ${items[id].name}`);
+        if (r !== skip) r.y.to((i + 1) * ROW);
+        r.o.to(1);
+      });
+      for (const [id, r] of rows) if (!order.includes(id)) {
+        rows.delete(id);
+        r.s.to(0.94); r.o.to(0);
+        r.o.onRest = () => r.el.remove();
+      }
+      height.to(ROW * (order.length + 1));
+    }
+
+    src.addEventListener('click', e => {
+      const b = e.target.closest('.switch'); if (!b) return;
+      const it = items[b.dataset.id];
+      it.on = !it.on; b.setAttribute('aria-checked', it.on);
+      if (it.on) { if (order.length < 9) order.push(it.id); }
+      else order = order.filter(id => id !== it.id);
+      layout();
+      status.textContent = it.on ? `${it.name} added as Mode ${order.indexOf(it.id) + 1}` : `${it.name} removed`;
+    });
+
+    let drag = null;
+    const tr = tracker();
+    function grab(e, r) {
+      if (e.button > 0) return;
+      e.preventDefault();
+      try { r.el.setPointerCapture(e.pointerId); } catch {}
+      const top = ml.getBoundingClientRect().top;
+      drag = { r, off: e.clientY - top - r.y.x };
+      r.el.classList.add('lifted');
+      r.s.to(1.035);
+      tr.reset(); tr.add(0, e.clientY);
+      r.el.addEventListener('pointermove', moveRow);
+      r.el.addEventListener('pointerup', dropRow, { once: true });
+      r.el.addEventListener('pointercancel', dropRow, { once: true });
+    }
+    function moveRow(e) {
+      if (!drag) return;
+      tr.add(0, e.clientY);
+      const top = ml.getBoundingClientRect().top;
+      let y = e.clientY - top - drag.off;
+      const min = ROW, max = ROW * order.length;
+      if (y < min) y = min - rubber(min - y, 120);
+      if (y > max) y = max + rubber(y - max, 120);
+      drag.r.y.jump(y); drag.r.y.render();
+      const i = order.indexOf(drag.r.id), j = clamp(Math.round(y / ROW) - 1, 0, order.length - 1);
+      if (i !== j) { order.splice(i, 1); order.splice(j, 0, drag.r.id); layout(drag.r); }
+    }
+    function dropRow() {
+      if (!drag) return;
+      const { r } = drag; drag = null;
+      r.el.removeEventListener('pointermove', moveRow);
+      r.y.to((order.indexOf(r.id) + 1) * ROW, { velocity: tr.velocity().y });
+      r.s.to(1);
+      r.el.classList.remove('lifted');
+      status.textContent = `${items[r.id].name} is now Mode ${order.indexOf(r.id) + 1}`;
+    }
+
+    layout();
+    for (const r of rows.values()) r.o.set(1);
+  })();
+
+  /* ================= memory counter ================= */
+  (function memory() {
+    const n = $('#mem-num');
+    const s = new Spring(900, { response: 1.1, eps: 0.3, onUpdate: v => { n.textContent = Math.round(v); } });
+    s.set(900);
+    new IntersectionObserver(([e], obs) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      setTimeout(() => s.to(40), 250);
+    }, { threshold: 0.6 }).observe(n);
+  })();
+
+  /* ================= neural engine wave ================= */
+  (function wave() {
+    const chip = $('#chip'), bars = $$('.wave i', chip);
+    const W = [0.35, 0.6, 0.85, 1, 0.85, 0.6, 0.35];
+    let on = false, id = 0, lv = 0, j = W.map(() => 0);
+    const frame = t => {
+      const env = Math.max(0, Math.sin(t / 420) * 0.6 + Math.sin(t / 173) * 0.4);
+      lv += (env - lv) * 0.2;
+      bars.forEach((b, i) => { j[i] += (Math.random() - j[i]) * 0.15; b.style.transform = `scaleY(${(0.12 + 0.88 * lv * W[i] * (0.75 + 0.5 * j[i])).toFixed(3)})`; });
+      if (on) id = requestAnimationFrame(frame);
+    };
+    new IntersectionObserver(([e]) => {
+      on = e.isIntersecting && !reduced;
+      cancelAnimationFrame(id);
+      if (on) id = requestAnimationFrame(frame);
+      else if (reduced) bars.forEach((b, i) => { b.style.transform = `scaleY(${0.2 + 0.6 * W[i]})`; });
+    }).observe(chip);
+  })();
+})();
+</script>
+</body>
+</html>

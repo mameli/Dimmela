@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found · Dimmela</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#5ee079" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b2a17" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.png">
+<style>
+:root {
+  --bg:
+    radial-gradient(90% 70% at 50% -10%, #8ff5a4 0%, transparent 60%),
+    radial-gradient(70% 60% at 100% 100%, #2fbf68 0%, transparent 70%),
+    linear-gradient(180deg, #74ee8e 0%, #5ee079 45%, #39c970 100%);
+  --ink: #04220f;
+  --ink-2: rgba(4, 34, 15, .78);
+  --btn-bg: #0b120d;
+  --btn-text: #fff;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:
+      radial-gradient(80% 70% at 50% -10%, #1f8a48 0%, transparent 62%),
+      radial-gradient(70% 60% at 100% 100%, #0f4a28 0%, transparent 70%),
+      linear-gradient(180deg, #0f3a22 0%, #0b2a17 55%, #061a0e 100%);
+    --ink: #effff3;
+    --ink-2: rgba(232, 255, 238, .74);
+    --btn-bg: #fff;
+    --btn-text: #04220f;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  min-height: 100svh;
+  display: grid; place-items: center;
+  padding: 24px 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-align: center;
+}
+img { width: 96px; height: 96px; margin: 0 auto 28px; display: block; filter: drop-shadow(0 14px 24px rgba(0, 60, 20, .3)); }
+h1 { margin: 0; font-size: clamp(2.8rem, 9vw, 5.5rem); line-height: .95; letter-spacing: -0.05em; font-weight: 700; }
+p { margin: 20px auto 0; max-width: 32ch; font-size: 1.2rem; line-height: 1.45; letter-spacing: -0.015em; font-weight: 500; color: var(--ink-2); }
+a {
+  display: inline-flex; align-items: center; min-height: 50px; margin-top: 34px; padding: 0 26px;
+  border-radius: 999px; background: var(--btn-bg); color: var(--btn-text);
+  font-weight: 600; font-size: 1.02rem; letter-spacing: -0.015em; text-decoration: none;
+  transition: transform .12s ease-out;
+}
+a:active { transform: scale(.97); }
+</style>
+</head>
+<body>
+  <main>
+    <img src="/icon.png" alt="" width="96" height="96">
+    <h1>Nothing to say here.</h1>
+    <p>This page doesn't exist. The one about dictation does.</p>
+    <a href="/">Back to Dimmela</a>
+  </main>
+</body>
+</html>
