@@ -26,7 +26,9 @@ final class AppModel {
             stopRecording: { [recorder] in recorder.stop() },
             transcribe: { [speechModel] samples in try await speechModel.transcribe(samples) },
             paste: { text in try await Paster.paste(text) },
-            report: { problem in Self.show(problem) }
+            report: { problem in Self.show(problem) },
+            defaultMode: { AppSettings.defaultMode },
+            chatClient: { try ChatClient.configured() }
         ))
         // Tasks started on the main actor run in the order the keys arrived.
         shortcut.onDown = { [unowned self] shift, time in
@@ -83,6 +85,7 @@ final class AppModel {
         case .microphoneUnavailable(let detail): "Can't record: \(detail)"
         case .transcriptionFailed(let detail): "Can't transcribe: \(detail)"
         case .pasteFailed(let detail): "Can't paste: \(detail)"
+        case .postProcessingFailed(let detail): "Post-processing failed, the Transcript was pasted instead: \(detail)"
         }
         logger.error("\(message, privacy: .public)")
         let content = UNMutableNotificationContent()

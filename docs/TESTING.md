@@ -42,3 +42,14 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] The `Esc` that cancels a Dictation does not reach the frontmost app (e.g. it does not close a dialog or leave full screen).
 - [ ] With no Dictation in progress `Esc` works normally everywhere.
 - [ ] `fn+space` pressed while the icon shows processing does not start a new Dictation.
+
+### Post-processing with a prompt-file Mode (ticket 04)
+
+- [ ] Settings › Post-processing: paste an OpenRouter key, Save key, Test connection: the provider answers.
+- [ ] The key is in Keychain Access under "Dimmela: provider API key", not in Dimmela's preferences.
+- [ ] Settings › Modes: Add Folder… with the `handy-config` folder; its prompt files are listed, README excluded.
+- [ ] Enable some Modes, drag to reorder, choose a Default Mode; the menu's Default Mode picker shows the same.
+- [ ] `shift+fn+space` in TextEdit: the LLM's answer is pasted. Plain `fn+space` still pastes only the Transcript.
+- [ ] Edit the Default Mode's file (e.g. "answer in uppercase"); the next Dictation follows the edit without relaunching.
+- [ ] Turn Wi-Fi off and dictate with `shift+fn+space`: the Transcript is pasted and a notification explains why.
+- [ ] Rename the Default Mode's file and dictate: the Transcript is pasted and a notification explains why.

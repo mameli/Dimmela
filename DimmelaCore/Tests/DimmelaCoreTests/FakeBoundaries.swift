@@ -1,4 +1,5 @@
 import DimmelaCore
+import Foundation
 
 /// Stands in for the microphone, the speech model and the paste: records what the controller
 /// asked of them and returns prepared answers.
@@ -8,6 +9,10 @@ final class FakeBoundaries {
     var transcript: Result<String, Error> = .success("Ciao, sto provando Dimmela.")
     var startError: Error?
     var pasteError: Error?
+    var defaultMode: Mode?
+    /// Thrown instead of building the chat client, as when no provider is configured.
+    var chatClientError: Error?
+    let provider = StubTransport()
 
     private(set) var recordingStarted = 0
     private(set) var recordingStopped = 0
@@ -48,7 +53,15 @@ final class FakeBoundaries {
                 if let pasteError { throw pasteError }
                 pasted.append(text)
             },
-            report: { [unowned self] problem in problems.append(problem) }
+            report: { [unowned self] problem in problems.append(problem) },
+            defaultMode: { [unowned self] in defaultMode },
+            chatClient: { [unowned self] in
+                if let chatClientError { throw chatClientError }
+                return ChatClient(
+                    baseURL: URL(string: "https://openrouter.ai/api/v1")!, apiKey: "sk-test",
+                    model: "anthropic/claude-haiku-5.5", transport: provider.send
+                )
+            }
         ))
         self.controller = controller
         return controller

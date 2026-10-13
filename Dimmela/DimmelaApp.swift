@@ -11,6 +11,10 @@ struct DimmelaApp: App {
         } label: {
             Image(systemName: delegate.model.controller.phase.symbol)
         }
+
+        Settings {
+            SettingsView()
+        }
     }
 }
 
@@ -24,6 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct MenuContent: View {
     let model: AppModel
+    @Environment(\.openSettings) private var openSettings
+    @AppStorage(AppSettings.enabledModesKey) private var enabled = ""
+    @AppStorage(AppSettings.defaultModeKey) private var defaultModeID = ""
 
     var body: some View {
         Text(status)
@@ -33,6 +40,17 @@ private struct MenuContent: View {
         if model.microphonePermission == .denied || model.microphonePermission == .restricted {
             Button("Allow the Microphone…") { model.openMicrophoneSettings() }
         }
+        Divider()
+        Picker("Default Mode", selection: $defaultModeID) {
+            Text("None").tag("")
+            ForEach(AppSettings.lines(of: enabled).map(Mode.init(id:))) { Text($0.name).tag($0.id) }
+        }
+        Button("Settings…") {
+            // No Dock icon: without activating, the window would stay behind the others.
+            NSApplication.shared.activate()
+            openSettings()
+        }
+        .keyboardShortcut(",")
         Divider()
         Button("Quit Dimmela") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")

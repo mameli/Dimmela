@@ -6,6 +6,8 @@ public enum DictationProblem: Equatable, Sendable {
     case microphoneUnavailable(String)
     case transcriptionFailed(String)
     case pasteFailed(String)
+    /// The Transcript was pasted instead of the LLM's answer.
+    case postProcessingFailed(String)
 }
 
 /// The platform pieces a Dictation needs, injected so the controller can be driven in tests.
@@ -17,19 +19,27 @@ public struct DictationBoundaries {
     /// Puts the text in the frontmost app.
     public var paste: @MainActor (String) async throws -> Void
     public var report: @MainActor (DictationProblem) -> Void
+    /// The Mode `shift+fn+space` applies, if the user chose one.
+    public var defaultMode: @MainActor () -> Mode?
+    /// The client for the configured provider; throws when there is none.
+    public var chatClient: @MainActor () throws -> ChatClient
 
     public init(
         startRecording: @escaping @MainActor () throws -> Void,
         stopRecording: @escaping @MainActor () async -> [Float],
         transcribe: @escaping @MainActor ([Float]) async throws -> String,
         paste: @escaping @MainActor (String) async throws -> Void,
-        report: @escaping @MainActor (DictationProblem) -> Void
+        report: @escaping @MainActor (DictationProblem) -> Void,
+        defaultMode: @escaping @MainActor () -> Mode?,
+        chatClient: @escaping @MainActor () throws -> ChatClient
     ) {
         self.startRecording = startRecording
         self.stopRecording = stopRecording
         self.transcribe = transcribe
         self.paste = paste
         self.report = report
+        self.defaultMode = defaultMode
+        self.chatClient = chatClient
     }
 }
 
@@ -56,6 +66,8 @@ public final class DictationController {
     @ObservationIgnored private let boundaries: DictationBoundaries
     @ObservationIgnored private var pressedAt: TimeInterval = 0
     @ObservationIgnored private var isLocked = false
+    /// The Mode for this Dictation, chosen when it starts; nil for the Transcript alone.
+    @ObservationIgnored private var mode: Mode?
     /// The current Dictation's processing, cancelled by `Esc`.
     @ObservationIgnored private var processing: Task<Void, Never>?
 
@@ -72,6 +84,7 @@ public final class DictationController {
                 phase = .recording
                 pressedAt = time
                 isLocked = false
+                mode = shift ? boundaries.defaultMode() : nil
             } catch {
                 boundaries.report(.microphoneUnavailable(String(describing: error)))
             }
@@ -130,12 +143,35 @@ public final class DictationController {
         guard !Task.isCancelled else { return }
         guard !transcript.isEmpty else { return end() }
 
+        var text = transcript
+        if let mode {
+            do {
+                text = try await postProcess(transcript, with: mode)
+            } catch {
+                guard !Task.isCancelled else { return }
+                boundaries.report(.postProcessingFailed(Self.describe(error)))
+            }
+            guard !Task.isCancelled else { return }
+        }
+
         do {
-            try await boundaries.paste(transcript + " ")
+            try await boundaries.paste(text + " ")
         } catch {
             boundaries.report(.pasteFailed(String(describing: error)))
         }
         end()
+    }
+
+    private func postProcess(_ transcript: String, with mode: Mode) async throws -> String {
+        let instructions = try mode.instructions()
+        return try await boundaries.chatClient().complete([
+            ChatMessage(role: .system, content: instructions),
+            ChatMessage(role: .user, content: transcript),
+        ])
+    }
+
+    private static func describe(_ error: Error) -> String {
+        (error as? LocalizedError)?.errorDescription ?? String(describing: error)
     }
 
     private func end() {
