@@ -84,6 +84,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] `shift` during a Dictation opens the list with the current Mode highlighted; `shift` again closes it.
 - [ ] With the list open, ↑/↓ move the highlight (from Transcript to the last Mode) and the pill follows; `Return` or a digit closes the list. Arrows and `Return` never reach TextEdit while the list is open, and work normally otherwise.
 - [ ] With more than nine enabled Modes, only the first nine are listed.
+- [ ] The Mode chosen during a Dictation (digit or arrows) is the Default Mode for the next one, and the menu's Default Mode shows it; after `0`, the next Dictation gives the Transcript alone.
 
 ### History (ticket 08)
 

@@ -26,6 +26,8 @@ public struct DictationBoundaries {
     public var report: @MainActor (DictationProblem) -> Void
     /// The Mode every Dictation starts with; nil for the Transcript alone.
     public var defaultMode: @MainActor () -> Mode?
+    /// Makes the Mode chosen during a Dictation the Default Mode for the next ones.
+    public var setDefaultMode: @MainActor (Mode?) -> Void
     /// The enabled Modes in the user's order; the first nine get the digits 1–9.
     public var enabledModes: @MainActor () -> [Mode]
     /// The user's Vocabulary, read at every Dictation.
@@ -43,6 +45,7 @@ public struct DictationBoundaries {
         paste: @escaping @MainActor (String) async throws -> Void,
         report: @escaping @MainActor (DictationProblem) -> Void,
         defaultMode: @escaping @MainActor () -> Mode?,
+        setDefaultMode: @escaping @MainActor (Mode?) -> Void,
         enabledModes: @escaping @MainActor () -> [Mode],
         vocabulary: @escaping @MainActor () -> Vocabulary,
         history: History,
@@ -55,6 +58,7 @@ public struct DictationBoundaries {
         self.paste = paste
         self.report = report
         self.defaultMode = defaultMode
+        self.setDefaultMode = setDefaultMode
         self.enabledModes = enabledModes
         self.vocabulary = vocabulary
         self.history = history
@@ -151,8 +155,8 @@ public final class DictationController {
         level = levelMeter.level(for: decibels)
     }
 
-    /// Chooses this Dictation's Mode and closes the list: 0 for none, 1–9 for the Mode at that
-    /// position. A digit with no Mode is ignored.
+    /// Chooses this Dictation's Mode, which also becomes the Default Mode, and closes the list:
+    /// 0 for none, 1–9 for the Mode at that position. A digit with no Mode is ignored.
     public func modeDigit(_ digit: Int) {
         guard phase == .recording else { return }
         if digit == 0 {
@@ -162,6 +166,7 @@ public final class DictationController {
         } else {
             return
         }
+        boundaries.setDefaultMode(mode)
         isModeListVisible = false
     }
 
@@ -177,6 +182,7 @@ public final class DictationController {
         let rows: [Mode?] = [nil] + modeChoices
         let current = rows.firstIndex(of: mode) ?? 0
         mode = rows[min(max(current + offset, 0), rows.count - 1)]
+        boundaries.setDefaultMode(mode)
     }
 
     /// Keeps the chosen Mode and closes the list.

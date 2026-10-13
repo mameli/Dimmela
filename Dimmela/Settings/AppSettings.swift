@@ -53,10 +53,14 @@ enum AppSettings {
         stored.split(separator: "\n").map(String.init)
     }
 
-    /// The Default Mode, if it is still enabled.
+    /// The Default Mode, if it is still enabled. Set from the menu, Settings, or by choosing a
+    /// Mode during a Dictation.
     static var defaultMode: Mode? {
-        guard let id = defaults.string(forKey: defaultModeKey), !id.isEmpty else { return nil }
-        return enabledModes.first { $0.id == id }
+        get {
+            guard let id = defaults.string(forKey: defaultModeKey), !id.isEmpty else { return nil }
+            return enabledModes.first { $0.id == id }
+        }
+        set { defaults.set(newValue?.id ?? "", forKey: defaultModeKey) }
     }
 
     static var vocabulary: Vocabulary {

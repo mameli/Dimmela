@@ -179,4 +179,40 @@ struct ModeDigitTests {
         controller.shiftPressed()
         #expect(!controller.isModeListVisible)
     }
+
+    @Test("the Mode chosen with a digit stays the Default Mode for the next Dictations")
+    func digitSticks() async {
+        let controller = fake.controllerWired()
+        await controller.shortcutDown(at: 10)
+        controller.modeDigit(3)
+        await controller.shortcutUp(at: 11)
+        #expect(fake.defaultMode == modes[2])
+
+        await controller.shortcutDown(at: 20)
+        #expect(controller.mode == modes[2])
+        await controller.shortcutUp(at: 21)
+        #expect(fake.provider.message(1, "system") == "Mode x-post.")
+    }
+
+    @Test("the Mode chosen with the arrows stays too, and 0 keeps the Transcript alone")
+    func arrowsAndZeroStick() async {
+        fake.defaultMode = modes[0]
+        let controller = fake.controllerWired()
+        await controller.shortcutDown(at: 10)
+        controller.shiftPressed()
+        controller.moveModeSelection(by: 1)
+        #expect(fake.defaultMode == modes[1])
+
+        controller.modeDigit(0)
+        #expect(fake.defaultMode == nil)
+    }
+
+    @Test("a digit with no Mode leaves the Default Mode alone")
+    func unmappedDigitDoesNotStick() async {
+        fake.defaultMode = modes[0]
+        let controller = fake.controllerWired()
+        await controller.shortcutDown(at: 10)
+        controller.modeDigit(8)
+        #expect(fake.defaultMode == modes[0])
+    }
 }

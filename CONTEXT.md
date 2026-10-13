@@ -37,7 +37,7 @@ A folder the user points Dimmela at, where it looks for skills and prompt files 
 _Avoid_: library, skills folder
 
 **Default Mode** (`defaultMode`):
-The Mode every Dictation starts with, unless the user picks another during it. It can be none: the Dictation then gives the Transcript alone.
+The Mode every Dictation starts with: the last one chosen, from the menu or during a Dictation. It can be none: the Dictation then gives the Transcript alone.
 _Avoid_: active mode, selected prompt
 
 **Mode digit**:

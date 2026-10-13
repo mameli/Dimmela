@@ -39,6 +39,7 @@ final class AppModel {
             paste: { text in try await Paster.paste(text) },
             report: { problem in Self.show(problem) },
             defaultMode: { AppSettings.defaultMode },
+            setDefaultMode: { AppSettings.defaultMode = $0 },
             enabledModes: { AppSettings.enabledModes },
             vocabulary: { AppSettings.vocabulary },
             history: history,

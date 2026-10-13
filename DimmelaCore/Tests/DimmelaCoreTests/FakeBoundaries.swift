@@ -62,6 +62,7 @@ final class FakeBoundaries {
             },
             report: { [unowned self] problem in problems.append(problem) },
             defaultMode: { [unowned self] in defaultMode },
+            setDefaultMode: { [unowned self] mode in defaultMode = mode },
             enabledModes: { [unowned self] in enabledModes },
             vocabulary: { [unowned self] in vocabulary },
             history: history,
