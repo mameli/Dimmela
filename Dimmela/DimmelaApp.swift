@@ -9,7 +9,7 @@ struct DimmelaApp: App {
         MenuBarExtra {
             MenuContent(model: delegate.model)
         } label: {
-            Image(systemName: delegate.model.controller.phase.symbol)
+            delegate.model.controller.phase.icon
         }
 
         Settings {
@@ -110,11 +110,11 @@ private struct HistoryMenu: View {
 }
 
 private extension DictationController.Phase {
-    var symbol: String {
+    var icon: Image {
         switch self {
-        case .idle: "waveform"
-        case .recording: "record.circle"
-        case .processing: "hourglass"
+        case .idle: Image("MenuBarIcon")
+        case .recording: Image(systemName: "record.circle")
+        case .processing: Image(systemName: "hourglass")
         }
     }
 }
