@@ -39,7 +39,8 @@ final class MicrophoneRecorder: Sendable {
         await AVCaptureDevice.requestAccess(for: .audio)
     }
 
-    func start() throws {
+    /// Starts recording; `onLevel` gets the loudness (0...1) of each block of audio, on the audio thread.
+    func start(onLevel: @escaping @Sendable (Float) -> Void = { _ in }) throws {
         guard Self.permission == .authorized else { throw Failure.permissionDenied }
         stopEngine()
         _ = samples.drain()
@@ -53,7 +54,7 @@ final class MicrophoneRecorder: Sendable {
         ), let converter = AVAudioConverter(from: format, to: target) else { throw Failure.converter }
 
         input.installTap(onBus: 0, bufferSize: 4096, format: format, block: Self.tapBlock(
-            converter: converter, target: target, samples: samples
+            converter: converter, target: target, samples: samples, onLevel: onLevel
         ))
         engine.prepare()
         try engine.start()
@@ -77,7 +78,8 @@ final class MicrophoneRecorder: Sendable {
 
     /// Built outside any actor: the block is called on the audio thread.
     private static func tapBlock(
-        converter: AVAudioConverter, target: AVAudioFormat, samples: SampleBuffer
+        converter: AVAudioConverter, target: AVAudioFormat, samples: SampleBuffer,
+        onLevel: @escaping @Sendable (Float) -> Void
     ) -> AVAudioNodeTapBlock {
         return { buffer, _ in
             let ratio = target.sampleRate / buffer.format.sampleRate
@@ -97,8 +99,17 @@ final class MicrophoneRecorder: Sendable {
             guard error == nil, let channel = output.floatChannelData?[0] else { return }
             let converted = UnsafeBufferPointer(start: channel, count: Int(output.frameLength))
             samples.append(converted)
+            onLevel(level(of: converted))
         }
     }
+}
+
+/// RMS loudness mapped from -50 dB (silence) to -10 dB (loud speech) onto 0...1.
+private func level(of samples: UnsafeBufferPointer<Float>) -> Float {
+    guard !samples.isEmpty else { return 0 }
+    let meanSquare = samples.reduce(0) { $0 + $1 * $1 } / Float(samples.count)
+    let decibels = 10 * log10(max(meanSquare, 1e-10))
+    return min(max((decibels + 50) / 40, 0), 1)
 }
 
 /// The samples recorded so far, written by the audio thread and taken by the caller.

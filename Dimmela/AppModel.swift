@@ -19,10 +19,15 @@ final class AppModel {
     @ObservationIgnored private let recorder = MicrophoneRecorder()
     @ObservationIgnored private let shortcut = ShortcutMonitor()
     @ObservationIgnored private var permissionPoll: Task<Void, Never>?
+    @ObservationIgnored private var overlay: OverlayPanel?
 
     init() {
         controller = DictationController(boundaries: DictationBoundaries(
-            startRecording: { [recorder] in try recorder.start() },
+            startRecording: { [recorder, weak self] in
+                try recorder.start { level in
+                    Task { @MainActor in self?.controller.microphoneLevel(level) }
+                }
+            },
             stopRecording: { [recorder] in recorder.stop() },
             transcribe: { [speechModel] samples in try await speechModel.transcribe(samples) },
             paste: { text in try await Paster.paste(text) },
@@ -47,6 +52,7 @@ final class AppModel {
         #if DEBUG
         if SmokeTest.runIfRequested(model: speechModel) { return }
         #endif
+        overlay = OverlayPanel(controller: controller)
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
         Task {
             if microphonePermission == .notDetermined {

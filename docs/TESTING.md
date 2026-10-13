@@ -60,3 +60,13 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Enable `mameli-x-voice`, make it the Default Mode, dictate in Italian with `shift+fn+space`: an English X post is pasted, with no preamble or quotes around it.
 - [ ] A skill with `references/` (e.g. `stop-slop`) works as a Mode.
 - [ ] Rename an enabled skill's folder: Settings shows it as Missing, and dictating with it pastes the Transcript with a notification.
+
+### Overlay (ticket 06)
+
+- [ ] `fn+space`: a dark pill appears at the bottom centre of the screen with the pointer, with red bars that follow the voice and "Transcript".
+- [ ] `shift+fn+space` with a Default Mode: the pill shows the Mode's name.
+- [ ] After recording, the bars become a spinner until the paste; then the pill disappears.
+- [ ] `Esc` hides the pill at once.
+- [ ] Dictating into TextEdit, the cursor stays in TextEdit and the paste lands there; the pill cannot be clicked.
+- [ ] With two displays, the pill shows on the one with the pointer; it also shows over a full-screen app.
+- [ ] With Reduce Motion on, the bars still move but without animation.

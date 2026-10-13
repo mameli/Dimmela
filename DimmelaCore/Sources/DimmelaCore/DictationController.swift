@@ -54,7 +54,18 @@ public final class DictationController {
         case processing
     }
 
-    public private(set) var phase: Phase = .idle
+    public private(set) var phase: Phase = .idle {
+        didSet {
+            if phase != .recording { level = 0 }
+            if phase == .idle { mode = nil }
+        }
+    }
+
+    /// The microphone's loudness, 0...1, while recording; 0 otherwise.
+    public private(set) var level: Float = 0
+
+    /// The Mode of the Dictation in progress; nil for the Transcript alone.
+    public private(set) var mode: Mode?
 
     /// Whether `Esc` belongs to Dimmela right now (it cancels the Dictation) instead of the
     /// frontmost app.
@@ -66,8 +77,6 @@ public final class DictationController {
     @ObservationIgnored private let boundaries: DictationBoundaries
     @ObservationIgnored private var pressedAt: TimeInterval = 0
     @ObservationIgnored private var isLocked = false
-    /// The Mode for this Dictation, chosen when it starts; nil for the Transcript alone.
-    @ObservationIgnored private var mode: Mode?
     /// The current Dictation's processing, cancelled by `Esc`.
     @ObservationIgnored private var processing: Task<Void, Never>?
 
@@ -93,6 +102,12 @@ public final class DictationController {
         case .recording, .processing:
             return
         }
+    }
+
+    /// The microphone's loudness from the recorder; kept only while recording.
+    public func microphoneLevel(_ level: Float) {
+        guard phase == .recording else { return }
+        self.level = min(max(level, 0), 1)
     }
 
     /// Ends a Hold, or turns a short tap into a Lock. Returns when the Dictation is over: its
@@ -123,13 +138,14 @@ public final class DictationController {
 
     private func finish() async {
         phase = .processing
-        let task = Task { await process() }
+        let mode = mode
+        let task = Task { await process(with: mode) }
         processing = task
         await task.value
     }
 
     /// Once cancelled it leaves everything alone: a new Dictation may already be running.
-    private func process() async {
+    private func process(with mode: Mode?) async {
         let samples = await boundaries.stopRecording()
         let transcript: String
         do {
