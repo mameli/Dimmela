@@ -17,6 +17,8 @@ enum AppSettings {
     /// Set when the user closes the welcome window with Done.
     static let onboardingDoneKey = "onboardingDone"
     static let checkForUpdatesKey = "checkForUpdates"
+    /// The app chosen to edit the Vocabulary file, by path; empty for the system's default.
+    static let vocabularyEditorKey = "vocabularyEditor"
 
     private static var defaults: UserDefaults { .standard }
 

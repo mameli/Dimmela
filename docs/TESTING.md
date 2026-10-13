@@ -97,7 +97,8 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 ### Vocabulary (ticket 09)
 
 - [ ] At launch `~/.dimmela/vocabulary.md` exists: the syntax on top, then the entries once written in Settings (if any).
-- [ ] Settings › General › Vocabulary shows the file and its number of entries; Edit Vocabulary… opens it in the editor for Markdown files. After saving and coming back, the count is updated.
+- [ ] Settings › General › Vocabulary shows the file and its number of entries; Edit Vocabulary… opens it in the system's default app for Markdown. After saving and coming back, the count is updated.
+- [ ] The arrow next to Edit Vocabulary… lists the apps that open Markdown, with icons; choosing one opens the file there, and the main button then uses it. Use the System Default goes back.
 - [ ] Add `- Jira = ira, gira | the issue tracker at work` and dictate "apro ira" with Default Mode None, without relaunching: "apro Jira" is pasted. A word that only contains a variant ("Lira", "girare") is untouched.
 - [ ] With a Default Mode, the History's Copy Transcript shows the corrected term.
 - [ ] Lines that do not start with `- ` are ignored, so notes can sit in the file.

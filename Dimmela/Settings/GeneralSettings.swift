@@ -81,11 +81,14 @@ struct UpdatesToggle: View {
     }
 }
 
-/// Where the Vocabulary file is, how many entries it has, and a button to edit it in the
-/// user's editor for Markdown.
+/// Where the Vocabulary file is, how many entries it has, and a button to edit it: in the app
+/// last chosen with Open With, or else in the system's default app for Markdown.
 struct VocabularyFileRow: View {
     @State private var count = AppSettings.vocabulary.entries.count
     @State private var error: String?
+    @AppStorage(AppSettings.vocabularyEditorKey) private var editorPath = ""
+    /// The apps that can open the file, read when the row appears.
+    @State private var editors: [URL] = []
 
     var body: some View {
         HStack {
@@ -96,8 +99,34 @@ struct VocabularyFileRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Edit Vocabulary…", action: edit)
+            Menu {
+                Section("Open With") {
+                    ForEach(editors, id: \.self) { app in
+                        Button {
+                            editorPath = app.path(percentEncoded: false)
+                            edit()
+                        } label: {
+                            Label {
+                                Text(verbatim: Self.name(of: app))
+                            } icon: {
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: app.path(percentEncoded: false)))
+                            }
+                        }
+                    }
+                }
+                if !editorPath.isEmpty {
+                    Divider()
+                    Button("Use the System Default") { editorPath = "" }
+                }
+            } label: {
+                Text("Edit Vocabulary…")
+            } primaryAction: {
+                edit()
+            }
+            .fixedSize()
+            .help(editor.map { "Opens in \(Self.name(of: $0))" } ?? "")
         }
+        .onAppear(perform: findEditors)
         // Back from the editor: the entries may have changed.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             count = AppSettings.vocabulary.entries.count
@@ -107,14 +136,39 @@ struct VocabularyFileRow: View {
         }
     }
 
+    /// The chosen app if it is still there, or else the system's default for the file.
+    private var editor: URL? {
+        if !editorPath.isEmpty, FileManager.default.fileExists(atPath: editorPath) {
+            return URL(fileURLWithPath: editorPath)
+        }
+        return NSWorkspace.shared.urlForApplication(toOpen: AppSettings.vocabularyFile)
+    }
+
+    private func findEditors() {
+        let apps = NSWorkspace.shared.urlsForApplications(toOpen: AppSettings.vocabularyFile)
+        var seen = Set<String>()
+        editors = apps
+            .filter { seen.insert(Self.name(of: $0)).inserted }
+            .sorted { Self.name(of: $0).localizedStandardCompare(Self.name(of: $1)) == .orderedAscending }
+    }
+
     private func edit() {
         do {
             try AppSettings.createVocabularyFileIfNeeded()
-            NSWorkspace.shared.open(AppSettings.vocabularyFile)
+            if let editor {
+                NSWorkspace.shared.open([AppSettings.vocabularyFile], withApplicationAt: editor, configuration: NSWorkspace.OpenConfiguration())
+            } else {
+                NSWorkspace.shared.open(AppSettings.vocabularyFile)
+            }
             error = nil
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    private static func name(of app: URL) -> String {
+        FileManager.default.displayName(atPath: app.path(percentEncoded: false))
+            .replacingOccurrences(of: ".app", with: "")
     }
 }
 
