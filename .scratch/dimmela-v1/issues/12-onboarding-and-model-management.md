@@ -6,8 +6,17 @@
 
 **Status:** ready-for-agent
 
-- [ ] First run opens an onboarding window that requests microphone and Accessibility permission and reflects their status
-- [ ] The onboarding window downloads and prepares the model with progress and states when it is ready
-- [ ] A half-finished download is detected and restarted rather than used
-- [ ] Settings › Transcription shows the model state and offers delete and re-download
-- [ ] Manual checklist covers a clean first run
+- [x] First run opens an onboarding window that requests microphone and Accessibility permission and reflects their status
+- [x] The onboarding window downloads and prepares the model with progress and states when it is ready
+- [x] A half-finished download is detected and restarted rather than used
+- [x] Settings › Transcription shows the model state and offers delete and re-download
+- [x] Manual checklist covers a clean first run
+
+## Comments
+
+### 2026-10-13: done (commits d3b5a67, 6c4107c)
+
+- The real model download was exercised by moving the seeded model aside: download and Neural Engine preparation took 62 s on an M3 Pro, then transcription worked.
+- The welcome window was checked by the user with permissions already granted. The full first launch from zero (permissions reset with `tccutil`) was not run; the commands are in `docs/TESTING.md`.
+- Notifications were added as a step (not in the ticket) after the user lost time with them turned off.
+- The app icon in the window showed macOS 26's placeholder until Dimmela was registered again with `lsregister -f`: an icon cache issue of the Debug build path, not of the project.
