@@ -53,3 +53,10 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Edit the Default Mode's file (e.g. "answer in uppercase"); the next Dictation follows the edit without relaunching.
 - [ ] Turn Wi-Fi off and dictate with `shift+fn+space`: the Transcript is pasted and a notification explains why.
 - [ ] Rename the Default Mode's file and dictate: the Transcript is pasted and a notification explains why.
+
+### Skills as Modes (ticket 05)
+
+- [ ] Settings › Modes › Add Folder… with `~/.claude/skills` (⌘⇧G to type the path, ⌘⇧. to show hidden folders): skills are listed by name, also those that are symbolic links; coding skills appear only under Available.
+- [ ] Enable `mameli-x-voice`, make it the Default Mode, dictate in Italian with `shift+fn+space`: an English X post is pasted, with no preamble or quotes around it.
+- [ ] A skill with `references/` (e.g. `stop-slop`) works as a Mode.
+- [ ] Rename an enabled skill's folder: Settings shows it as Missing, and dictating with it pastes the Transcript with a notification.

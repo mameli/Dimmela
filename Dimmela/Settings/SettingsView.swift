@@ -119,7 +119,7 @@ private struct ModeSettings: View {
             Section("Available") {
                 let others = available.filter { !enabledModes.contains($0) }
                 if others.isEmpty {
-                    Text(sourceList.isEmpty ? "Add a folder of prompt files." : "Nothing else in the Mode sources.")
+                    Text(sourceList.isEmpty ? "Add a folder of prompt files or skills." : "Nothing else in the Mode sources.")
                         .foregroundStyle(.secondary)
                 }
                 ForEach(others) { mode in
@@ -183,8 +183,15 @@ private struct ModeRow: View {
         HStack {
             Toggle(isOn: Binding(get: { isEnabled }, set: { _ in toggle() })) {
                 VStack(alignment: .leading) {
-                    Text(mode.name)
-                    Text(mode.url.deletingLastPathComponent().lastPathComponent)
+                    HStack {
+                        Text(mode.name)
+                        if mode.isMissing {
+                            Text("Missing").font(.caption).foregroundStyle(.red)
+                        }
+                    }
+                    Text(mode.isMissing
+                        ? "Not found at \(mode.id): the Transcript is pasted instead."
+                        : "\(mode.isSkill ? "Skill" : "Prompt file") in \(mode.url.deletingLastPathComponent().lastPathComponent)")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

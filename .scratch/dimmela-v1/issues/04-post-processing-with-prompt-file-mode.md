@@ -6,11 +6,20 @@
 
 **Status:** ready-for-agent
 
-- [ ] Settings has a Post-processing section with base URL, model, API key (Keychain) and a working connection test
-- [ ] Settings has a Modes section to add/remove Mode sources and enable/reorder the prompt files found (READMEs excluded)
-- [ ] The menu-bar menu has a Default Mode picker
-- [ ] `shift+fn+space` pastes the LLM's answer; plain `fn+space` still pastes only the Transcript
-- [ ] Editing the prompt file takes effect on the next Dictation without restarting
-- [ ] On any Post-processing failure the Transcript is pasted and a notification is shown
-- [ ] Controller tests with a stub chat transport cover request shape (system = prompt verbatim, user = Transcript), Default Mode selection and fallback on failure
-- [ ] Mode catalog tests use real temporary folders
+- [x] Settings has a Post-processing section with base URL, model, API key (Keychain) and a working connection test
+- [x] Settings has a Modes section to add/remove Mode sources and enable/reorder the prompt files found (READMEs excluded)
+- [x] The menu-bar menu has a Default Mode picker
+- [x] `shift+fn+space` pastes the LLM's answer; plain `fn+space` still pastes only the Transcript
+- [x] Editing the prompt file takes effect on the next Dictation without restarting
+- [x] On any Post-processing failure the Transcript is pasted and a notification is shown
+- [x] Controller tests with a stub chat transport cover request shape (system = prompt verbatim, user = Transcript), Default Mode selection and fallback on failure
+- [x] Mode catalog tests use real temporary folders
+
+## Comments
+
+### 2026-10-13: done (commit 60d6d5b)
+
+- Verified by hand by the user with OpenRouter and the handy-config prompts.
+- Handy's `${output}` placeholder is dropped and the Transcript is sent as the user message, as Handy does with OpenRouter.
+- The provider timeout is 5 s total, as the user asked; after that the Transcript is pasted.
+- Reasoning is not explicitly disabled; Haiku does not reason by default.

@@ -45,4 +45,45 @@ struct ModeCatalogTests {
         #expect(found == Mode(id: file.path(percentEncoded: false)))
         #expect(found.name == "Prompt")
     }
+
+    @Test("a folder with a SKILL.md is a skill Mode, named after its frontmatter")
+    func skills() {
+        folder.write("mameli-x-voice/SKILL.md", "---\nname: mameli-x-voice\ndescription: X posts.\n---\n\n# Voice\n")
+        folder.write("untitled-skill/SKILL.md", "# No frontmatter\n")
+        folder.write("not-a-skill/notes.md", "Just notes.")
+
+        let modes = ModeCatalog.modes(in: [folder.url])
+        #expect(modes.map(\.name) == ["Mameli x voice", "Untitled skill"])
+        #expect(modes[0].id == folder.url.appending(path: "mameli-x-voice").path(percentEncoded: false))
+    }
+
+    @Test("skills and prompt files of a source are sorted together")
+    func mixed() {
+        folder.write("b-skill/SKILL.md", "---\nname: b-skill\n---\nB")
+        folder.write("a-prompt.md", "A")
+        folder.write("c-prompt.md", "C")
+        #expect(ModeCatalog.modes(in: [folder.url]).map(\.name) == ["A prompt", "B skill", "C prompt"])
+    }
+
+    @Test("skills reached through symbolic links are found")
+    func symlinks() throws {
+        let real = TemporaryFolder()
+        real.write("stop-slop/SKILL.md", "---\nname: stop-slop\n---\nCut the slop.")
+        real.write("prompt.md", "Clean up.")
+        try FileManager.default.createSymbolicLink(
+            at: folder.url.appending(path: "stop-slop"), withDestinationURL: real.url.appending(path: "stop-slop")
+        )
+        try FileManager.default.createSymbolicLink(
+            at: folder.url.appending(path: "prompt.md"), withDestinationURL: real.url.appending(path: "prompt.md")
+        )
+        #expect(ModeCatalog.modes(in: [folder.url]).map(\.name) == ["Prompt", "Stop slop"])
+    }
+
+    @Test("a Mode whose files are gone is reported missing")
+    func missing() {
+        let skill = folder.url.appending(path: "gone-skill").path(percentEncoded: false)
+        let prompt = folder.write("prompt.md", "Clean up.").path(percentEncoded: false)
+        #expect(Mode(id: skill).isMissing)
+        #expect(!Mode(id: prompt).isMissing)
+    }
 }

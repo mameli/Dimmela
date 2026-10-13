@@ -6,8 +6,8 @@ extension ChatClient {
     /// the user wait; the Transcript is pasted instead.
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 30
-        configuration.timeoutIntervalForResource = 60
+        configuration.timeoutIntervalForRequest = 5
+        configuration.timeoutIntervalForResource = 5
         return URLSession(configuration: configuration)
     }()
 
