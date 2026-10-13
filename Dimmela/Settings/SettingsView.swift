@@ -55,69 +55,186 @@ private struct TranscriptionSettings: View {
 }
 
 private struct PostProcessingSettings: View {
+    /// Servers people commonly use, to fill the address in one click.
+    private static let presets: [(name: String, provider: Provider)] = [
+        ("OpenRouter", .openRouter),
+        ("LM Studio", Provider(baseURL: "http://localhost:1234/v1", model: "")),
+        ("Ollama", Provider(baseURL: "http://localhost:11434/v1", model: "")),
+    ]
+
     @AppStorage(AppSettings.providerBaseURLKey) private var baseURL = Provider.openRouter.baseURL
     @AppStorage(AppSettings.providerModelKey) private var model = Provider.openRouter.model
-    @State private var apiKey = ""
-    @State private var keyStatus = ""
-    @State private var testResult: String?
+    @State private var keySuffix = Self.storedKeySuffix
+    @State private var isReplacingKey = false
+    @State private var newKey = ""
+    @State private var keyError: String?
+    @State private var test: TestResult?
     @State private var isTesting = false
+
+    private enum TestResult {
+        case success(String)
+        case failure(String)
+    }
 
     var body: some View {
         Form {
             Section {
-                TextField("Base URL", text: $baseURL, prompt: Text(verbatim: Provider.openRouter.baseURL))
-                TextField("Model", text: $model, prompt: Text(verbatim: Provider.openRouter.model))
+                LabeledContent("Base URL") {
+                    HStack {
+                        TextField("Base URL", text: $baseURL, prompt: Text(verbatim: Provider.openRouter.baseURL))
+                            .labelsHidden()
+                        Menu("Presets") {
+                            ForEach(Self.presets, id: \.name) { preset in
+                                Button(preset.name) {
+                                    baseURL = preset.provider.baseURL
+                                    if !preset.provider.model.isEmpty { model = preset.provider.model }
+                                    test = nil
+                                }
+                            }
+                        }
+                        .fixedSize()
+                    }
+                }
+                if let urlProblem {
+                    Label(urlProblem, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+                LabeledContent("Model") {
+                    TextField("Model", text: $model, prompt: Text(verbatim: Provider.openRouter.model))
+                        .labelsHidden()
+                }
+            } header: {
+                Text("Provider")
             } footer: {
                 Text("Any OpenAI-compatible server. Plain http:// only for a server on this Mac.")
                     .foregroundStyle(.secondary)
             }
+
             Section {
-                SecureField("API key", text: $apiKey)
-                    .onSubmit(saveKey)
-                HStack {
-                    Button("Save key", action: saveKey)
-                    Text(keyStatus).foregroundStyle(.secondary)
+                LabeledContent("API key") {
+                    if let keySuffix, !isReplacingKey {
+                        HStack {
+                            Text("Saved in the Keychain (…\(keySuffix))")
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Button("Replace") { isReplacingKey = true }
+                            Button("Remove", role: .destructive, action: removeKey)
+                        }
+                    } else {
+                        HStack {
+                            SecureField("API key", text: $newKey, prompt: Text("Paste the key here"))
+                                .labelsHidden()
+                                .onSubmit(saveKey)
+                            Button("Save", action: saveKey)
+                                .disabled(newKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            if isReplacingKey {
+                                Button("Cancel") {
+                                    isReplacingKey = false
+                                    newKey = ""
+                                }
+                            }
+                        }
+                    }
+                }
+                if let keyError {
+                    Text(keyError).font(.caption).foregroundStyle(.red)
                 }
             } footer: {
-                Text("Stored in the Keychain.").foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text("Stored in the macOS Keychain, never in a file.")
+                    if baseURL.contains("openrouter.ai") {
+                        Link("Get an OpenRouter key", destination: URL(string: "https://openrouter.ai/settings/keys")!)
+                    }
+                }
+                .foregroundStyle(.secondary)
             }
+
             Section {
                 HStack {
-                    Button("Test connection") { Task { await test() } }
-                        .disabled(isTesting)
+                    Button("Test Connection") { Task { await runTest() } }
+                        .disabled(isTesting || urlProblem != nil)
                     if isTesting { ProgressView().controlSize(.small) }
+                    Spacer()
                 }
-                if let testResult {
-                    Text(testResult).foregroundStyle(.secondary).textSelection(.enabled)
+                switch test {
+                case .success(let message):
+                    Label(message, systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                case .failure(let message):
+                    Label {
+                        Text(message).textSelection(.enabled)
+                    } icon: {
+                        Image(systemName: "xmark.octagon.fill").foregroundStyle(.red)
+                    }
+                case nil:
+                    EmptyView()
                 }
+            } footer: {
+                Text("Sends a one-word request to the model. If the provider does not answer within 30 seconds during a Dictation, the Transcript is pasted instead.")
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .onAppear {
-            apiKey = Keychain.apiKey ?? ""
+        .onChange(of: baseURL) { test = nil }
+        .onChange(of: model) { test = nil }
+    }
+
+    /// The last characters of the saved key, so the user can tell which key it is.
+    private static var storedKeySuffix: String? {
+        guard let key = Keychain.apiKey, !key.isEmpty else { return nil }
+        return String(key.suffix(4))
+    }
+
+    private var urlProblem: String? {
+        guard !baseURL.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        do {
+            _ = try Provider(baseURL: baseURL, model: "x").validatedBaseURL()
+            return nil
+        } catch {
+            return (error as? LocalizedError)?.errorDescription ?? String(describing: error)
         }
     }
 
     private func saveKey() {
+        let key = newKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else { return }
         do {
-            try Keychain.setAPIKey(apiKey)
-            keyStatus = apiKey.isEmpty ? "Key removed." : "Key saved."
+            try Keychain.setAPIKey(key)
+            keySuffix = Self.storedKeySuffix
+            newKey = ""
+            isReplacingKey = false
+            keyError = nil
+            test = nil
         } catch {
-            keyStatus = error.localizedDescription
+            keyError = error.localizedDescription
         }
     }
 
-    private func test() async {
+    private func removeKey() {
+        do {
+            try Keychain.setAPIKey("")
+            keySuffix = nil
+            keyError = nil
+            test = nil
+        } catch {
+            keyError = error.localizedDescription
+        }
+    }
+
+    private func runTest() async {
         isTesting = true
         defer { isTesting = false }
-        saveKey()
+        let start = ContinuousClock.now
         do {
-            let reply = try await ChatClient.configured().complete([
+            _ = try await ChatClient.configured().complete([
                 ChatMessage(role: .user, content: "Reply with the single word OK."),
             ])
-            testResult = "The provider answered: \(reply)"
+            let elapsed = (ContinuousClock.now - start).components
+            let seconds = Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
+            test = .success("\(model) answered in \(seconds.formatted(.number.precision(.fractionLength(1)))) s")
         } catch {
-            testResult = (error as? LocalizedError)?.errorDescription ?? String(describing: error)
+            test = .failure((error as? LocalizedError)?.errorDescription ?? String(describing: error))
         }
     }
 }
