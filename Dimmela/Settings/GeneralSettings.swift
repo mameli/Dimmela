@@ -82,7 +82,8 @@ struct UpdatesToggle: View {
 }
 
 /// Where the Vocabulary file is, how many entries it has, and a menu of the apps that can edit
-/// it, the system's default for Markdown first.
+/// it, the system's default for Markdown first. Apps that only show text (browsers, Instruments,
+/// Pages…) are left out.
 struct VocabularyFileRow: View {
     @State private var count = AppSettings.vocabulary.entries.count
     @State private var error: String?
@@ -130,7 +131,7 @@ struct VocabularyFileRow: View {
         defaultEditor = NSWorkspace.shared.urlForApplication(toOpen: file)
         var seen = Set<String>()
         let others = NSWorkspace.shared.urlsForApplications(toOpen: file)
-            .filter { $0 != defaultEditor && seen.insert(Self.name(of: $0)).inserted }
+            .filter { $0 != defaultEditor && Self.editsText($0) && seen.insert(Self.name(of: $0)).inserted }
             .sorted { Self.name(of: $0).localizedStandardCompare(Self.name(of: $1)) == .orderedAscending }
         editors = (defaultEditor.map { [$0] } ?? []) + others
     }
@@ -142,6 +143,28 @@ struct VocabularyFileRow: View {
             error = nil
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+
+    private static let textTypes: Set<String> = [
+        "net.daringfireball.markdown", "public.markdown", "public.plain-text", "public.text", "public.utf8-plain-text",
+    ]
+    private static let textExtensions: Set<String> = ["md", "markdown", "txt", "text"]
+    /// Declare text editing but open it as a table.
+    private static let notTextEditors: Set<String> = ["com.apple.iWork.Numbers"]
+
+    /// Whether the app declares the Editor role for Markdown or plain text, not only Viewer, and
+    /// not merely for any file at all.
+    private static func editsText(_ app: URL) -> Bool {
+        guard let bundle = Bundle(url: app),
+              !notTextEditors.contains(bundle.bundleIdentifier ?? ""),
+              let types = bundle.object(forInfoDictionaryKey: "CFBundleDocumentTypes") as? [[String: Any]]
+        else { return false }
+        return types.contains { type in
+            guard type["CFBundleTypeRole"] as? String == "Editor" else { return false }
+            let contentTypes = Set(type["LSItemContentTypes"] as? [String] ?? [])
+            let extensions = Set((type["CFBundleTypeExtensions"] as? [String] ?? []).map { $0.lowercased() })
+            return !contentTypes.isDisjoint(with: textTypes) || !extensions.isDisjoint(with: textExtensions)
         }
     }
 
