@@ -26,6 +26,17 @@ struct WelcomeView: View {
             Section {
                 Text("Hold or tap fn+Space anywhere, speak, and Dimmela pastes the text where you are typing. Everything is transcribed on this Mac. A few steps before the first Dictation:")
                     .fixedSize(horizontal: false, vertical: true)
+            } header: {
+                VStack(spacing: 6) {
+                    Image(nsImage: NSApplication.shared.applicationIconImage)
+                        .resizable()
+                        .frame(width: 96, height: 96)
+                    Text("Dimmela")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.primary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 8)
             }
 
             Section {
