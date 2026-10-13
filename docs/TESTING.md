@@ -96,3 +96,9 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Dictate "apro ira" with Default Mode None: "apro Jira" is pasted. A word that only contains a variant ("Lira", "girare") is untouched.
 - [ ] With a Default Mode, the History's Copy Transcript shows the corrected term.
 - [ ] Lines that do not start with `- ` are ignored, so notes can sit in the list.
+
+### Fillers (ticket 10)
+
+- [ ] Dictate "allora, ehm, volevo dire una cosa" with Default Mode None: no "ehm" and no stray comma in the pasted text.
+- [ ] Start a Dictation with "ehm," or "mmh…": the text starts with the next word, capitalized.
+- [ ] "cioè" and "tipo" stay in the text.
