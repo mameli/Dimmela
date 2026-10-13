@@ -13,8 +13,15 @@ struct DimmelaApp: App {
         }
 
         Settings {
-            SettingsView()
+            SettingsView(speechModel: delegate.model.speechModel)
         }
+
+        Window("Welcome to Dimmela", id: WelcomeView.windowID) {
+            WelcomeView(model: delegate.model)
+        }
+        .windowResizability(.contentSize)
+        .restorationBehavior(.disabled)
+        .defaultLaunchBehavior(WelcomeView.isNeededAtLaunch ? .presented : .suppressed)
     }
 }
 
@@ -29,6 +36,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private struct MenuContent: View {
     let model: AppModel
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
+    @AppStorage(AppSettings.onboardingDoneKey) private var onboardingDone = false
     @AppStorage(AppSettings.enabledModesKey) private var enabled = ""
     @AppStorage(AppSettings.defaultModeKey) private var defaultModeID = ""
 
@@ -51,6 +60,12 @@ private struct MenuContent: View {
         Picker("Default Mode", selection: $defaultModeID) {
             Text("None").tag("")
             ForEach(AppSettings.lines(of: enabled).map(Mode.init(id:))) { Text($0.name).tag($0.id) }
+        }
+        if !onboardingDone {
+            Button("Set Up Dimmela…") {
+                NSApplication.shared.activate()
+                openWindow(id: WelcomeView.windowID)
+            }
         }
         Button("Settings…") {
             // No Dock icon: without activating, the window would stay behind the others.

@@ -109,3 +109,16 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] A quick accidental tap of `fn+space` followed by a second tap without speaking pastes nothing and leaves no History entry.
 - [ ] Speaking quietly or after a long pause is still transcribed.
 - [ ] A Dictation with long pauses in the middle keeps everything said (only the silence before and after is cut).
+
+### Onboarding and model management (ticket 12)
+
+To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDone`, or in a Debug build add `-showWelcome YES`. To start from zero, also remove Dimmela from the Microphone and Accessibility lists (`tccutil reset Microphone app.dimmela.Dimmela`, `tccutil reset Accessibility app.dimmela.Dimmela`) and delete `~/Library/Application Support/Dimmela/Models`.
+
+- [ ] First launch: the welcome window opens in front; no permission prompt appears by itself.
+- [ ] Allow the Microphone: the system prompt appears, then the window comes back to the front and step 1 is ticked.
+- [ ] Allow Accessibility: System Settings opens; after turning Dimmela on and coming back, step 2 is ticked and `fn+space` works without relaunching.
+- [ ] Allow Notifications: step 3 is ticked; if denied, Open System Settings goes to the Notifications pane.
+- [ ] With no model on disk, step 4 shows the download progress, then "Preparing the model for this Mac", then ready (about a minute on an M3 Pro).
+- [ ] Done closes the window; it does not open at the next launch and "Set Up Dimmela…" leaves the menu.
+- [ ] Settings › Transcription: Delete the Model removes it (the next Dictation downloads it again); Download Again replaces it.
+- [ ] Quit Dimmela halfway through the download and relaunch: the download starts again from scratch.

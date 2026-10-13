@@ -35,13 +35,24 @@ final class SpeechModel {
     /// started again instead of being loaded.
     private static let downloadedMarker = ".dimmela-downloaded"
 
-    private static var isDownloaded: Bool {
+    static let downloadMB = 490
+
+    static var isDownloaded: Bool {
         FileManager.default.fileExists(atPath: folder.appending(path: downloadedMarker).path(percentEncoded: false))
     }
 
     /// Downloads the model if needed and loads it. Later calls return at once.
     func prepare() async throws {
         _ = try await loaded()
+    }
+
+    /// Removes the model from this Mac; the next Dictation, or `prepare()`, downloads it again.
+    func delete() throws {
+        loading?.cancel()
+        loading = nil
+        asr = nil
+        try FileManager.default.removeItem(at: Self.folder)
+        state = .notLoaded
     }
 
     func transcribe(_ samples: [Float]) async throws -> String {
@@ -69,6 +80,8 @@ final class SpeechModel {
         let downloadedNow = !Self.isDownloaded
         if downloadedNow {
             state = .downloading(0)
+            // Whatever an interrupted download left is not trusted: start from scratch.
+            try? FileManager.default.removeItem(at: Self.folder)
             try FileManager.default.createDirectory(at: Self.folder, withIntermediateDirectories: true)
             _ = try await AsrModels.download(to: Self.folder, version: .v3) { progress in
                 let percent = Int(progress.fractionCompleted * 100)

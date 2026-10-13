@@ -3,13 +3,54 @@ import DimmelaCore
 import SwiftUI
 
 struct SettingsView: View {
+    let speechModel: SpeechModel
+
     var body: some View {
         TabView {
+            Tab("Transcription", systemImage: "waveform") { TranscriptionSettings(model: speechModel) }
             Tab("Post-processing", systemImage: "sparkles") { PostProcessingSettings() }
             Tab("Modes", systemImage: "list.number") { ModeSettings() }
             Tab("Vocabulary", systemImage: "character.book.closed") { VocabularySettings() }
         }
         .frame(width: 560, height: 460)
+    }
+}
+
+private struct TranscriptionSettings: View {
+    let model: SpeechModel
+    @State private var error: String?
+
+    var body: some View {
+        Form {
+            Section {
+                SpeechModelStatus(model: model)
+                if model.state == .ready || SpeechModel.isDownloaded {
+                    HStack {
+                        Button("Delete the Model", role: .destructive) {
+                            do { try model.delete() } catch { self.error = error.localizedDescription }
+                        }
+                        Button("Download Again") {
+                            do {
+                                try model.delete()
+                                Task { try? await model.prepare() }
+                            } catch {
+                                self.error = error.localizedDescription
+                            }
+                        }
+                        Spacer()
+                    }
+                }
+                if let error {
+                    Text(error).foregroundStyle(.secondary).textSelection(.enabled)
+                }
+            } header: {
+                Text("Speech model")
+            } footer: {
+                Text("Parakeet v3 runs on this Mac and recognizes Italian, English and 23 other European languages by itself. It is downloaded once from Hugging Face: no audio or text leaves the Mac.")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

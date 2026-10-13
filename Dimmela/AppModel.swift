@@ -17,6 +17,7 @@ final class AppModel {
     private(set) var controller: DictationController!
     private(set) var accessibilityGranted = AXIsProcessTrusted()
     private(set) var microphonePermission = MicrophoneRecorder.permission
+    private(set) var notificationsAllowed = false
 
     @ObservationIgnored private let recorder = MicrophoneRecorder()
     @ObservationIgnored private let shortcut = ShortcutMonitor()
@@ -65,24 +66,57 @@ final class AppModel {
         if SmokeTest.runIfRequested(model: speechModel, detector: speechDetector) { return }
         #endif
         overlay = OverlayPanel(controller: controller)
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
-        Task {
-            if microphonePermission == .notDetermined {
-                _ = await MicrophoneRecorder.requestPermission()
-                microphonePermission = MicrophoneRecorder.permission
-            }
-        }
         Task { try? await speechModel.prepare() }
         Task { await speechDetector.prepare() }
+        Task { await refreshNotifications() }
+        // On the first launch the welcome window asks for the permissions, one at a time.
+        guard UserDefaults.standard.bool(forKey: AppSettings.onboardingDoneKey) else {
+            startWatchingWhenAllowed()
+            return
+        }
+        Task { await requestMicrophone() }
         if !shortcut.start() {
             requestAccessibility()
         }
+    }
+
+    func requestMicrophone() async {
+        if microphonePermission == .notDetermined {
+            _ = await MicrophoneRecorder.requestPermission()
+        }
+        microphonePermission = MicrophoneRecorder.permission
+    }
+
+    func requestNotifications() async {
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert])
+        await refreshNotifications()
+    }
+
+    /// Read again when Dimmela comes back from System Settings.
+    func refreshPermissions() async {
+        microphonePermission = MicrophoneRecorder.permission
+        accessibilityGranted = AXIsProcessTrusted()
+        await refreshNotifications()
+    }
+
+    private func refreshNotifications() async {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        notificationsAllowed = status == .authorized || status == .provisional
     }
 
     /// Shows the system prompt, then waits for the grant: macOS gives no callback.
     func requestAccessibility() {
         // The value of kAXTrustedCheckOptionPrompt, a C global Swift 6 refuses to read.
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        startWatchingWhenAllowed()
+    }
+
+    /// Starts the keyboard watch now, or as soon as Accessibility is granted.
+    private func startWatchingWhenAllowed() {
+        if shortcut.start() {
+            accessibilityGranted = true
+            return
+        }
         guard permissionPoll == nil else { return }
         permissionPoll = Task { [weak self] in
             while !Task.isCancelled {
@@ -97,6 +131,14 @@ final class AppModel {
 
     func openMicrophoneSettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+    }
+
+    func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    }
+
+    func openNotificationSettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!)
     }
 
     func copy(_ text: String) {

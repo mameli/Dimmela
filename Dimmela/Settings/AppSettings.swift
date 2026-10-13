@@ -13,6 +13,8 @@ enum AppSettings {
     static let defaultModeKey = "defaultMode"
     /// The Vocabulary as the user writes it: one `- term = variants | description` per line.
     static let vocabularyKey = "vocabulary"
+    /// Set when the user closes the welcome window with Done.
+    static let onboardingDoneKey = "onboardingDone"
 
     private static var defaults: UserDefaults { .standard }
 
