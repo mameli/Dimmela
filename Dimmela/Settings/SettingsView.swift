@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
+            Tab("General", systemImage: "gearshape") { GeneralSettings() }
             Tab("Transcription", systemImage: "waveform") { TranscriptionSettings(model: speechModel) }
             Tab("Post-processing", systemImage: "sparkles") { PostProcessingSettings() }
             Tab("Modes", systemImage: "list.number") { ModeSettings() }

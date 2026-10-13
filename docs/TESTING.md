@@ -122,3 +122,11 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 - [ ] Done closes the window; it does not open at the next launch and "Set Up Dimmela…" leaves the menu.
 - [ ] Settings › Transcription: Delete the Model removes it (the next Dictation downloads it again); Download Again replaces it.
 - [ ] Quit Dimmela halfway through the download and relaunch: the download starts again from scratch.
+
+### Launch at login (ticket 13)
+
+- [ ] Settings › General shows the icon, the name and the version, and "Open at login".
+- [ ] Turn it on: Dimmela appears in System Settings › General › Login Items. If macOS asks for approval, the toggle shows "Open Login Items".
+- [ ] Log out and back in: Dimmela is in the menu bar and the menu says Ready without opening it by hand.
+- [ ] Turn it off: Dimmela leaves the Login Items.
+- [ ] The welcome window has the same toggle under Optional.
