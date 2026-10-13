@@ -18,7 +18,7 @@
 - The build is signed with Developer ID and Hardened Runtime and notarized. Gatekeeper reports `accepted, source=Notarized Developer ID`. The zip is 12 MB.
 - Release: https://github.com/mameli/Dimmela/releases/tag/v0.1.0
 - Tap: https://github.com/mameli/homebrew-dimmela. The cask SHA-256 matches the zip downloaded from GitHub.
-- Homebrew 7 requires `brew tap mameli/dimmela` before installing, so the READMEs and future release notes say so. The v0.1.0 release notes still show the one-line form.
+- `brew install --cask mameli/dimmela/dimmela` taps on its own (Homebrew 7's `cmd/install.rb` calls `ensure_installed!` on a fully qualified name); only `brew info` needs an explicit tap. READMEs and release notes use the one-line form.
 - Not verified:
   - an actual `brew install` (it would change the user's Homebrew setup)
   - the update checker against a newer release (none exists yet; the update checker is still open below)

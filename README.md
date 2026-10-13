@@ -1,14 +1,17 @@
-# Dimmela
+<p align="center">
+  <img src="Dimmela/Assets.xcassets/AppIcon.appiconset/icon_256.png" alt="Dimmela icon" width="128">
+</p>
+
+<h1 align="center">Dimmela</h1>
+
+<p align="center"><a href="https://github.com/mameli/Dimmela/releases/latest"><b>Download the latest version</b></a> · macOS 15+ · Apple Silicon</p>
 
 A native macOS menu-bar app for dictation. Hold or tap `fn+Space`, speak, and Dimmela pastes the text where you are typing. Speech is transcribed on your Mac by Parakeet v3 on the Neural Engine. Optionally, an LLM rewrites each Dictation with your own prompts and skills.
 
 It is a lighter alternative to [Handy](https://handy.computer): with the speech model loaded the app uses about 40 MB of memory, against Handy's 900 MB (the model's weights live with the Neural Engine and are not counted there; even counting them it stays well under half).
 
-Apple Silicon, macOS 15 or later.
-
 ```sh
-brew tap mameli/dimmela
-brew install --cask dimmela
+brew install --cask mameli/dimmela/dimmela
 ```
 
 Or download `Dimmela.zip` from the [latest release](https://github.com/mameli/Dimmela/releases/latest), open it and move Dimmela to Applications.

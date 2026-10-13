@@ -97,7 +97,7 @@ fi
 gh release create "$tag" "$zip" "$latest" --target main --title "Dimmela $version" --notes-file - <<NOTES
 Apple Silicon Mac, macOS 15 or later.
 
-With Homebrew: \`brew tap mameli/dimmela\` then \`brew install --cask dimmela\` (or \`brew upgrade --cask dimmela\`). Otherwise download \`Dimmela-$version.zip\` (\`Dimmela.zip\` is the same file), open it and move **Dimmela** to **Applications**.
+With Homebrew: \`brew install --cask mameli/dimmela/dimmela\` (or \`brew upgrade --cask dimmela\`). Otherwise download \`Dimmela-$version.zip\` (\`Dimmela.zip\` is the same file), open it and move **Dimmela** to **Applications**.
 
 Dimmela is notarized by Apple: it opens like any other app. At the first launch a window walks you through the permissions and downloads the speech model (about 490 MB).
 NOTES
