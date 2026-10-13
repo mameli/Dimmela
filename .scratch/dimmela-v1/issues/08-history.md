@@ -6,10 +6,18 @@
 
 **Status:** ready-for-agent
 
-- [ ] Each completed Dictation creates a History entry with audio, Transcript, final text, Mode and timestamp
-- [ ] Only the last 5 entries are kept; the oldest entry and its audio are deleted when a sixth arrives
-- [ ] Cancelled Dictations are not stored
-- [ ] The History submenu offers copy final text, copy Transcript and Post-process again with any enabled Mode
-- [ ] Post-process again copies the new result to the clipboard and shows a notification
-- [ ] History survives an app restart
-- [ ] Controller tests cover entry creation, rotation, cancelled exclusion and Post-process again
+- [x] Each completed Dictation creates a History entry with audio, Transcript, final text, Mode and timestamp
+- [x] Only the last 5 entries are kept; the oldest entry and its audio are deleted when a sixth arrives
+- [x] Cancelled Dictations are not stored
+- [x] The History submenu offers copy final text, copy Transcript and Post-process again with any enabled Mode
+- [x] Post-process again copies the new result to the clipboard and shows a notification
+- [x] History survives an app restart
+- [x] Controller tests cover entry creation, rotation, cancelled exclusion and Post-process again
+
+## Comments
+
+### 2026-10-13: done (commit 7fc0036)
+
+- Verified by hand by the user.
+- Post-processing again does not add a History entry; otherwise each retry would push out a real Dictation.
+- A missing notification turned out to be notifications turned off in System Settings. The workaround attempted for it was reverted.

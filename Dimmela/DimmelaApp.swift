@@ -1,6 +1,5 @@
 import DimmelaCore
 import SwiftUI
-import UserNotifications
 
 @main
 struct DimmelaApp: App {
@@ -19,20 +18,11 @@ struct DimmelaApp: App {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor let model = AppModel()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        UNUserNotificationCenter.current().delegate = self
         MainActor.assumeIsolated { model.launch() }
-    }
-
-    /// Shows banners also while Dimmela is the active app, as right after a click in its menu:
-    /// by default macOS drops them.
-    nonisolated func userNotificationCenter(
-        _ center: UNUserNotificationCenter, willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .list]
     }
 }
 
