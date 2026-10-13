@@ -21,5 +21,5 @@
 
 - Verified by hand by the user with OpenRouter and the handy-config prompts.
 - Handy's `${output}` placeholder is dropped and the Transcript is sent as the user message, as Handy does with OpenRouter.
-- The provider timeout is 5 s total, as the user asked; after that the Transcript is pasted.
+- The provider timeout was briefly 5 s at the user's request, then restored to 30 s (60 s total) in ticket 05: long skills risk exceeding 5 s.
 - Reasoning is not explicitly disabled; Haiku does not reason by default.
