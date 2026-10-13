@@ -17,6 +17,9 @@ public struct DictationBoundaries {
     public var startRecording: @MainActor () throws -> Void
     /// Stops the microphone and returns what it heard: 16 kHz mono samples.
     public var stopRecording: @MainActor () async -> [Float]
+    /// Where the voice activity detector hears speech in the samples, from the first word to the
+    /// last; nil if there is none. Throws when the detector is unavailable.
+    public var findSpeech: @MainActor ([Float]) async throws -> Range<Int>?
     public var transcribe: @MainActor ([Float]) async throws -> String
     /// Puts the text in the frontmost app.
     public var paste: @MainActor (String) async throws -> Void
@@ -35,6 +38,7 @@ public struct DictationBoundaries {
     public init(
         startRecording: @escaping @MainActor () throws -> Void,
         stopRecording: @escaping @MainActor () async -> [Float],
+        findSpeech: @escaping @MainActor ([Float]) async throws -> Range<Int>?,
         transcribe: @escaping @MainActor ([Float]) async throws -> String,
         paste: @escaping @MainActor (String) async throws -> Void,
         report: @escaping @MainActor (DictationProblem) -> Void,
@@ -46,6 +50,7 @@ public struct DictationBoundaries {
     ) {
         self.startRecording = startRecording
         self.stopRecording = stopRecording
+        self.findSpeech = findSpeech
         self.transcribe = transcribe
         self.paste = paste
         self.report = report
@@ -213,7 +218,14 @@ public final class DictationController {
 
     /// Once cancelled it leaves everything alone: a new Dictation may already be running.
     private func process(with mode: Mode?) async {
-        let samples = await boundaries.stopRecording()
+        let recorded = await boundaries.stopRecording()
+        // The silence before and after the speech is cut. Without a detector, all of it is kept.
+        var samples = recorded
+        do {
+            guard let speech = try await boundaries.findSpeech(recorded) else { return end() }
+            samples = Array(recorded[speech.clamped(to: recorded.indices)])
+        } catch {}
+        guard !Task.isCancelled else { return }
         let vocabulary = boundaries.vocabulary()
         let transcript: String
         do {

@@ -102,3 +102,10 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] Dictate "allora, ehm, volevo dire una cosa" with Default Mode None: no "ehm" and no stray comma in the pasted text.
 - [ ] Start a Dictation with "ehm," or "mmh…": the text starts with the next word, capitalized.
 - [ ] "cioè" and "tipo" stay in the text.
+
+### Voice activity detection (ticket 11)
+
+- [ ] Smoke test: `-transcribeFile` on a file with a second of silence around the speech prints a speech range inside the file; on a silent file it prints `speech none`.
+- [ ] A quick accidental tap of `fn+space` followed by a second tap without speaking pastes nothing and leaves no History entry.
+- [ ] Speaking quietly or after a long pause is still transcribed.
+- [ ] A Dictation with long pauses in the middle keeps everything said (only the silence before and after is cut).

@@ -6,6 +6,8 @@ import Foundation
 @MainActor
 final class FakeBoundaries {
     var samples: [Float] = [0.1, 0.2, 0.3]
+    /// Where the voice activity detector finds speech; all of it by default.
+    var findSpeech: ([Float]) throws -> Range<Int>? = { 0..<$0.count }
     var transcript: Result<String, Error> = .success("Ciao, sto provando Dimmela.")
     var startError: Error?
     var pasteError: Error?
@@ -43,6 +45,7 @@ final class FakeBoundaries {
                 recordingStopped += 1
                 return samples
             },
+            findSpeech: { [unowned self] samples in try findSpeech(samples) },
             transcribe: { [unowned self] samples in
                 transcribed.append(samples)
                 phaseDuringTranscription = self.controller?.phase

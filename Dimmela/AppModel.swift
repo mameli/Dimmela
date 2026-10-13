@@ -12,6 +12,7 @@ private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "app")
 @Observable
 final class AppModel {
     let speechModel = SpeechModel()
+    @ObservationIgnored private let speechDetector = SpeechDetector()
     let history = History(directory: URL.applicationSupportDirectory.appending(path: "Dimmela/History", directoryHint: .isDirectory))
     private(set) var controller: DictationController!
     private(set) var accessibilityGranted = AXIsProcessTrusted()
@@ -30,6 +31,7 @@ final class AppModel {
                 }
             },
             stopRecording: { [recorder] in recorder.stop() },
+            findSpeech: { [speechDetector] samples in try await speechDetector.speechRange(in: samples) },
             transcribe: { [speechModel] samples in try await speechModel.transcribe(samples) },
             paste: { text in try await Paster.paste(text) },
             report: { problem in Self.show(problem) },
@@ -60,7 +62,7 @@ final class AppModel {
 
     func launch() {
         #if DEBUG
-        if SmokeTest.runIfRequested(model: speechModel) { return }
+        if SmokeTest.runIfRequested(model: speechModel, detector: speechDetector) { return }
         #endif
         overlay = OverlayPanel(controller: controller)
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
@@ -71,6 +73,7 @@ final class AppModel {
             }
         }
         Task { try? await speechModel.prepare() }
+        Task { await speechDetector.prepare() }
         if !shortcut.start() {
             requestAccessibility()
         }

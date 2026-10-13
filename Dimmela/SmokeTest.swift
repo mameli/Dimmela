@@ -2,14 +2,15 @@
 import AVFoundation
 import AppKit
 
-/// Checks the speech model without a microphone or a keyboard, from the command line:
+/// Checks the speech model and the voice activity detection without a microphone or a
+/// keyboard, from the command line:
 ///
 ///     Dimmela.app/Contents/MacOS/Dimmela -transcribeFile <audio file>
 ///
-/// Prints the Transcript, the time it took and the memory footprint, then quits.
+/// Prints where the speech is, the Transcript, the times and the memory footprint, then quits.
 @MainActor
 enum SmokeTest {
-    static func runIfRequested(model: SpeechModel) -> Bool {
+    static func runIfRequested(model: SpeechModel, detector: SpeechDetector) -> Bool {
         guard let path = UserDefaults.standard.string(forKey: "transcribeFile") else { return false }
         Task {
             do {
@@ -17,6 +18,10 @@ enum SmokeTest {
                 try await model.prepare()
                 print("model ready in \(ContinuousClock.now - start)")
                 let samples = try read(URL(fileURLWithPath: path))
+                await detector.prepare()
+                start = ContinuousClock.now
+                let speech = try await detector.speechRange(in: samples)
+                print("speech \(speech.map { "\($0.lowerBound)..<\($0.upperBound)" } ?? "none") of \(samples.count) samples in \(ContinuousClock.now - start)")
                 start = ContinuousClock.now
                 let text = try await model.transcribe(samples)
                 print("transcribed \(samples.count / 16_000) s in \(ContinuousClock.now - start): \(text)")
