@@ -6,9 +6,17 @@
 
 **Status:** ready-for-agent
 
-- [ ] The pill appears on Dictation start and disappears after the paste or on cancel
-- [ ] The level meter follows my voice
-- [ ] The pill switches to a processing indicator after recording ends
-- [ ] The pill shows the current Mode name, or that no Post-processing will run
-- [ ] The frontmost app keeps key focus throughout; the paste lands where the cursor was
-- [ ] Controller tests cover the published overlay state across phases
+- [x] The pill appears on Dictation start and disappears after the paste or on cancel
+- [x] The level meter follows my voice
+- [x] The pill switches to a processing indicator after recording ends
+- [x] The pill shows the current Mode name, or that no Post-processing will run
+- [x] The frontmost app keeps key focus throughout; the paste lands where the cursor was
+- [x] Controller tests cover the published overlay state across phases
+
+## Comments
+
+### 2026-10-13: done
+
+- Verified by hand by the user.
+- While processing, the pill shows three white dots that pulse one after the other on a 1.6 s cycle (the user's choice), instead of the system spinner, which was invisible on the dark pill.
+- The dots stay still with Reduce Motion.

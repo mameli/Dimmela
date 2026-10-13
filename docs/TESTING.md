@@ -65,8 +65,8 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 
 - [ ] `fn+space`: a dark pill appears at the bottom centre of the screen with the pointer, with red bars that follow the voice and "Transcript".
 - [ ] `shift+fn+space` with a Default Mode: the pill shows the Mode's name.
-- [ ] After recording, the bars become a spinner until the paste; then the pill disappears.
+- [ ] After recording, the bars become three pulsing white dots until the paste; then the pill disappears.
 - [ ] `Esc` hides the pill at once.
 - [ ] Dictating into TextEdit, the cursor stays in TextEdit and the paste lands there; the pill cannot be clicked.
 - [ ] With two displays, the pill shows on the one with the pointer; it also shows over a full-screen app.
-- [ ] With Reduce Motion on, the bars still move but without animation.
+- [ ] With Reduce Motion on, the bars still move but without animation and the dots stay still.

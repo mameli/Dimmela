@@ -60,7 +60,7 @@ private struct OverlayView: View {
     var body: some View {
         HStack(spacing: 10) {
             if controller.phase == .processing {
-                ProgressView().controlSize(.small).tint(.white)
+                PulsingDots()
             } else {
                 LevelBars(level: controller.level)
             }
@@ -93,5 +93,33 @@ private struct LevelBars: View {
         }
         .frame(height: 18)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: level)
+    }
+}
+
+/// Three white dots pulsing one after the other while the Dictation is processed. With Reduce
+/// Motion they stay still.
+private struct PulsingDots: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let period = 1.6
+
+    var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { context in
+            let time = context.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 4) {
+                ForEach(0..<3, id: \.self) { index in
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 5, height: 5)
+                        .opacity(reduceMotion ? 0.8 : opacity(at: time, index: index))
+                }
+            }
+        }
+        .frame(height: 18)
+    }
+
+    /// A wave that peaks on each dot a third of a period after the previous one.
+    private func opacity(at time: TimeInterval, index: Int) -> Double {
+        let phase = (time / period - Double(index) / 3).truncatingRemainder(dividingBy: 1)
+        return 0.3 + 0.7 * (0.5 + 0.5 * cos(phase * 2 * .pi))
     }
 }
