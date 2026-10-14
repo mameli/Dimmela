@@ -13,6 +13,8 @@ Copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` first, so macOS 
 
 The Debug build (signed with the local certificate) and the released app (signed with Developer ID) are different apps for macOS: each needs its own Microphone and Accessibility grant. When switching from one to the other, remove Dimmela from Privacy & Security › Accessibility (and Microphone if needed) and allow it again.
 
+If notifications or permission prompts show macOS's grid placeholder instead of Dimmela's icon, the system icon cache kept the icon of a build that had none. Clearing it fixes it: `rm -rf "$(getconf DARWIN_USER_CACHE_DIR)com.apple.iconservices"`, `sudo rm -rf /Library/Caches/com.apple.iconservices.store`, then restart the Mac. Several copies of Dimmela registered at once (the Debug, Release and installed builds share the bundle id) make it more likely.
+
 ## Smoke test (Debug builds)
 
 Transcribe a file without microphone or keyboard. It prints the Transcript, the time and the memory footprint:
