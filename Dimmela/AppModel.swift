@@ -84,6 +84,7 @@ final class AppModel {
             return
         }
         Task { await requestMicrophone() }
+        Task { await requestNotificationsIfNeverAsked() }
         if !shortcut.start() {
             requestAccessibility()
         }
@@ -99,6 +100,13 @@ final class AppModel {
     func requestNotifications() async {
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert])
         await refreshNotifications()
+    }
+
+    /// After the welcome window, when macOS has forgotten the answer (notifications reset in
+    /// System Settings): asked again once. A refusal is respected.
+    private func requestNotificationsIfNeverAsked() async {
+        guard await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .notDetermined else { return }
+        await requestNotifications()
     }
 
     /// Read again when Dimmela comes back from System Settings.
