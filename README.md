@@ -34,6 +34,10 @@ xcodebuild -project Dimmela.xcodeproj -scheme Dimmela -configuration Debug -deri
 
 Domain tests: `cd DimmelaCore && swift test`. What needs a Mac is checked by hand with [docs/TESTING.md](docs/TESTING.md).
 
+## Support
+
+Dimmela is free. If it is useful to you, you can [buy me a coffee](https://buymeacoffee.com/mameli.dev): it helps cover the costs of keeping Dimmela going.
+
 ## License
 
 MIT

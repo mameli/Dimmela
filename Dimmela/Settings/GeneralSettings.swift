@@ -206,7 +206,25 @@ struct GeneralSettings: View {
             Section {
                 UpdatesToggle()
             }
+
+            // At the bottom, in grey: seen by those who scroll this far, not first thing (from Takku).
+            Section {
+            } footer: {
+                Text(Self.supportNote)
+                    .foregroundStyle(.secondary)
+                    .tint(.secondary)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .formStyle(.grouped)
+    }
+
+    /// The link is grey like the text around it, so it is underlined to show it is one.
+    private static var supportNote: AttributedString {
+        var note = AttributedString(localized: "Dimmela is free. If it is useful to you, [buy me a coffee](https://buymeacoffee.com/mameli.dev).")
+        for run in note.runs where run.link != nil {
+            note[run.range].underlineStyle = .single
+        }
+        return note
     }
 }
