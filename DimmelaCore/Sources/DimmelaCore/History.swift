@@ -38,9 +38,11 @@ public final class History {
     }
 
     /// Keeps a Dictation and deletes what falls beyond the limit.
-    public func add(transcript: String, text: String, mode: Mode?, samples: [Float], date: Date = .now) throws {
+    public func add(
+        id: UUID = UUID(), transcript: String, text: String, mode: Mode?, samples: [Float], date: Date = .now
+    ) throws {
         let entry = HistoryEntry(
-            id: UUID(), date: date, transcript: transcript, text: text, modeID: mode?.id, modeName: mode?.name
+            id: id, date: date, transcript: transcript, text: text, modeID: mode?.id, modeName: mode?.name
         )
         let folder = folder(of: entry)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

@@ -57,8 +57,8 @@ public struct ChatClient: Sendable {
 
     private let baseURL: URL
     private let apiKey: String?
-    private let model: String
-    private let reasoning: Provider.ReasoningEffort?
+    public let model: String
+    public let reasoning: Provider.ReasoningEffort?
     private let extraParameters: String?
     private let transport: Transport
 
@@ -72,6 +72,11 @@ public struct ChatClient: Sendable {
         self.reasoning = reasoning
         self.extraParameters = extraParameters
         self.transport = transport
+    }
+
+    /// Whether requests carry Extra parameters, without saying which.
+    public var hasExtraParameters: Bool {
+        !((try? ExtraParameters.parse(extraParameters ?? "").isEmpty) ?? true)
     }
 
     public func complete(_ messages: [ChatMessage]) async throws -> String {

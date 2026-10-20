@@ -67,6 +67,7 @@ private struct PostProcessingSettings: View {
     /// A `Provider.ReasoningEffort` raw value; empty for the model's default.
     @AppStorage(AppSettings.providerReasoningKey) private var reasoning = ""
     @AppStorage(AppSettings.providerExtraParametersKey) private var savedExtraParameters = ""
+    @AppStorage(AppSettings.keepsPostProcessingLogKey) private var keepsPostProcessingLog = false
     /// The Extra parameters as typed: they are saved only when valid.
     @State private var extraParameters = ""
     @State private var extraParametersProblem: String?
@@ -196,6 +197,23 @@ private struct PostProcessingSettings: View {
                 }
             } footer: {
                 Text("Sends a one-word request to the model, with the same reasoning and Extra parameters as a Dictation. If the provider does not answer within 30 seconds during a Dictation, the Transcript is pasted instead.")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Keep a Post-processing log", isOn: $keepsPostProcessingLog)
+                if keepsPostProcessingLog {
+                    Button("Show in Finder") {
+                        let log = AppSettings.postProcessingLog.url
+                        if FileManager.default.fileExists(atPath: log.path(percentEncoded: false)) {
+                            NSWorkspace.shared.activateFileViewerSelecting([log])
+                        } else {
+                            NSWorkspace.shared.open(log.deletingLastPathComponent())
+                        }
+                    }
+                }
+            } footer: {
+                Text("Each Transcript with the Mode, the prompt version, the model and the LLM's answer, one JSON line per Post-processing in ~/.dimmela/post-processing.jsonl, about 1 MB at most: to improve your Modes' prompts with a model of your choice, adding your own \"comment\" where the answer was not what you wanted. Dimmela only adds lines at the end. It holds what you dictate, so it is never part of Report a Problem.")
                     .foregroundStyle(.secondary)
             }
         }

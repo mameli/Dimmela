@@ -36,6 +36,8 @@ public struct DictationBoundaries {
     public var chatClient: @MainActor () throws -> ChatClient
     /// Where completed Dictations are kept.
     public var history: History
+    /// Each Post-processing that reached the provider, answered or failed; not when cancelled.
+    public var recordPostProcessing: @MainActor (PostProcessingRecord) -> Void
 
     public init(
         startRecording: @escaping @MainActor () throws -> Void,
@@ -49,7 +51,8 @@ public struct DictationBoundaries {
         enabledModes: @escaping @MainActor () -> [Mode],
         vocabulary: @escaping @MainActor () -> Vocabulary,
         history: History,
-        chatClient: @escaping @MainActor () throws -> ChatClient
+        chatClient: @escaping @MainActor () throws -> ChatClient,
+        recordPostProcessing: @escaping @MainActor (PostProcessingRecord) -> Void = { _ in }
     ) {
         self.startRecording = startRecording
         self.stopRecording = stopRecording
@@ -63,6 +66,7 @@ public struct DictationBoundaries {
         self.vocabulary = vocabulary
         self.history = history
         self.chatClient = chatClient
+        self.recordPostProcessing = recordPostProcessing
     }
 }
 
@@ -253,10 +257,13 @@ public final class DictationController {
         guard !Task.isCancelled else { return }
         guard !transcript.isEmpty else { return end() }
 
+        // Shared by the History entry and the Post-processing log, which also gives it to the
+        // Post-processing again of the same Dictation.
+        let dictationID = UUID()
         var text = transcript
         if let mode {
             do {
-                text = try await postProcess(transcript, with: mode)
+                text = try await postProcess(transcript, with: mode, dictationID: dictationID)
             } catch {
                 guard !Task.isCancelled else { return }
                 boundaries.report(.postProcessingFailed(Self.describe(error)))
@@ -265,7 +272,7 @@ public final class DictationController {
         }
 
         // Kept even if the paste fails: the text can still be copied from the History.
-        try? boundaries.history.add(transcript: transcript, text: text, mode: mode, samples: samples)
+        try? boundaries.history.add(id: dictationID, transcript: transcript, text: text, mode: mode, samples: samples)
         do {
             try await boundaries.paste(text + " ")
         } catch {
@@ -278,20 +285,39 @@ public final class DictationController {
     /// if it fails.
     public func postProcessAgain(_ entry: HistoryEntry, with mode: Mode) async -> String? {
         do {
-            return try await postProcess(entry.transcript, with: mode)
+            return try await postProcess(entry.transcript, with: mode, dictationID: entry.id, isAgain: true)
         } catch {
             boundaries.report(.postProcessingAgainFailed(Self.describe(error)))
             return nil
         }
     }
 
-    private func postProcess(_ transcript: String, with mode: Mode) async throws -> String {
-        let instructions = [try mode.instructions(), boundaries.vocabulary().promptBlock]
+    private func postProcess(
+        _ transcript: String, with mode: Mode, dictationID: UUID, isAgain: Bool = false
+    ) async throws -> String {
+        let modeInstructions = try mode.instructions()
+        let instructions = [modeInstructions, boundaries.vocabulary().promptBlock]
             .compactMap { $0 }.joined(separator: "\n\n")
-        return try await boundaries.chatClient().complete([
-            ChatMessage(role: .system, content: instructions),
-            ChatMessage(role: .user, content: transcript),
-        ])
+        let client = try boundaries.chatClient()
+        let start = ContinuousClock.now
+        func record(text: String?, error: String?) {
+            let elapsed = (ContinuousClock.now - start).components
+            boundaries.recordPostProcessing(PostProcessingRecord(
+                dictationID: dictationID, mode: mode, instructions: modeInstructions, client: client, isAgain: isAgain, transcript: transcript,
+                text: text, error: error, seconds: Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
+            ))
+        }
+        do {
+            let text = try await client.complete([
+                ChatMessage(role: .system, content: instructions),
+                ChatMessage(role: .user, content: transcript),
+            ])
+            record(text: text, error: nil)
+            return text
+        } catch {
+            if !Task.isCancelled { record(text: nil, error: Self.describe(error)) }
+            throw error
+        }
     }
 
     private static func describe(_ error: Error) -> String {

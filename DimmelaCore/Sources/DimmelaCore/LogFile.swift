@@ -1,11 +1,9 @@
 import Foundation
 import Synchronization
 
-/// Dimmela's own log, next to the system's: the system log keeps info messages only while they
-/// are in memory, this file keeps every line. Past `maxBytes` the file becomes the previous one
-/// (`Dimmela.1.log`) and a new one starts, so the two never take more than twice `maxBytes`.
-/// Never the Transcript, the text, the provider's address or the Extra parameters: the file
-/// goes in *Report a Problem…*.
+/// Lines appended to a file, for Dimmela's own log and the Post-processing log. Past `maxBytes`
+/// the file becomes the previous one (`Dimmela.1.log`) and a new one starts, so the two never
+/// take more than twice `maxBytes`.
 public final class LogFile: Sendable {
     public let url: URL
     private let previousURL: URL

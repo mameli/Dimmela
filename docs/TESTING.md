@@ -62,6 +62,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 - [ ] The key is in Keychain Access under "Dimmela: provider API key", not in Dimmela's preferences.
 - [ ] Reasoning on OpenRouter set to Off, then High: Test connection still answers, a little slower with High.
 - [ ] Extra parameters: type `{"reasoning_effort": "xhigh"}` by hand (with smart quotes on in System Settings › Keyboard): the quotes stay straight and no error shows. Remove the closing brace: a red message, Test connection disabled; quit and reopen Settings: the last valid parameters are back.
+- [ ] Settings › Post-processing › Keep a Post-processing log on, then dictate with a Mode: `~/.dimmela/post-processing.jsonl` gets one line with the Transcript, the answer, the Mode, `promptVersion`, model and reasoning. Edit the prompt file and dictate again: the new line has another `promptVersion`. Post-process a History entry again from the menu: its line has `"isAgain":true`. Add `"comment":"…"` by hand to a line, save, dictate again: the comment is still there. Turn the log off: no new lines.
 - [ ] Extra parameters `{"reasoning_effort": "banana"}` on a provider that checks it: Test connection fails with the provider's message followed by "Settings › Post-processing sets Extra parameters."
 - [ ] Settings › Modes: Add Folder… with the `handy-config` folder; its prompt files are listed, README excluded.
 - [ ] Enable some Modes, drag to reorder, choose a Default Mode; the menu's Default Mode picker shows the same.

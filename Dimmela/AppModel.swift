@@ -63,7 +63,11 @@ final class AppModel {
             enabledModes: { AppSettings.enabledModes },
             vocabulary: { AppSettings.vocabulary },
             history: history,
-            chatClient: { try ChatClient.configured() }
+            chatClient: { try ChatClient.configured() },
+            recordPostProcessing: { record in
+                guard AppSettings.keepsPostProcessingLog else { return }
+                AppSettings.postProcessingLog.write(record.jsonLine)
+            }
         ))
         // Tasks started on the main actor run in the order the keys arrived.
         shortcut.onDown = { [unowned self] time in

@@ -21,6 +21,8 @@ enum AppSettings {
     /// Set when the user closes the welcome window with Done.
     static let onboardingDoneKey = "onboardingDone"
     static let checkForUpdatesKey = "checkForUpdates"
+    /// Off unless the user turns it on: the Post-processing log holds what they dictate.
+    static let keepsPostProcessingLogKey = "keepsPostProcessingLog"
 
     private static var defaults: UserDefaults { .standard }
 
@@ -30,6 +32,12 @@ enum AppSettings {
     }
 
     static var checkForUpdates: Bool { defaults.bool(forKey: checkForUpdatesKey) }
+
+    static var keepsPostProcessingLog: Bool { defaults.bool(forKey: keepsPostProcessingLogKey) }
+
+    /// Each Post-processing as one line of JSON, to improve the Modes' prompts: next to the
+    /// Vocabulary, where the user edits their own files. Two files of 512 KB at most.
+    static let postProcessingLog = LogFile(url: URL.homeDirectory.appending(path: ".dimmela/post-processing.jsonl"))
 
     static var provider: Provider {
         Provider(

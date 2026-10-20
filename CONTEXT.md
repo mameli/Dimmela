@@ -66,6 +66,10 @@ _Avoid_: filler word (for words with meaning)
 The last Dictations kept by Dimmela, each with its audio, Transcript, final text and Mode, so they can be copied or Post-processed again with another Mode.
 _Avoid_: log, archive
 
+**Post-processing log** (`PostProcessingRecord`):
+A text-only record of each Post-processing, kept only if the user turns it on: Transcript, Mode, prompt version, model and the LLM's answer, so the user can improve their Modes' prompts with a model of their choice. Unlike the History it has no audio and keeps far more, up to about 1 MB.
+_Avoid_: history, journal, dataset
+
 **Vocabulary** (`Vocabulary`):
 The user's custom words (e.g. "Claude", "Jira") that Dimmela enforces in the Transcript.
 _Avoid_: custom words, dictionary

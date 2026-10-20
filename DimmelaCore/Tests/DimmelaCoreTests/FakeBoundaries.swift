@@ -25,6 +25,7 @@ final class FakeBoundaries {
     private(set) var transcribed: [[Float]] = []
     private(set) var pasted: [String] = []
     private(set) var problems: [DictationProblem] = []
+    private(set) var records: [PostProcessingRecord] = []
     /// The controller's phase while the speech model was working.
     private(set) var phaseDuringTranscription: DictationController.Phase?
 
@@ -70,9 +71,10 @@ final class FakeBoundaries {
                 if let chatClientError { throw chatClientError }
                 return ChatClient(
                     baseURL: URL(string: "https://openrouter.ai/api/v1")!, apiKey: "sk-test",
-                    model: "anthropic/claude-haiku-5.5", transport: provider.send
+                    model: "anthropic/claude-haiku-5.5", reasoning: .low, transport: provider.send
                 )
-            }
+            },
+            recordPostProcessing: { [unowned self] record in records.append(record) }
         ))
         self.controller = controller
         return controller
