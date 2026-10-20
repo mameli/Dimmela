@@ -21,9 +21,7 @@ public struct ProblemReport: Equatable, Sendable {
     /// The provider by model and where it runs: its address can name a company.
     public static func postProcessing(provider: Provider, isUsed: Bool) -> String {
         guard isUsed else { return "Not used" }
-        let host = URL(string: provider.baseURL.trimmingCharacters(in: .whitespaces))?.host()?.lowercased() ?? ""
-        let onThisMac = ["localhost", "127.0.0.1", "::1", "[::1]"].contains(host)
-        return "\(provider.model) (\(onThisMac ? "on this Mac" : "remote"))"
+        return "\(provider.model) (\(provider.isOnThisMac ? "on this Mac" : "remote"))"
     }
 
     public var issueURL: URL {

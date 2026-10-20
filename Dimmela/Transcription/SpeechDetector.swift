@@ -1,8 +1,7 @@
 @preconcurrency import FluidAudio
 import Foundation
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "speech-detector")
+private let logger = AppLog(category: "speech-detector")
 
 /// Silero voice activity detection through FluidAudio: where a Dictation's speech starts and
 /// ends. Its small model is downloaded once, next to Parakeet.
@@ -26,7 +25,7 @@ final class SpeechDetector {
                 modelDirectory: URL.applicationSupportDirectory.appending(path: "Dimmela", directoryHint: .isDirectory)
             )
         } catch {
-            logger.error("Voice activity detection unavailable: \(error, privacy: .public)")
+            logger.error("Voice activity detection unavailable: \(error.localizedDescription)")
         }
     }
 

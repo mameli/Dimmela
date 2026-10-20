@@ -1,17 +1,14 @@
 import AppKit
 import DimmelaCore
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "report")
+private let logger = AppLog(category: "report")
 
 /// *Report a Problem…*: writes a report file with Dimmela's version, the Mac, the settings that
-/// matter and Dimmela's logs of the last days, shows it in Finder and opens the GitHub bug form
+/// matter and Dimmela's log file, shows it in Finder and opens the GitHub bug form
 /// with the same fields filled in. Nothing is sent: the user checks the file and attaches it
 /// (from Takku).
 @MainActor
 enum ProblemReporter {
-    private nonisolated static let logDays = 3
-
     static func report() {
         let report = ProblemReport(
             version: version, system: system, installedWith: installedWith,
@@ -30,7 +27,7 @@ enum ProblemReporter {
                 try report.text(logs: logs).write(to: file, atomically: true, encoding: .utf8)
                 NSWorkspace.shared.activateFileViewerSelecting([file])
             } catch {
-                logger.error("Report not written: \(error, privacy: .public)")
+                logger.error("Report not written: \(error.localizedDescription)")
             }
             NSWorkspace.shared.open(report.issueURL)
         }
@@ -63,28 +60,8 @@ enum ProblemReporter {
         #endif
     }
 
-    /// What `log show` keeps of Dimmela's messages: errors and notices are stored for days, info
-    /// only while in memory. Values not marked public show as `<private>`.
+    /// Dimmela's log file, previous file included: at most about 1 MB, info messages too.
     private static func recentLogs() async -> String {
-        await Task.detached {
-            let process = Process()
-            process.executableURL = URL(filePath: "/usr/bin/log")
-            process.arguments = [
-                "show", "--last", "\(logDays)d", "--info", "--style", "compact",
-                "--predicate", #"subsystem == "app.dimmela.Dimmela""#,
-            ]
-            let output = Pipe()
-            process.standardOutput = output
-            process.standardError = output
-            do {
-                try process.run()
-                // Read before waiting: a full pipe would block `log` forever.
-                let data = output.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-                return String(decoding: data, as: UTF8.self)
-            } catch {
-                return "Logs not available: \(error)"
-            }
-        }.value
+        await Task.detached { AppLog.file.contents }.value
     }
 }

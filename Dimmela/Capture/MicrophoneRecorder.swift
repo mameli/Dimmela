@@ -1,9 +1,8 @@
 @preconcurrency import AVFoundation
 import Foundation
 import Synchronization
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "microphone")
+private let logger = AppLog(category: "microphone")
 
 /// Records the default microphone into memory as 16 kHz mono samples, the format Parakeet
 /// takes. A new engine for every Dictation: a microphone plugged in or chosen between two
@@ -64,7 +63,7 @@ final class MicrophoneRecorder: Sendable {
         engine.prepare()
         try engine.start()
         self.engine.withLock { $0 = engine }
-        logger.info("Recording from \(format.sampleRate, privacy: .public) Hz, \(format.channelCount, privacy: .public) channels")
+        logger.info("Recording from \(format.sampleRate) Hz, \(format.channelCount) channels")
     }
 
     /// Stops the microphone and returns everything recorded since `start()`.

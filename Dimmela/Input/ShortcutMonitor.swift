@@ -1,8 +1,7 @@
 import AppKit
 import ApplicationServices
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "shortcut")
+private let logger = AppLog(category: "shortcut")
 
 /// Watches the keyboard for the Dictation shortcut, `fn+space`, and while a Dictation is in
 /// progress for `Esc`, the digits, `shift`, the arrows and `Return`, through

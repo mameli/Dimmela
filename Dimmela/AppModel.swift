@@ -3,9 +3,8 @@ import ApplicationServices
 import DimmelaCore
 import Observation
 import UserNotifications
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "app")
+private let logger = AppLog(category: "app")
 
 /// Wires the platform pieces to the Dictation controller and holds what the menu shows.
 @MainActor
@@ -33,10 +32,31 @@ final class AppModel {
                     Task { @MainActor in self?.controller.microphoneLoudness(decibels) }
                 }
             },
-            stopRecording: { [recorder] in recorder.stop() },
-            findSpeech: { [speechDetector] samples in try await speechDetector.speechRange(in: samples) },
-            transcribe: { [speechModel] samples in try await speechModel.transcribe(samples) },
-            paste: { text in try await Paster.paste(text) },
+            stopRecording: { [recorder, weak self] in
+                let samples = recorder.stop()
+                let mode = self?.controller.mode?.name ?? "none"
+                logger.info("Recording stopped: \(Self.seconds(samples.count)) of audio, Mode: \(mode)")
+                return samples
+            },
+            findSpeech: { [speechDetector] samples in
+                let speech = try await speechDetector.speechRange(in: samples)
+                if let speech {
+                    logger.info("Speech from \(Self.seconds(speech.lowerBound)) to \(Self.seconds(speech.upperBound))")
+                } else {
+                    logger.info("No speech found: nothing is pasted")
+                }
+                return speech
+            },
+            transcribe: { [speechModel] samples in
+                let start = ContinuousClock.now
+                let transcript = try await speechModel.transcribe(samples)
+                logger.info("Transcribed \(Self.seconds(samples.count)) in \(Self.elapsed(since: start)): \(transcript.count) characters")
+                return transcript
+            },
+            paste: { text in
+                try await Paster.paste(text)
+                logger.info("Pasted \(text.count) characters")
+            },
             report: { problem in Self.show(problem) },
             defaultMode: { AppSettings.defaultMode },
             setDefaultMode: { AppSettings.defaultMode = $0 },
@@ -47,12 +67,14 @@ final class AppModel {
         ))
         // Tasks started on the main actor run in the order the keys arrived.
         shortcut.onDown = { [unowned self] time in
+            if controller.phase == .idle { logger.info("Dictation started") }
             Task { await self.controller.shortcutDown(at: time) }
         }
         shortcut.onUp = { [unowned self] time in
             Task { await self.controller.shortcutUp(at: time) }
         }
         shortcut.onEscape = { [unowned self] in
+            logger.info("Esc: Dictation cancelled while \(controller.phase == .recording ? "recording" : "processing")")
             Task { await self.controller.escape() }
         }
         shortcut.capturesEscape = { [unowned self] in controller.capturesEscape }
@@ -65,10 +87,12 @@ final class AppModel {
     }
 
     func launch() {
+        let info = Bundle.main.infoDictionary
+        logger.info("Dimmela \(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?")) started")
         do {
             try AppSettings.createVocabularyFileIfNeeded()
         } catch {
-            logger.error("Vocabulary file not created: \(error, privacy: .public)")
+            logger.error("Vocabulary file not created: \(error.localizedDescription)")
         }
         #if DEBUG
         if SmokeTest.runIfRequested(model: speechModel, detector: speechDetector) { return }
@@ -88,6 +112,21 @@ final class AppModel {
         if !shortcut.start() {
             requestAccessibility()
         }
+        logger.info("Accessibility: \(accessibilityGranted ? "granted" : "not granted")")
+    }
+
+    /// Samples at the recorder's rate, as seconds: "3.2 s".
+    private nonisolated static func seconds(_ samples: Int) -> String {
+        "\((Double(samples) / MicrophoneRecorder.sampleRate).formatted(logNumber.precision(.fractionLength(1)))) s"
+    }
+
+    /// Numbers in the log as in English, whatever the Mac's language: the log goes in issues.
+    private nonisolated static let logNumber = FloatingPointFormatStyle<Double>(locale: Locale(identifier: "en_US_POSIX"))
+
+    nonisolated static func elapsed(since start: ContinuousClock.Instant) -> String {
+        let elapsed = (ContinuousClock.now - start).components
+        let seconds = Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
+        return "\(seconds.formatted(logNumber.precision(.fractionLength(2)))) s"
     }
 
     func requestMicrophone() async {
@@ -95,6 +134,14 @@ final class AppModel {
             _ = await MicrophoneRecorder.requestPermission()
         }
         microphonePermission = MicrophoneRecorder.permission
+        let state = switch microphonePermission {
+        case .authorized: "allowed"
+        case .denied: "denied"
+        case .restricted: "restricted"
+        case .notDetermined: "not asked yet"
+        @unknown default: "unknown"
+        }
+        logger.info("Microphone: \(state)")
     }
 
     func requestNotifications() async {
@@ -180,7 +227,7 @@ final class AppModel {
         case .postProcessingFailed(let detail): "Post-processing failed, the Transcript was pasted instead: \(detail)"
         case .postProcessingAgainFailed(let detail): "Post-processing failed: \(detail)"
         }
-        logger.error("\(message, privacy: .public)")
+        logger.error(message)
         notify(message)
     }
 

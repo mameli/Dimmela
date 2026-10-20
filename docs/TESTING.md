@@ -15,6 +15,14 @@ The Debug build (signed with the local certificate) and the released app (signed
 
 If notifications or permission prompts show macOS's grid placeholder instead of Dimmela's icon, the system icon cache kept the icon of a build that had none. Clearing it fixes it: `rm -rf "$(getconf DARWIN_USER_CACHE_DIR)com.apple.iconservices"`, `sudo rm -rf /Library/Caches/com.apple.iconservices.store`, then restart the Mac. Several copies of Dimmela registered at once (the Debug, Release and installed builds share the bundle id) make it more likely.
 
+## Logs
+
+Dimmela writes every step to `~/Library/Logs/Dimmela/Dimmela.log` (also in Console › Log Reports): launch and permissions, start and end of each Dictation with the audio length and the Mode, speech found, transcription time, Post-processing requests (model, on this Mac or remote, reasoning, whether there are Extra parameters, HTTP status, time), paste, `Esc`, errors. Never the Transcript, the text, the provider's address, the key or the Extra parameters. Past 512 KB the file becomes `Dimmela.1.log` and a new one starts, so the two stay under 1 MB. *Report a Problem…* includes both.
+
+```bash
+tail -f ~/Library/Logs/Dimmela/Dimmela.log
+```
+
 ## Smoke test (Debug builds)
 
 Transcribe a file without microphone or keyboard. It prints the Transcript, the time and the memory footprint:

@@ -1,6 +1,8 @@
 import DimmelaCore
 import Foundation
 
+private let logger = AppLog(category: "post-processing")
+
 extension ChatClient {
     /// Post-processing sits between the end of speech and the paste: give up rather than make
     /// the user wait; the Transcript is pasted instead.
@@ -14,13 +16,31 @@ extension ChatClient {
     /// The client for the provider in Settings, with the key in the Keychain.
     static func configured() throws -> ChatClient {
         let provider = AppSettings.provider
+        let keyStart = ContinuousClock.now
+        let apiKey = Keychain.apiKey
+        // Usually instant: slow when macOS asked the user to let this build read the key.
+        if ContinuousClock.now - keyStart > .milliseconds(500) {
+            logger.notice("Key read from the Keychain in \(AppModel.elapsed(since: keyStart))")
+        }
         return ChatClient(
-            baseURL: try provider.validatedBaseURL(), apiKey: Keychain.apiKey, model: provider.model,
+            baseURL: try provider.validatedBaseURL(), apiKey: apiKey, model: provider.model,
             reasoning: provider.reasoning, extraParameters: provider.extraParameters
         ) { request in
-            let (data, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
-            return (data, http)
+            // Every request with its timing, by where the provider runs: its address can name a company.
+            let start = ContinuousClock.now
+            let reasoning = provider.reasoning?.displayName ?? "model default"
+            let summary = "\(provider.model) (\(provider.isOnThisMac ? "on this Mac" : "remote")), reasoning \(reasoning)"
+                + (provider.extraParameters == nil ? "" : ", Extra parameters") + ", \(request.httpBody?.count ?? 0) bytes sent"
+            do {
+                let (data, response) = try await session.data(for: request)
+                guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+                logger.info("Post-processing \(summary): HTTP \(http.statusCode), \(data.count) bytes in \(AppModel.elapsed(since: start))")
+                return (data, http)
+            } catch {
+                // By description only: a URLError's full form includes the address.
+                logger.error("Post-processing \(summary): failed after \(AppModel.elapsed(since: start)): \(error.localizedDescription)")
+                throw error
+            }
         }
     }
 }

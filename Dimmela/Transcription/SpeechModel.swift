@@ -1,9 +1,8 @@
 @preconcurrency import FluidAudio
 import Foundation
 import Observation
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "speech-model")
+private let logger = AppLog(category: "speech-model")
 
 /// Parakeet TDT v3 on the Neural Engine through FluidAudio: downloaded once, then kept loaded
 /// for as long as Dimmela runs (ticket 01 measured 25–50 MB to keep it in memory).
@@ -94,7 +93,7 @@ final class SpeechModel {
         let start = ContinuousClock.now
         let models = try await AsrModels.load(from: Self.folder, version: .v3)
         let asr = AsrManager(config: .default, models: models)
-        logger.info("Loaded Parakeet v3 in \(ContinuousClock.now - start, privacy: .public)")
+        logger.info("Loaded Parakeet v3 in \(ContinuousClock.now - start)")
         state = .ready
         return asr
     }

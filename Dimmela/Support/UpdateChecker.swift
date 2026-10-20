@@ -1,9 +1,8 @@
 import AppKit
 import Observation
 import DimmelaCore
-import os
 
-private let logger = Logger(subsystem: "app.dimmela.Dimmela", category: "updates")
+private let logger = AppLog(category: "updates")
 
 /// At launch and once a day, when the user leaves it on in Settings, asks GitHub for the latest
 /// release. The request carries nothing about the user or the Dictations.
@@ -57,7 +56,7 @@ final class UpdateChecker {
             available = Release(version: version, page: reply.page)
         } catch {
             // Offline or rate-limited: nothing to show, tried again tomorrow.
-            logger.notice("Update check failed: \(error, privacy: .public)")
+            logger.notice("Update check failed: \(error.localizedDescription)")
         }
     }
 }

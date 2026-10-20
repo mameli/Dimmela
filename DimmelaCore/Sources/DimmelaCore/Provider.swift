@@ -54,6 +54,12 @@ public struct Provider: Equatable, Sendable {
     /// key and the Transcript would travel readable.
     private static let loopbackHosts: Set<String> = ["localhost", "127.0.0.1", "::1", "[::1]"]
 
+    /// A server on this Mac, by its address.
+    public var isOnThisMac: Bool {
+        let host = URL(string: baseURL.trimmingCharacters(in: .whitespaces))?.host()?.lowercased() ?? ""
+        return Self.loopbackHosts.contains(host)
+    }
+
     /// The base URL to call, if the provider is usable.
     public func validatedBaseURL() throws -> URL {
         guard let url = URL(string: baseURL.trimmingCharacters(in: .whitespaces)),
