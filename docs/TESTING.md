@@ -52,6 +52,9 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -trans
 
 - [ ] Settings › Post-processing: paste an OpenRouter key, Save key, Test connection: the provider answers.
 - [ ] The key is in Keychain Access under "Dimmela: provider API key", not in Dimmela's preferences.
+- [ ] Reasoning on OpenRouter set to Off, then High: Test connection still answers, a little slower with High.
+- [ ] Extra parameters: type `{"reasoning_effort": "xhigh"}` by hand (with smart quotes on in System Settings › Keyboard): the quotes stay straight and no error shows. Remove the closing brace: a red message, Test connection disabled; quit and reopen Settings: the last valid parameters are back.
+- [ ] Extra parameters `{"reasoning_effort": "banana"}` on a provider that checks it: Test connection fails with the provider's message followed by "Settings › Post-processing sets Extra parameters."
 - [ ] Settings › Modes: Add Folder… with the `handy-config` folder; its prompt files are listed, README excluded.
 - [ ] Enable some Modes, drag to reorder, choose a Default Mode; the menu's Default Mode picker shows the same.
 - [ ] With a Default Mode, `fn+space` in TextEdit pastes the LLM's answer; with Default Mode None it pastes only the Transcript.

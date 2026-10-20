@@ -6,6 +6,10 @@ import Foundation
 enum AppSettings {
     static let providerBaseURLKey = "providerBaseURL"
     static let providerModelKey = "providerModel"
+    /// A `Provider.ReasoningEffort` raw value; empty for the model's default.
+    static let providerReasoningKey = "providerReasoning"
+    /// The Extra parameters as written, saved only when valid; empty for none.
+    static let providerExtraParametersKey = "providerExtraParameters"
     /// Folder paths, one per Mode source, one per line.
     static let modeSourcesKey = "modeSources"
     /// The enabled Modes' identifiers, in the user's order, one per line.
@@ -30,7 +34,9 @@ enum AppSettings {
     static var provider: Provider {
         Provider(
             baseURL: defaults.string(forKey: providerBaseURLKey) ?? Provider.openRouter.baseURL,
-            model: defaults.string(forKey: providerModelKey) ?? Provider.openRouter.model
+            model: defaults.string(forKey: providerModelKey) ?? Provider.openRouter.model,
+            reasoning: defaults.string(forKey: providerReasoningKey).flatMap(Provider.ReasoningEffort.init(rawValue:)),
+            extraParameters: defaults.string(forKey: providerExtraParametersKey).flatMap { $0.isEmpty ? nil : $0 }
         )
     }
 

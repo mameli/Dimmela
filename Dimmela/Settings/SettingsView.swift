@@ -64,6 +64,12 @@ private struct PostProcessingSettings: View {
 
     @AppStorage(AppSettings.providerBaseURLKey) private var baseURL = Provider.openRouter.baseURL
     @AppStorage(AppSettings.providerModelKey) private var model = Provider.openRouter.model
+    /// A `Provider.ReasoningEffort` raw value; empty for the model's default.
+    @AppStorage(AppSettings.providerReasoningKey) private var reasoning = ""
+    @AppStorage(AppSettings.providerExtraParametersKey) private var savedExtraParameters = ""
+    /// The Extra parameters as typed: they are saved only when valid.
+    @State private var extraParameters = ""
+    @State private var extraParametersProblem: String?
     @State private var keySuffix = Self.storedKeySuffix
     @State private var isReplacingKey = false
     @State private var newKey = ""
@@ -151,9 +157,27 @@ private struct PostProcessingSettings: View {
             }
 
             Section {
+                Picker("Reasoning", selection: $reasoning) {
+                    Text("Model default").tag("")
+                    ForEach(Provider.ReasoningEffort.allCases, id: \.self) { effort in
+                        Text(effort.displayName).tag(effort.rawValue)
+                    }
+                }
+                LabeledContent("Extra parameters") {
+                    CodeTextField(placeholder: #"JSON, e.g. {"reasoning_effort": "xhigh"}"#, text: $extraParameters)
+                }
+                if let extraParametersProblem {
+                    Text(extraParametersProblem).font(.caption).foregroundStyle(.red)
+                }
+            } footer: {
+                Text("Model default sends nothing. OpenRouter gets the level in its own format, every other provider as reasoning_effort, which not every model accepts. Extra parameters are added to every request as written, each key in place of what Dimmela sends for it: for what a model needs beyond the Reasoning menu, see the provider's documentation.")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 HStack {
                     Button("Test Connection") { Task { await runTest() } }
-                        .disabled(isTesting || urlProblem != nil)
+                        .disabled(isTesting || urlProblem != nil || extraParametersProblem != nil)
                     if isTesting { ProgressView().controlSize(.small) }
                     Spacer()
                 }
@@ -171,13 +195,28 @@ private struct PostProcessingSettings: View {
                     EmptyView()
                 }
             } footer: {
-                Text("Sends a one-word request to the model. If the provider does not answer within 30 seconds during a Dictation, the Transcript is pasted instead.")
+                Text("Sends a one-word request to the model, with the same reasoning and Extra parameters as a Dictation. If the provider does not answer within 30 seconds during a Dictation, the Transcript is pasted instead.")
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
         .onChange(of: baseURL) { test = nil }
         .onChange(of: model) { test = nil }
+        .onChange(of: reasoning) { test = nil }
+        .onChange(of: extraParameters) { saveExtraParameters() }
+        .onAppear { extraParameters = savedExtraParameters }
+    }
+
+    /// Saved only when valid: otherwise the field shows the problem and Post-processing keeps the
+    /// last valid parameters.
+    private func saveExtraParameters() {
+        do {
+            savedExtraParameters = try ExtraParameters.parse(extraParameters).isEmpty ? "" : extraParameters
+            extraParametersProblem = nil
+        } catch {
+            extraParametersProblem = error.localizedDescription
+        }
+        test = nil
     }
 
     /// The last characters of the saved key, so the user can tell which key it is.

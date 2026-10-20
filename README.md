@@ -19,7 +19,7 @@ Or download `Dimmela.zip` from the [latest release](https://github.com/mameli/Di
 ## How it works
 
 - **Dictation**: hold `fn+Space` and release when you are done (Hold), or tap it to dictate hands-free until the next tap (Lock). `Esc` cancels.
-- **Modes**: folders of prompt files or skills (`SKILL.md`) become Modes. Every Dictation starts with the Default Mode; while dictating, `1`–`9` pick another one and `shift` shows the list. Post-processing goes to any OpenAI-compatible provider, such as OpenRouter.
+- **Modes**: folders of prompt files or skills (`SKILL.md`) become Modes. Every Dictation starts with the Default Mode; while dictating, `1`–`9` pick another one and `shift` shows the list. Post-processing goes to any OpenAI-compatible provider, such as OpenRouter, with the reasoning level you choose; whatever else a model needs goes in *Extra parameters*, a JSON object added to every request as written: the provider's documentation says what to write.
 - **Vocabulary**: names and terms that speech recognition gets wrong are fixed in the Transcript and given to the LLM.
 - **History**: the last five Dictations, with their audio, to copy or Post-process again from the menu.
 

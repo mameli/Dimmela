@@ -5,13 +5,15 @@ final class StubTransport: @unchecked Sendable {
     private(set) var requests: [URLRequest] = []
     var status = 200
     var reply = "Testo rifinito."
+    /// The whole response body, in place of the one built from `reply` or the error.
+    var body: String?
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         requests.append(request)
         let content = String(data: try JSONEncoder().encode(reply), encoding: .utf8)!
-        let body = status == 200
+        let body = body ?? (status == 200
             ? #"{"choices":[{"message":{"role":"assistant","content":"# + content + "}}]}"
-            : #"{"error":{"message":"overloaded"}}"#
+            : #"{"error":{"message":"overloaded"}}"#)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!
         return (Data(body.utf8), response)
     }
@@ -23,6 +25,11 @@ final class StubTransport: @unchecked Sendable {
               let messages = json["messages"] as? [[String: String]]
         else { return nil }
         return messages.first { $0["role"] == role }?["content"]
+    }
+
+    /// The JSON body of request number `index`.
+    func sentBody(_ index: Int = 0) -> [String: Any]? {
+        requests[index].httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
     }
 }
 

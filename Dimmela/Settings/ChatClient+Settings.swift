@@ -15,7 +15,8 @@ extension ChatClient {
     static func configured() throws -> ChatClient {
         let provider = AppSettings.provider
         return ChatClient(
-            baseURL: try provider.validatedBaseURL(), apiKey: Keychain.apiKey, model: provider.model
+            baseURL: try provider.validatedBaseURL(), apiKey: Keychain.apiKey, model: provider.model,
+            reasoning: provider.reasoning, extraParameters: provider.extraParameters
         ) { request in
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }

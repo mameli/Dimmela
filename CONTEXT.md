@@ -28,6 +28,14 @@ _Avoid_: transcription (for the text), raw text
 The optional step that sends the Transcript to an LLM together with a Mode and replaces it with the LLM's answer.
 _Avoid_: AI processing, rewrite, enhancement
 
+**Provider** (`Provider`):
+The OpenAI-compatible server that Post-processing calls, set in Settings: address, model, how much the model reasons and any Extra parameters. The API key lives in the Keychain.
+_Avoid_: backend, API, vendor
+
+**Extra parameters**:
+Request parameters the user writes for the Provider, sent as written and in place of what Dimmela would send for the same key. They hold what Dimmela does not know about a model, such as how it wants to be asked to reason.
+_Avoid_: custom body, overrides, advanced settings
+
 **Mode** (`Mode`):
 A named set of instructions for Post-processing. Its source is either a prompt file or a skill (`SKILL.md`): for Dimmela the two are the same thing.
 _Avoid_: prompt, skill, template, preset (when talking about the concept)

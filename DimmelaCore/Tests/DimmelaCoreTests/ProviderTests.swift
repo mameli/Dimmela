@@ -27,3 +27,25 @@ struct ProviderTests {
         }
     }
 }
+
+@Suite("Extra parameters")
+struct ExtraParametersTests {
+    @Test("a JSON object; blank means none", arguments: [
+        ("", 0), (" \n ", 0), (#"{}"#, 0), (#"{"chat_template_kwargs": {"thinking": true}, "temperature": 0.2}"#, 2),
+    ])
+    func valid(text: String, count: Int) throws {
+        #expect(try ExtraParameters.parse(text).count == count)
+    }
+
+    @Test("not a JSON object, or replacing model or messages, is refused", arguments: [
+        (#"{"reasoning_effort": "xhigh""#, ExtraParameters.Problem.notJSON),
+        (#"{“reasoning_effort”: “xhigh”}"#, .notJSON),
+        (#"[{"thinking": true}]"#, .notAnObject),
+        ("42", .notAnObject),
+        (#"{"model": "other"}"#, .reserved("model")),
+        (#"{"messages": []}"#, .reserved("messages")),
+    ])
+    func invalid(text: String, problem: ExtraParameters.Problem) {
+        #expect(throws: problem) { try ExtraParameters.parse(text) }
+    }
+}
