@@ -10,6 +10,29 @@ public enum DictationProblem: Equatable, Sendable {
     case postProcessingFailed(String)
     /// Post-processing a History entry again gave no text.
     case postProcessingAgainFailed(String)
+    /// The profile in use failed with the first detail; the fallback profile named answered.
+    case postProcessingFellBack(failed: String, detail: String, answeredBy: String)
+}
+
+/// A Provider profile as Post-processing tries it: its name, and its client or why there is none.
+public struct NamedChatClient: Sendable {
+    public let name: String
+    public let client: Result<ChatClient, any Error>
+
+    public init(name: String, client: Result<ChatClient, any Error>) {
+        self.name = name
+        self.client = client
+    }
+
+    public init(name: String, _ make: () throws -> ChatClient) {
+        self.init(name: name, client: Result(catching: make))
+    }
+}
+
+/// No Provider profile to send the Transcript to.
+public struct NoProviderProfile: LocalizedError, Equatable {
+    public init() {}
+    public var errorDescription: String? { "No Provider profile: add one in Settings › Post-processing." }
 }
 
 /// The platform pieces a Dictation needs, injected so the controller can be driven in tests.
@@ -32,12 +55,18 @@ public struct DictationBoundaries {
     public var enabledModes: @MainActor () -> [Mode]
     /// The user's Vocabulary, read at every Dictation.
     public var vocabulary: @MainActor () -> Vocabulary
-    /// The client for the configured provider; throws when there is none.
-    public var chatClient: @MainActor () throws -> ChatClient
+    /// The Provider profiles to try, in order: the one in use, then the fallback ones.
+    public var chatClients: @MainActor () -> [NamedChatClient]
+    /// A fallback profile is tried only if Post-processing started less than this long ago.
+    public var fallbackBudget: Duration
     /// Where completed Dictations are kept.
     public var history: History
     /// Each Post-processing that reached the provider, answered or failed; not when cancelled.
     public var recordPostProcessing: @MainActor (PostProcessingRecord) -> Void
+    /// The pauses before a Post-processing request that failed for a passing reason is sent again.
+    public var retryWaits: [Duration]
+    /// Waits out one of those pauses; throws when cancelled.
+    public var sleep: @Sendable (Duration) async throws -> Void
 
     public init(
         startRecording: @escaping @MainActor () throws -> Void,
@@ -51,8 +80,11 @@ public struct DictationBoundaries {
         enabledModes: @escaping @MainActor () -> [Mode],
         vocabulary: @escaping @MainActor () -> Vocabulary,
         history: History,
-        chatClient: @escaping @MainActor () throws -> ChatClient,
-        recordPostProcessing: @escaping @MainActor (PostProcessingRecord) -> Void = { _ in }
+        chatClients: @escaping @MainActor () -> [NamedChatClient],
+        fallbackBudget: Duration = .seconds(20),
+        recordPostProcessing: @escaping @MainActor (PostProcessingRecord) -> Void = { _ in },
+        retryWaits: [Duration] = ChatClient.retryWaits,
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.startRecording = startRecording
         self.stopRecording = stopRecording
@@ -65,8 +97,11 @@ public struct DictationBoundaries {
         self.enabledModes = enabledModes
         self.vocabulary = vocabulary
         self.history = history
-        self.chatClient = chatClient
+        self.chatClients = chatClients
+        self.fallbackBudget = fallbackBudget
         self.recordPostProcessing = recordPostProcessing
+        self.retryWaits = retryWaits
+        self.sleep = sleep
     }
 }
 
@@ -88,6 +123,8 @@ public final class DictationController {
             if phase == .idle {
                 mode = nil
                 modeChoices = []
+                retries = 0
+                fallbackProfile = nil
             }
         }
     }
@@ -97,6 +134,14 @@ public final class DictationController {
 
     /// The Mode of the Dictation in progress; nil for the Transcript alone.
     public private(set) var mode: Mode?
+
+    /// How many times this Dictation's Post-processing request was sent again after a failure
+    /// that passes by itself; the overlay says Dimmela is retrying.
+    public private(set) var retries = 0
+
+    /// The fallback profile this Dictation's Post-processing is trying now; nil for the profile
+    /// in use.
+    public private(set) var fallbackProfile: String?
 
     /// The Modes the digits 1–9 choose during this Dictation, in order.
     public private(set) var modeChoices: [Mode] = []
@@ -298,17 +343,56 @@ public final class DictationController {
         let modeInstructions = try mode.instructions()
         let instructions = [modeInstructions, boundaries.vocabulary().promptBlock]
             .compactMap { $0 }.joined(separator: "\n\n")
-        let client = try boundaries.chatClient()
+        let routes = boundaries.chatClients()
+        guard !routes.isEmpty else { throw NoProviderProfile() }
+        let start = ContinuousClock.now
+        var firstFailure: (name: String, error: any Error)?
+        for (index, route) in routes.enumerated() {
+            if index > 0 {
+                guard ContinuousClock.now - start < boundaries.fallbackBudget else { break }
+                if !isAgain { useFallback(route.name) }
+            }
+            do {
+                let client = try route.client.get()
+                let text = try await send(
+                    transcript, instructions: instructions, to: client, profile: route.name,
+                    mode: mode, modeInstructions: modeInstructions, dictationID: dictationID, isAgain: isAgain
+                )
+                if let firstFailure {
+                    boundaries.report(.postProcessingFellBack(failed: firstFailure.name, detail: Self.describe(firstFailure.error), answeredBy: route.name))
+                }
+                return text
+            } catch {
+                if Task.isCancelled || error is CancellationError { throw error }
+                if firstFailure == nil { firstFailure = (route.name, error) }
+            }
+        }
+        throw firstFailure!.error
+    }
+
+    /// One profile's attempt, Retries included, recorded in the Post-processing log.
+    private func send(
+        _ transcript: String, instructions: String, to client: ChatClient, profile: String,
+        mode: Mode, modeInstructions: String, dictationID: UUID, isAgain: Bool
+    ) async throws -> String {
+        let attempts = Attempts()
+        let sleep = boundaries.sleep
+        let retrying = client.retrying(after: boundaries.retryWaits) { [weak self] wait in
+            await attempts.add()
+            if !isAgain { await self?.willRetry() }
+            try await sleep(wait)
+        }
         let start = ContinuousClock.now
         func record(text: String?, error: String?) {
             let elapsed = (ContinuousClock.now - start).components
             boundaries.recordPostProcessing(PostProcessingRecord(
                 dictationID: dictationID, mode: mode, instructions: modeInstructions, client: client, isAgain: isAgain, transcript: transcript,
-                text: text, error: error, seconds: Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
+                text: text, error: error, seconds: Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18, attempts: attempts.count,
+                profile: profile
             ))
         }
         do {
-            let text = try await client.complete([
+            let text = try await retrying.complete([
                 ChatMessage(role: .system, content: instructions),
                 ChatMessage(role: .user, content: transcript),
             ])
@@ -320,6 +404,17 @@ public final class DictationController {
         }
     }
 
+    private func useFallback(_ name: String) {
+        guard phase == .processing else { return }
+        fallbackProfile = name
+        retries = 0
+    }
+
+    private func willRetry() {
+        guard phase == .processing else { return }
+        retries += 1
+    }
+
     private static func describe(_ error: Error) -> String {
         (error as? LocalizedError)?.errorDescription ?? String(describing: error)
     }
@@ -329,4 +424,11 @@ public final class DictationController {
         processing = nil
         phase = .idle
     }
+}
+
+/// The requests one Post-processing sent, the first and those sent again.
+@MainActor
+private final class Attempts {
+    private(set) var count = 1
+    func add() { count += 1 }
 }

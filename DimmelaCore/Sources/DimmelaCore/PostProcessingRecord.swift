@@ -24,10 +24,15 @@ public struct PostProcessingRecord: Codable, Equatable, Sendable {
     public let text: String?
     public let error: String?
     public let seconds: Double
+    /// The requests sent: more than 1 when the provider failed for a passing reason and the
+    /// request was sent again. `seconds` includes the pauses between them.
+    public let attempts: Int
+    /// The Provider profile's name: a fallback one when the profile in use failed.
+    public let profile: String?
 
     public init(
         dictationID: UUID, date: Date = .now, mode: Mode, instructions: String, client: ChatClient, isAgain: Bool, transcript: String,
-        text: String?, error: String?, seconds: Double
+        text: String?, error: String?, seconds: Double, attempts: Int = 1, profile: String? = nil
     ) {
         self.dictationID = dictationID
         self.date = date
@@ -42,6 +47,8 @@ public struct PostProcessingRecord: Codable, Equatable, Sendable {
         self.text = text
         self.error = error
         self.seconds = (seconds * 100).rounded() / 100
+        self.attempts = attempts
+        self.profile = profile
     }
 
     static func version(of instructions: String) -> String {

@@ -13,7 +13,7 @@ enum ProblemReporter {
         let report = ProblemReport(
             version: version, system: system, installedWith: installedWith,
             postProcessing: ProblemReport.postProcessing(
-                provider: AppSettings.provider, isUsed: !AppSettings.enabledModes.isEmpty
+                provider: AppSettings.selectedProviderProfile?.provider, isUsed: !AppSettings.enabledModes.isEmpty
             )
         )
         Task {

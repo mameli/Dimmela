@@ -62,14 +62,81 @@ struct PostProcessingTests {
         #expect(fake.provider.message(1, "system") == "Second version.")
     }
 
-    @Test("a provider error pastes the Transcript and reports the problem")
+    @Test("a provider error that does not pass pastes the Transcript and reports the problem")
     func providerError() async {
         fake.defaultMode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
         fake.provider.status = 503
         let controller = fake.controllerWired()
         await dictate(controller)
+        #expect(fake.provider.requests.count == 3)
+        #expect(fake.pauses.all == ChatClient.retryWaits)
         #expect(fake.pasted == ["Ciao, sto provando Dimmela. "])
         #expect(fake.problems == [.postProcessingFailed("The provider answered with error 503: overloaded")])
+        #expect(fake.records.map(\.attempts) == [3])
+    }
+
+    @Test("a busy provider is asked again: the answer is pasted, the overlay said Dimmela was retrying, the log counts the requests")
+    func retriedUntilAnswered() async {
+        fake.defaultMode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
+        fake.provider.statuses = [429]
+        fake.provider.reply = "Ciao, sto provando Dimmela!"
+        let controller = fake.controllerWired()
+        let seen = Seen()
+        fake.pauses.whileWaiting = { [controller] in await seen.note(controller.retries) }
+
+        await dictate(controller)
+
+        #expect(fake.provider.requests.count == 2)
+        #expect(seen.retries == [1])
+        #expect(controller.retries == 0)
+        #expect(fake.pasted == ["Ciao, sto provando Dimmela! "])
+        #expect(fake.problems.isEmpty)
+        #expect(fake.records.map(\.attempts) == [2])
+        #expect(fake.records.first?.text == "Ciao, sto provando Dimmela!")
+    }
+
+    @Test("a refused request is not sent again", arguments: [400, 401, 404])
+    func refusedOnce(status: Int) async {
+        fake.defaultMode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
+        fake.provider.status = status
+        let controller = fake.controllerWired()
+        await dictate(controller)
+        #expect(fake.provider.requests.count == 1)
+        #expect(fake.pauses.all.isEmpty)
+        #expect(fake.pasted == ["Ciao, sto provando Dimmela. "])
+    }
+
+    @Test("Esc while waiting to retry cancels the Dictation: nothing pasted, nothing sent again, nothing logged")
+    func escapeWhileRetrying() async {
+        fake.defaultMode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
+        fake.provider.status = 503
+        let controller = fake.controllerWired()
+        fake.pauses.whileWaiting = { [controller] in await controller.escape() }
+
+        await dictate(controller)
+
+        #expect(fake.provider.requests.count == 1)
+        #expect(controller.phase == .idle)
+        #expect(fake.pasted.isEmpty)
+        #expect(fake.problems.isEmpty)
+        #expect(fake.records.isEmpty)
+    }
+
+    @Test("Post-processing again from the History retries too, without touching the overlay")
+    func againRetries() async throws {
+        let mode = Mode(id: folder.write("prompt.md", "Clean up.").path(percentEncoded: false))
+        let controller = fake.controllerWired()
+        await dictate(controller)
+        let entry = try #require(fake.history.entries.first)
+        fake.provider.statuses = [502]
+        fake.provider.reply = "Di nuovo."
+
+        let text = await controller.postProcessAgain(entry, with: mode)
+
+        #expect(text == "Di nuovo.")
+        #expect(fake.provider.requests.count == 2)
+        #expect(controller.retries == 0)
+        #expect(fake.records.last?.attempts == 2)
     }
 
     @Test("a Mode whose file is gone pastes the Transcript and reports the problem")
@@ -192,4 +259,10 @@ struct PostProcessingTests {
         #expect(read.hasExtraParameters)
         #expect(read.seconds == 1.23)
     }
+}
+
+@MainActor
+private final class Seen {
+    private(set) var retries: [Int] = []
+    func note(_ value: Int) { retries.append(value) }
 }

@@ -29,8 +29,20 @@ The optional step that sends the Transcript to an LLM together with a Mode and r
 _Avoid_: AI processing, rewrite, enhancement
 
 **Provider** (`Provider`):
-The OpenAI-compatible server that Post-processing calls, set in Settings: address, model, how much the model reasons and any Extra parameters. The API key lives in the Keychain.
+The OpenAI-compatible server that Post-processing calls: address, model, how much the model reasons and any Extra parameters.
 _Avoid_: backend, API, vendor
+
+**Provider profile** (`ProviderProfile`):
+A named Provider set up in Settings, with its API key in the Keychain. The user keeps as many as they like, in their own order, and Post-processing uses the selected one.
+_Avoid_: preset (that is a ready-made starting point for a profile), account
+
+**Fallback** (`isFallback`):
+A Provider profile marked to be tried, in the list's order, when the profile in use still fails after its Retries. Only within 20 seconds of the start of Post-processing; then the Transcript is pasted.
+_Avoid_: backup, failover
+
+**Retry**:
+Sending a Post-processing request again, after a short pause, when it failed for a reason that can pass by itself (connection lost, rate limit, 5xx). Twice at most, then the Transcript is pasted.
+_Avoid_: resend
 
 **Extra parameters**:
 Request parameters the user writes for the Provider, sent as written and in place of what Dimmela would send for the same key. They hold what Dimmela does not know about a model, such as how it wants to be asked to reason.

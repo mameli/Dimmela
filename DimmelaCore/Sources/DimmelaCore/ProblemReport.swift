@@ -19,8 +19,9 @@ public struct ProblemReport: Equatable, Sendable {
     }
 
     /// The provider by model and where it runs: its address can name a company.
-    public static func postProcessing(provider: Provider, isUsed: Bool) -> String {
+    public static func postProcessing(provider: Provider?, isUsed: Bool) -> String {
         guard isUsed else { return "Not used" }
+        guard let provider else { return "No Provider profile" }
         return "\(provider.model) (\(provider.isOnThisMac ? "on this Mac" : "remote"))"
     }
 

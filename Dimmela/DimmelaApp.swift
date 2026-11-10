@@ -40,6 +40,7 @@ private struct MenuContent: View {
     @AppStorage(AppSettings.onboardingDoneKey) private var onboardingDone = false
     @AppStorage(AppSettings.enabledModesKey) private var enabled = ""
     @AppStorage(AppSettings.defaultModeKey) private var defaultModeID = ""
+    @AppStorage(AppSettings.providerProfilesKey) private var profiles = ProviderProfiles()
 
     var body: some View {
         Text(status)
@@ -60,6 +61,11 @@ private struct MenuContent: View {
         Picker("Default Mode", selection: $defaultModeID) {
             Text("None").tag("")
             ForEach(AppSettings.lines(of: enabled).map(Mode.init(id:))) { Text($0.name).tag($0.id) }
+        }
+        if profiles.all.count > 1 {
+            Picker("Provider", selection: Binding(get: { profiles.selected?.id }, set: { profiles.selectedID = $0 })) {
+                ForEach(profiles.all) { Text($0.displayName).tag(Optional($0.id)) }
+            }
         }
         if !onboardingDone {
             Button("Set Up Dimmela…") {

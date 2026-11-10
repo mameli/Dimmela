@@ -80,7 +80,7 @@ private struct OverlayView: View {
             } else {
                 LevelBars(level: controller.level)
             }
-            Text(controller.mode?.name ?? "Transcript")
+            Text(title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white)
                 .lineLimit(1)
@@ -89,6 +89,12 @@ private struct OverlayView: View {
         .frame(height: 36)
         .background(Capsule().fill(.black.opacity(0.82)))
         .overlay(Capsule().strokeBorder(.white.opacity(0.12)))
+    }
+
+    /// The Mode, then the fallback profile and the Retry when there are: "Clean · Mistral · retrying…".
+    private var title: String {
+        [controller.mode?.name ?? "Transcript", controller.fallbackProfile, controller.retries > 0 ? "retrying…" : nil]
+            .compactMap { $0 }.joined(separator: " · ")
     }
 }
 

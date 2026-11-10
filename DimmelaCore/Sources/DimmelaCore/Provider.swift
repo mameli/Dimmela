@@ -2,7 +2,7 @@ import Foundation
 
 /// The OpenAI-compatible server Post-processing calls. The API key is not stored here: it
 /// lives in the Keychain.
-public struct Provider: Equatable, Sendable {
+public struct Provider: Codable, Equatable, Hashable, Sendable {
     public static let openRouter = Provider(baseURL: "https://openrouter.ai/api/v1", model: "anthropic/claude-haiku-5.5")
 
     public var baseURL: String

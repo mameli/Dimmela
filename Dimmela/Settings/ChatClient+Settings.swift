@@ -13,11 +13,21 @@ extension ChatClient {
         return URLSession(configuration: configuration)
     }()
 
-    /// The client for the provider in Settings, with the key in the Keychain.
-    static func configured() throws -> ChatClient {
-        let provider = AppSettings.provider
+    enum ProfileFailure: LocalizedError {
+        case none
+
+        var errorDescription: String? {
+            "No Provider profile: add one in Settings › Post-processing."
+        }
+    }
+
+    /// The client for a Provider profile, the selected one by default, with its key from the
+    /// Keychain.
+    static func configured(_ profile: ProviderProfile? = AppSettings.selectedProviderProfile) throws -> ChatClient {
+        guard let profile else { throw ProfileFailure.none }
+        let provider = profile.provider
         let keyStart = ContinuousClock.now
-        let apiKey = Keychain.apiKey
+        let apiKey = Keychain.apiKey(for: profile.id)
         // Usually instant: slow when macOS asked the user to let this build read the key.
         if ContinuousClock.now - keyStart > .milliseconds(500) {
             logger.notice("Key read from the Keychain in \(AppModel.elapsed(since: keyStart))")

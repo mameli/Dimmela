@@ -4,12 +4,15 @@ import Foundation
 final class StubTransport: @unchecked Sendable {
     private(set) var requests: [URLRequest] = []
     var status = 200
+    /// The statuses of the first requests, in order; `status` for every request after them.
+    var statuses: [Int] = []
     var reply = "Testo rifinito."
     /// The whole response body, in place of the one built from `reply` or the error.
     var body: String?
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         requests.append(request)
+        let status = requests.count <= statuses.count ? statuses[requests.count - 1] : status
         let content = String(data: try JSONEncoder().encode(reply), encoding: .utf8)!
         let body = body ?? (status == 200
             ? #"{"choices":[{"message":{"role":"assistant","content":"# + content + "}}]}"

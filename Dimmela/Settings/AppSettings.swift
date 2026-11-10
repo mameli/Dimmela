@@ -4,12 +4,13 @@ import Foundation
 /// The keys of Dimmela's settings in UserDefaults, shared by the code and the `@AppStorage`
 /// of the views.
 enum AppSettings {
-    static let providerBaseURLKey = "providerBaseURL"
-    static let providerModelKey = "providerModel"
-    /// A `Provider.ReasoningEffort` raw value; empty for the model's default.
-    static let providerReasoningKey = "providerReasoning"
-    /// The Extra parameters as written, saved only when valid; empty for none.
-    static let providerExtraParametersKey = "providerExtraParameters"
+    /// The Provider profiles and the selected one, as `ProviderProfiles` JSON.
+    static let providerProfilesKey = "providerProfiles"
+    // The single Provider of 0.1.7, read once to migrate it and left for an older version.
+    private static let legacyBaseURLKey = "providerBaseURL"
+    private static let legacyModelKey = "providerModel"
+    private static let legacyReasoningKey = "providerReasoning"
+    private static let legacyExtraParametersKey = "providerExtraParameters"
     /// Folder paths, one per Mode source, one per line.
     static let modeSourcesKey = "modeSources"
     /// The enabled Modes' identifiers, in the user's order, one per line.
@@ -39,13 +40,29 @@ enum AppSettings {
     /// Vocabulary, where the user edits their own files. Two files of 512 KB at most.
     static let postProcessingLog = LogFile(url: URL.homeDirectory.appending(path: ".dimmela/post-processing.jsonl"))
 
-    static var provider: Provider {
-        Provider(
-            baseURL: defaults.string(forKey: providerBaseURLKey) ?? Provider.openRouter.baseURL,
-            model: defaults.string(forKey: providerModelKey) ?? Provider.openRouter.model,
-            reasoning: defaults.string(forKey: providerReasoningKey).flatMap(Provider.ReasoningEffort.init(rawValue:)),
-            extraParameters: defaults.string(forKey: providerExtraParametersKey).flatMap { $0.isEmpty ? nil : $0 }
-        )
+    static var providerProfiles: ProviderProfiles {
+        get { defaults.string(forKey: providerProfilesKey).flatMap(ProviderProfiles.init(rawValue:)) ?? ProviderProfiles() }
+        set { defaults.set(newValue.rawValue, forKey: providerProfilesKey) }
+    }
+
+    /// The profile Post-processing uses.
+    static var selectedProviderProfile: ProviderProfile? { providerProfiles.selected }
+
+    /// Once, at the first launch of a version with profiles: the Provider set up until then
+    /// becomes the first profile, with its key; a new install gets an OpenRouter profile waiting
+    /// for its key, as the single Provider did.
+    static func migrateProviderIfNeeded() {
+        guard defaults.string(forKey: providerProfilesKey) == nil else { return }
+        let legacyKey = Keychain.legacyAPIKey
+        let wasSetUp = legacyKey != nil || defaults.string(forKey: legacyBaseURLKey) != nil
+        let profile = wasSetUp ? ProviderProfile.migrating(Provider(
+            baseURL: defaults.string(forKey: legacyBaseURLKey) ?? Provider.openRouter.baseURL,
+            model: defaults.string(forKey: legacyModelKey) ?? Provider.openRouter.model,
+            reasoning: defaults.string(forKey: legacyReasoningKey).flatMap(Provider.ReasoningEffort.init(rawValue:)),
+            extraParameters: defaults.string(forKey: legacyExtraParametersKey).flatMap { $0.isEmpty ? nil : $0 }
+        )) : ProviderProfile.presets[0].copy()
+        if let legacyKey { try? Keychain.setAPIKey(legacyKey, for: profile.id) }
+        providerProfiles = ProviderProfiles(all: [profile], selectedID: profile.id)
     }
 
     // Lists are stored one item per line: `@AppStorage` then works with them as plain strings.

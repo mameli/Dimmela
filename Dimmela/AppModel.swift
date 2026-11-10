@@ -26,6 +26,7 @@ final class AppModel {
 
     init() {
         AppSettings.registerDefaults()
+        AppSettings.migrateProviderIfNeeded()
         controller = DictationController(boundaries: DictationBoundaries(
             startRecording: { [recorder, weak self] in
                 try recorder.start { decibels in
@@ -63,7 +64,11 @@ final class AppModel {
             enabledModes: { AppSettings.enabledModes },
             vocabulary: { AppSettings.vocabulary },
             history: history,
-            chatClient: { try ChatClient.configured() },
+            chatClients: {
+                AppSettings.providerProfiles.chain.map { profile in
+                    NamedChatClient(name: profile.displayName) { try ChatClient.configured(profile) }
+                }
+            },
             recordPostProcessing: { record in
                 guard AppSettings.keepsPostProcessingLog else { return }
                 AppSettings.postProcessingLog.write(record.jsonLine)
@@ -230,6 +235,7 @@ final class AppModel {
         case .pasteFailed(let detail): "Can't paste: \(detail)"
         case .postProcessingFailed(let detail): "Post-processing failed, the Transcript was pasted instead: \(detail)"
         case .postProcessingAgainFailed(let detail): "Post-processing failed: \(detail)"
+        case .postProcessingFellBack(let failed, let detail, let answeredBy): "\(failed) failed, \(answeredBy) answered instead: \(detail)"
         }
         logger.error(message)
         notify(message)

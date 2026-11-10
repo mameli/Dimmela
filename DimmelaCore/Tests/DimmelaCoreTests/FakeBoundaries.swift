@@ -17,6 +17,13 @@ final class FakeBoundaries {
     /// Thrown instead of building the chat client, as when no provider is configured.
     var chatClientError: Error?
     let provider = StubTransport()
+    /// The fallback profiles after the one in use, by name, in order.
+    var fallbacks: [(name: String, transport: StubTransport)] = []
+    /// No profile at all, as when the user removed every one.
+    var hasNoProfile = false
+    var fallbackBudget: Duration = .seconds(20)
+    /// The pauses before a request was sent again, recorded instead of waited.
+    let pauses = Pauses()
     let historyFolder = TemporaryFolder()
     lazy var history = History(directory: historyFolder.url)
 
@@ -67,17 +74,44 @@ final class FakeBoundaries {
             enabledModes: { [unowned self] in enabledModes },
             vocabulary: { [unowned self] in vocabulary },
             history: history,
-            chatClient: { [unowned self] in
-                if let chatClientError { throw chatClientError }
-                return ChatClient(
-                    baseURL: URL(string: "https://openrouter.ai/api/v1")!, apiKey: "sk-test",
-                    model: "anthropic/claude-haiku-5.5", reasoning: .low, transport: provider.send
-                )
+            chatClients: { [unowned self] in
+                guard !hasNoProfile else { return [] }
+                let first = NamedChatClient(name: "OpenRouter") {
+                    if let chatClientError { throw chatClientError }
+                    return Self.client(provider)
+                }
+                return [first] + fallbacks.map { fallback in NamedChatClient(name: fallback.name) { Self.client(fallback.transport) } }
             },
-            recordPostProcessing: { [unowned self] record in records.append(record) }
+            fallbackBudget: fallbackBudget,
+            recordPostProcessing: { [unowned self] record in records.append(record) },
+            sleep: { [pauses] wait in try await pauses.sleep(wait) }
         ))
         self.controller = controller
         return controller
+    }
+}
+
+/// Records the pauses asked for and returns at once; `whileWaiting` runs inside each one.
+final class Pauses: @unchecked Sendable {
+    private let lock = NSLock()
+    private var recorded: [Duration] = []
+    var whileWaiting: (@Sendable () async throws -> Void)?
+
+    var all: [Duration] { lock.withLock { recorded } }
+
+    func sleep(_ wait: Duration) async throws {
+        lock.withLock { recorded.append(wait) }
+        try await whileWaiting?()
+        try Task.checkCancellation()
+    }
+}
+
+extension FakeBoundaries {
+    nonisolated static func client(_ transport: StubTransport) -> ChatClient {
+        ChatClient(
+            baseURL: URL(string: "https://openrouter.ai/api/v1")!, apiKey: "sk-test",
+            model: "anthropic/claude-haiku-5.5", reasoning: .low, transport: transport.send
+        )
     }
 }
 
