@@ -52,6 +52,10 @@ _Avoid_: custom body, overrides, advanced settings
 A named set of instructions for Post-processing. Its source is either a prompt file or a skill (`SKILL.md`): for Dimmela the two are the same thing.
 _Avoid_: prompt, skill, template, preset (when talking about the concept)
 
+**Built-in Mode** (`BuiltInModes`):
+One of the Modes Dimmela ships, Clean and Markdown: prompt files copied to `~/.dimmela/modes` at the first launch, where the user can edit them. Dimmela updates a copy only while the user has not changed it (ADR 0006).
+_Avoid_: default Mode (that is the Mode every Dictation starts with), preset
+
 **Mode source** (`ModeSource`):
 A folder the user points Dimmela at, where it looks for skills and prompt files that can become Modes. Only the ones the user enables become Modes.
 _Avoid_: library, skills folder

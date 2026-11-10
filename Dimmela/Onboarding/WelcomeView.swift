@@ -82,10 +82,13 @@ struct WelcomeView: View {
             }
 
             Section {
-                Text("Optional: an LLM can rewrite each Dictation with your prompts and skills (Modes). Add a provider key and a folder of Modes in Settings.")
+                Text("Optional: an LLM can rewrite each Dictation with a Mode. Dimmela comes with two: Clean, which tidies up what you said, and Markdown, which also makes lists, tables and checklists when you ask for them. In Settings › Post-processing, add a provider key or a coding agent you already pay for, such as Claude Code or Codex; your own prompts and skills go in Settings › Modes.")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
+                    if defaultModeID.isEmpty, let clean = AppSettings.builtInCleanMode {
+                        Button("Start Every Dictation with Clean") { defaultModeID = clean.id }
+                    }
                     Button("Open Settings…") {
                         NSApplication.shared.activate()
                         openSettings()

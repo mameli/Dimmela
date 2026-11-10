@@ -166,3 +166,10 @@ Before every release, with each CLI installed and signed in (these CLIs update t
 - [ ] Sign out of one (`codex logout`): its editor says it is not signed in; with another profile marked Fallback, a Dictation is answered by that one and the notification says so.
 - [ ] With an agent in use, `Esc` during processing ends the run: no `codex`, `claude`, `copilot`, `opencode` or `pi` process is left (`pgrep -fl`).
 
+### Built-in Modes (v2 ticket 07)
+
+- [ ] First launch of this version: `~/.dimmela/modes` holds `clean.md` and `markdown.md`; Settings › Modes lists the folder as a Mode source and Clean and Markdown enabled after the Modes you had, with the same digits as before.
+- [ ] With no Default Mode, the welcome window offers *Start Every Dictation with Clean*.
+- [ ] Markdown: "voglio scrivere una lista della spesa latte uova pane" pastes a list; "fai una tabella con nome e ruolo…" a table; "cose da fare come checklist…" `- [ ]` items; a plain sentence stays a sentence.
+- [ ] Edit `clean.md`, relaunch: the edit stays. Delete `markdown.md`, relaunch: it does not come back.
+

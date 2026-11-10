@@ -106,6 +106,11 @@ final class AppModel {
         #if DEBUG
         if SmokeTest.runIfRequested(model: speechModel, detector: speechDetector) { return }
         #endif
+        do {
+            try AppSettings.installBuiltInModes()
+        } catch {
+            logger.error("Built-in Modes not written: \(error.localizedDescription)")
+        }
         overlay = OverlayPanel(controller: controller)
         updates.start()
         Task { try? await speechModel.prepare() }

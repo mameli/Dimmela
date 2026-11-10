@@ -117,6 +117,32 @@ enum AppSettings {
         try text.write(to: vocabularyFile, atomically: true, encoding: .utf8)
     }
 
+    /// The built-in Modes' folder, next to the Vocabulary: the user edits them as their own.
+    static let builtInModesFolder = URL.homeDirectory.appending(path: ".dimmela/modes")
+    private static let builtInModesInstalledKey = "builtInModesInstalled"
+
+    /// At every launch. The first time, the built-in Modes are written, their folder becomes a
+    /// Mode source and they are enabled after the user's own Modes, whose digits do not change;
+    /// later, the files Dimmela wrote get the current prompts (see `BuiltInModes`).
+    static func installBuiltInModes() throws {
+        let firstTime = !defaults.bool(forKey: builtInModesInstalledKey)
+        try BuiltInModes.install(in: builtInModesFolder, firstTime: firstTime)
+        guard firstTime else { return }
+        defaults.set(true, forKey: builtInModesInstalledKey)
+        let folder = builtInModesFolder.standardizedFileURL.path(percentEncoded: false)
+        let trimmed = { (path: String) in path.hasSuffix("/") ? String(path.dropLast()) : path }
+        if !modeSources.contains(where: { trimmed($0) == folder }) { modeSources.append(folder) }
+        let names = Set(BuiltInModes.files.map(\.name))
+        let builtIn = ModeCatalog.modes(in: [builtInModesFolder]).filter { names.contains($0.url.lastPathComponent) }
+        enabledModes += builtIn.filter { !enabledModes.contains($0) }
+    }
+
+    /// The built-in Clean Mode, if it is enabled: the Default Mode onboarding suggests.
+    static var builtInCleanMode: Mode? {
+        let clean = ModeCatalog.modes(in: [builtInModesFolder]).first { $0.url.lastPathComponent == "clean.md" }
+        return enabledModes.first { $0 == clean }
+    }
+
     /// The Modes found in the Mode sources now.
     static var availableModes: [Mode] {
         ModeCatalog.modes(in: modeSources.map { URL(fileURLWithPath: $0, isDirectory: true) })
