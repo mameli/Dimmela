@@ -21,15 +21,24 @@ struct SettingsView: View {
 private struct TranscriptionSettings: View {
     let model: SpeechModel
     @State private var error: String?
+    /// Changes when a model is deleted, so the rows read the disk again.
+    @State private var deletions = 0
 
     var body: some View {
         Form {
             Section {
+                Picker("Model", selection: Binding(get: { model.choice }, set: { model.choose($0) })) {
+                    ForEach(SpeechModelChoice.allCases) { choice in
+                        Text("\(choice.name) (\(choice.downloadMB) MB)").tag(choice)
+                    }
+                }
+                Text(model.choice.note).font(.caption).foregroundStyle(.secondary)
                 SpeechModelStatus(model: model)
-                if model.state == .ready || SpeechModel.isDownloaded {
+                if model.state == .ready || model.choice.isDownloaded {
                     HStack {
                         Button("Delete the Model", role: .destructive) {
                             do { try model.delete() } catch { self.error = error.localizedDescription }
+                            deletions += 1
                         }
                         Button("Download Again") {
                             do {
@@ -42,13 +51,24 @@ private struct TranscriptionSettings: View {
                         Spacer()
                     }
                 }
+                ForEach(SpeechModelChoice.allCases.filter { $0 != model.choice && $0.isDownloaded }) { other in
+                    HStack {
+                        Text("\(other.name) is also on this Mac (\(other.downloadMB) MB).").foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Delete", role: .destructive) {
+                            do { try model.delete(other) } catch { self.error = error.localizedDescription }
+                            deletions += 1
+                        }
+                    }
+                }
+                .id(deletions)
                 if let error {
                     Text(error).foregroundStyle(.secondary).textSelection(.enabled)
                 }
             } header: {
                 Text("Speech model")
             } footer: {
-                Text("Parakeet v3 runs on this Mac and recognizes Italian, English and 23 other European languages by itself. It is downloaded once from Hugging Face: no audio or text leaves the Mac.")
+                Text("Parakeet runs on this Mac and recognizes Italian, English and 23 other European languages by itself. Each model is downloaded once from Hugging Face: no audio or text leaves the Mac. Only the chosen model stays in memory.")
                     .foregroundStyle(.secondary)
             }
         }

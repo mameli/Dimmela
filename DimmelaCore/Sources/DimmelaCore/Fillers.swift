@@ -50,7 +50,7 @@ enum Fillers {
 
     /// Spaces and punctuation left behind: double spaces, a space before punctuation, a comma
     /// right before the end of the sentence.
-    private static func tidy(_ text: String) -> String {
+    static func tidy(_ text: String) -> String {
         var text = text
         for (pattern, template) in [
             ("[ \\t]{2,}", " "),
@@ -61,5 +61,14 @@ enum Fillers {
             text = text.replacingOccurrences(of: pattern, with: template, options: .regularExpression)
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+/// Parakeet writes `<unk>` for a word it could not recognise (Ultra more often than v3): pasted,
+/// it would end up in the user's text. It is dropped, with the space it leaves.
+enum UnknownWords {
+    static func remove(from text: String) -> String {
+        guard text.contains("<unk>") else { return text }
+        return Fillers.tidy(text.replacingOccurrences(of: "<unk>", with: " "))
     }
 }

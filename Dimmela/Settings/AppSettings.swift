@@ -22,6 +22,8 @@ enum AppSettings {
     /// Set when the user closes the welcome window with Done.
     static let onboardingDoneKey = "onboardingDone"
     static let checkForUpdatesKey = "checkForUpdates"
+    /// A `SpeechModelChoice` raw value; v3 when missing.
+    static let speechModelKey = "speechModel"
     /// Off unless the user turns it on: the Post-processing log holds what they dictate.
     static let keepsPostProcessingLogKey = "keepsPostProcessingLog"
 

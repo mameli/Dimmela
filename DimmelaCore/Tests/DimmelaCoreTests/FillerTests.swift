@@ -49,4 +49,13 @@ struct FillerTests {
     func onlyFillers() async {
         #expect(await pasted(after: "Ehm... mmh.").isEmpty)
     }
+
+    @Test("a word Parakeet could not recognise is dropped, not pasted as <unk>", arguments: [
+        ("Ho parlato con <unk> ieri.", "Ho parlato con ieri. "),
+        ("<unk> Domani vado a Milano.", "Domani vado a Milano. "),
+        ("Va bene <unk>.", "Va bene. "),
+    ])
+    func unknownWord(transcript: String, expected: String) async {
+        #expect(await pasted(after: transcript) == [expected])
+    }
 }

@@ -169,14 +169,14 @@ struct SpeechModelStatus: View {
         switch model.state {
         case .notLoaded:
             HStack {
-                Text("Parakeet v3, \(SpeechModel.downloadMB) MB, downloaded once.").foregroundStyle(.secondary)
+                Text("\(model.choice.name), \(model.choice.downloadMB) MB, downloaded once.").foregroundStyle(.secondary)
                 Spacer()
                 Button("Download") { Task { try? await model.prepare() } }
             }
         case .downloading(let percent):
             VStack(alignment: .leading, spacing: 4) {
                 ProgressView(value: Double(percent), total: 100)
-                Text("Downloading Parakeet v3… \(percent)%").font(.caption).foregroundStyle(.secondary)
+                Text("Downloading \(model.choice.name)… \(percent)%").font(.caption).foregroundStyle(.secondary)
             }
         case .preparing(let firstTime):
             HStack {
@@ -188,7 +188,7 @@ struct SpeechModelStatus: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         case .ready:
-            Text("Parakeet v3 is ready.").foregroundStyle(.secondary)
+            Text("\(model.choice.name) is ready.").foregroundStyle(.secondary)
         case .failed(let detail):
             VStack(alignment: .leading, spacing: 4) {
                 HStack {

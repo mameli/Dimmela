@@ -292,7 +292,7 @@ public final class DictationController {
         let vocabulary = boundaries.vocabulary()
         let transcript: String
         do {
-            transcript = Fillers.remove(from: vocabulary.correct(try await boundaries.transcribe(samples)))
+            transcript = Fillers.remove(from: vocabulary.correct(UnknownWords.remove(from: try await boundaries.transcribe(samples))))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
             guard !Task.isCancelled else { return }
