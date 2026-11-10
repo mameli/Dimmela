@@ -50,5 +50,6 @@ struct ProblemReportTests {
         #expect(ProblemReport.postProcessing(provider: local, isUsed: true) == "qwen (on this Mac)")
         #expect(ProblemReport.postProcessing(provider: remote, isUsed: true) == "gpt (remote)")
         #expect(ProblemReport.postProcessing(provider: nil, isUsed: true) == "No Provider profile")
+        #expect(ProblemReport.postProcessing(provider: AgentCLI.claude.profile().provider, isUsed: true) == "Claude Code, its default model")
     }
 }

@@ -42,6 +42,28 @@ struct FallbackTests {
         #expect(fake.history.entries.first?.text == "Dalla riserva.")
     }
 
+    @Test("a coding agent's CLI is a profile like the others: signed out, the next profile answers")
+    func agentFallsBack() async throws {
+        withMode()
+        let claude = try FakeCLI(.claude, [.init(pattern: "-p*", script: FakeCLI.prints("""
+            {"type":"result","is_error":true,"subtype":"success","result":"Not logged in · Please run /login"}
+            """, exit: 1))])
+        fake.inUse = NamedChatClient(name: "Claude Code") { claude.runner().client(for: AgentCLI.claude.profile()) }
+        let mistral = StubTransport()
+        mistral.reply = "Dalla riserva."
+        fake.fallbacks = [("Mistral", mistral)]
+        let controller = fake.controllerWired()
+
+        await dictate(controller)
+
+        #expect(claude.calls.count == 1)
+        #expect(claude.calls.first?.input.contains("<instructions>\nClean up.\n</instructions>") == true)
+        #expect(fake.pasted == ["Dalla riserva. "])
+        #expect(fake.problems == [.postProcessingFellBack(
+            failed: "Claude Code", detail: AgentCLI.Failure.notSignedIn(.claude).localizedDescription, answeredBy: "Mistral"
+        )])
+    }
+
     @Test("a failure a different provider can fix falls back at once, with no Retry", arguments: [400, 401, 402, 404])
     func refusedFallsBack(status: Int) async {
         withMode()

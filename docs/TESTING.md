@@ -154,3 +154,15 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 
 - [ ] With a GitHub release of `mameli/Dimmela` newer than the running version, the menu shows "Dimmela X is available…" and opens the release page. Turned off in Settings › General, no request is made.
 - [ ] Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.
+
+### Coding agents as Provider profiles (v2 ticket 04)
+
+Before every release, with each CLI installed and signed in (these CLIs update themselves):
+
+- [ ] Settings › Post-processing › + › With your coding agent's plan: add Claude Code, Codex, GitHub Copilot, OpenCode and Pi. Each editor shows the CLI's path and version, and the model menu lists the plan's models (Claude Code's fixed list).
+- [ ] *Test Connection* answers for each one, in a few seconds.
+- [ ] A Dictation with each one in use is Post-processed; `~/Library/Logs/Dimmela/Dimmela.log` shows `LLM reply through <agent>` with `0 tool calls`.
+- [ ] After an OpenCode Dictation, `opencode session list --standalone` run in `$TMPDIR/Dimmela-opencode-work` lists no session.
+- [ ] Sign out of one (`codex logout`): its editor says it is not signed in; with another profile marked Fallback, a Dictation is answered by that one and the notification says so.
+- [ ] With an agent in use, `Esc` during processing ends the run: no `codex`, `claude`, `copilot`, `opencode` or `pi` process is left (`pgrep -fl`).
+

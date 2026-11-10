@@ -19,6 +19,8 @@ final class FakeBoundaries {
     let provider = StubTransport()
     /// The fallback profiles after the one in use, by name, in order.
     var fallbacks: [(name: String, transport: StubTransport)] = []
+    /// The profile in use, in place of "OpenRouter" answering through `provider`.
+    var inUse: NamedChatClient?
     /// No profile at all, as when the user removed every one.
     var hasNoProfile = false
     var fallbackBudget: Duration = .seconds(20)
@@ -76,7 +78,7 @@ final class FakeBoundaries {
             history: history,
             chatClients: { [unowned self] in
                 guard !hasNoProfile else { return [] }
-                let first = NamedChatClient(name: "OpenRouter") {
+                let first = inUse ?? NamedChatClient(name: "OpenRouter") {
                     if let chatClientError { throw chatClientError }
                     return Self.client(provider)
                 }

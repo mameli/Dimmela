@@ -33,7 +33,7 @@ The OpenAI-compatible server that Post-processing calls: address, model, how muc
 _Avoid_: backend, API, vendor
 
 **Provider profile** (`ProviderProfile`):
-A named Provider set up in Settings, with its API key in the Keychain. The user keeps as many as they like, in their own order, and Post-processing uses the selected one.
+A named Provider set up in Settings, with its API key in the Keychain. The user keeps as many as they like, in their own order, and Post-processing uses the selected one. A profile can instead run a coding agent's CLI the user installed and signed in to (`AgentCLI`): no key, their plan pays; it is a Provider like the others, with no term of its own (ADR 0005).
 _Avoid_: preset (that is a ready-made starting point for a profile), account
 
 **Fallback** (`isFallback`):

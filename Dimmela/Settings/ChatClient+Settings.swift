@@ -25,6 +25,10 @@ extension ChatClient {
     /// Keychain.
     static func configured(_ profile: ProviderProfile? = AppSettings.selectedProviderProfile) throws -> ChatClient {
         guard let profile else { throw ProfileFailure.none }
+        if let cli = profile.agentCLI {
+            // What it logs holds no text: model, sizes, timing, usage, the agent's error.
+            return AgentCLI.Runner(cli, log: { logger.info($0) }).client(for: profile)
+        }
         let provider = profile.provider
         let keyStart = ContinuousClock.now
         let apiKey = Keychain.apiKey(for: profile.id)

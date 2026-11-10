@@ -30,7 +30,7 @@ struct PostProcessingSettings: View {
             } header: {
                 Text("Provider profiles")
             } footer: {
-                Text("Any OpenAI-compatible server. Post-processing uses the profile marked In use; if it still fails after asking again, the profiles marked Fallback are tried in this order, drag to reorder. After 20 seconds no other profile is tried and the Transcript is pasted.")
+                Text("Any OpenAI-compatible server, or a coding agent you already pay for. Post-processing uses the profile marked In use; if it still fails after asking again, the profiles marked Fallback are tried in this order, drag to reorder. After 20 seconds no other profile is tried and the Transcript is pasted.")
                     .foregroundStyle(.secondary)
             }
 
@@ -64,8 +64,9 @@ struct PostProcessingSettings: View {
         .onAppear { editedID = editedID ?? profiles.selected?.id }
     }
 
-    /// + and − under the list, as in the Mac's own lists. The + offers an empty profile or one
-    /// started from a common server.
+    /// + and − under the list, as in the Mac's own lists. The + offers an empty profile, one
+    /// started from a common server, and the coding agents' CLIs not added yet: they are offered
+    /// even when not installed, and their editor says what is missing.
     private var addAndRemove: some View {
         HStack(spacing: 12) {
             Menu {
@@ -73,6 +74,14 @@ struct PostProcessingSettings: View {
                 Divider()
                 ForEach(ProviderProfile.presets) { preset in
                     Button(preset.name) { add(preset.copy()) }
+                }
+                let offeredCLIs = AgentCLI.allCases.filter { cli in !profiles.all.contains { $0.agentCLI == cli } }
+                if !offeredCLIs.isEmpty {
+                    Section("With your coding agent's plan") {
+                        ForEach(offeredCLIs, id: \.self) { cli in
+                            Button(cli.name) { add(cli.profile()) }
+                        }
+                    }
                 }
             } label: {
                 Image(systemName: "plus").accessibilityLabel(Text("Add Profile"))
@@ -115,7 +124,7 @@ private struct ProfileRow: View {
                 .foregroundStyle(isEdited ? Color.accentColor : .secondary)
             VStack(alignment: .leading) {
                 Text(profile.displayName)
-                Text(profile.provider.model.isEmpty ? "To be configured" : profile.provider.model)
+                Text(caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -125,6 +134,18 @@ private struct ProfileRow: View {
             } else if profile.isFallback {
                 Text("Fallback").font(.caption).foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private var caption: String {
+        let model = profile.provider.model
+        switch profile.agentCLI {
+        case .codex: return "Your ChatGPT plan, through Codex" + (model.isEmpty ? "" : " · \(model)")
+        case .copilot: return "Your GitHub Copilot plan" + (model.isEmpty ? "" : " · \(model)")
+        case .claude: return "Your Claude plan, through Claude Code" + (model.isEmpty ? "" : " · \(model)")
+        case .opencode: return model.isEmpty ? "To be configured" : "Through OpenCode · \(model)"
+        case .pi: return model.isEmpty ? "To be configured" : "Through Pi · \(model)"
+        case nil: return model.isEmpty ? "To be configured" : model
         }
     }
 }
@@ -155,51 +176,27 @@ private struct ProfileEditor: View {
                 TextField("Name", text: $profile.name, prompt: Text(verbatim: profile.displayName))
                     .labelsHidden()
             }
-            LabeledContent("Base URL") {
-                TextField("Base URL", text: $profile.provider.baseURL, prompt: Text(verbatim: Provider.openRouter.baseURL))
-                    .labelsHidden()
-            }
-            if let urlProblem {
-                Label(urlProblem, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            }
-            LabeledContent("Model") {
-                TextField("Model", text: $profile.provider.model, prompt: Text(verbatim: Provider.openRouter.model))
-                    .labelsHidden()
-            }
-            apiKeyRow
-            if let keyError {
-                Text(keyError).font(.caption).foregroundStyle(.red)
+            if let cli = profile.agentCLI {
+                AgentCLIRows(cli: cli, provider: $profile.provider)
+            } else {
+                providerRows
             }
         } header: {
             Text("Profile: \(profile.displayName)")
         } footer: {
-            HStack(spacing: 4) {
-                Text("Plain http:// only for a server on this Mac. The key is stored in the macOS Keychain, never in a file.")
-                if profile.provider.baseURL.contains("openrouter.ai") {
-                    Link("Get an OpenRouter key", destination: URL(string: "https://openrouter.ai/settings/keys")!)
+            if profile.agentCLI == nil {
+                HStack(spacing: 4) {
+                    Text("Plain http:// only for a server on this Mac. The key is stored in the macOS Keychain, never in a file.")
+                    if profile.provider.baseURL.contains("openrouter.ai") {
+                        Link("Get an OpenRouter key", destination: URL(string: "https://openrouter.ai/settings/keys")!)
+                    }
                 }
+                .foregroundStyle(.secondary)
             }
-            .foregroundStyle(.secondary)
         }
 
-        Section {
-            Picker("Reasoning", selection: $profile.provider.reasoning) {
-                Text("Model default").tag(Provider.ReasoningEffort?.none)
-                ForEach(Provider.ReasoningEffort.allCases, id: \.self) { effort in
-                    Text(effort.displayName).tag(Optional(effort))
-                }
-            }
-            LabeledContent("Extra parameters") {
-                CodeTextField(placeholder: #"JSON, e.g. {"reasoning_effort": "xhigh"}"#, text: $extraParameters)
-            }
-            if let extraParametersProblem {
-                Text(extraParametersProblem).font(.caption).foregroundStyle(.red)
-            }
-        } footer: {
-            Text("Model default sends nothing. OpenRouter gets the level in its own format, every other provider as reasoning_effort, which not every model accepts. Extra parameters are added to every request as written, each key in place of what Dimmela sends for it: for what a model needs beyond the Reasoning menu, see the provider's documentation.")
-                .foregroundStyle(.secondary)
+        if profile.agentCLI == nil {
+            reasoningAndExtraParameters
         }
 
         Section {
@@ -231,7 +228,7 @@ private struct ProfileEditor: View {
                 EmptyView()
             }
         } footer: {
-            Text("Sends a one-word request to the model, with the same reasoning and Extra parameters as a Dictation. During a Dictation a busy provider is asked again twice, a few seconds apart; if it still fails or does not answer within 30 seconds, the Transcript is pasted instead.")
+            Text("Sends a one-word request to the model, with the same settings as a Dictation. During a Dictation a busy provider is asked again twice, a few seconds apart; if it still fails or does not answer within 30 seconds, the Transcript is pasted instead.")
                 .foregroundStyle(.secondary)
         }
         .onAppear {
@@ -242,6 +239,47 @@ private struct ProfileEditor: View {
         .onChange(of: profile.provider.model) { test = nil }
         .onChange(of: profile.provider.reasoning) { test = nil }
         .onChange(of: extraParameters) { saveExtraParameters() }
+    }
+
+    /// An OpenAI-compatible server: its address, model and key.
+    @ViewBuilder private var providerRows: some View {
+        LabeledContent("Base URL") {
+            TextField("Base URL", text: $profile.provider.baseURL, prompt: Text(verbatim: Provider.openRouter.baseURL))
+                .labelsHidden()
+        }
+        if let urlProblem {
+            Label(urlProblem, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        }
+        LabeledContent("Model") {
+            TextField("Model", text: $profile.provider.model, prompt: Text(verbatim: Provider.openRouter.model))
+                .labelsHidden()
+        }
+        apiKeyRow
+        if let keyError {
+            Text(keyError).font(.caption).foregroundStyle(.red)
+        }
+    }
+
+    private var reasoningAndExtraParameters: some View {
+        Section {
+            Picker("Reasoning", selection: $profile.provider.reasoning) {
+                Text("Model default").tag(Provider.ReasoningEffort?.none)
+                ForEach(Provider.ReasoningEffort.allCases, id: \.self) { effort in
+                    Text(effort.displayName).tag(Optional(effort))
+                }
+            }
+            LabeledContent("Extra parameters") {
+                CodeTextField(placeholder: #"JSON, e.g. {"reasoning_effort": "xhigh"}"#, text: $extraParameters)
+            }
+            if let extraParametersProblem {
+                Text(extraParametersProblem).font(.caption).foregroundStyle(.red)
+            }
+        } footer: {
+            Text("Model default sends nothing. OpenRouter gets the level in its own format, every other provider as reasoning_effort, which not every model accepts. Extra parameters are added to every request as written, each key in place of what Dimmela sends for it: for what a model needs beyond the Reasoning menu, see the provider's documentation.")
+                .foregroundStyle(.secondary)
+        }
     }
 
     @ViewBuilder private var apiKeyRow: some View {
@@ -291,7 +329,7 @@ private struct ProfileEditor: View {
     }
 
     private var urlProblem: String? {
-        guard !profile.provider.baseURL.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        guard profile.agentCLI == nil, !profile.provider.baseURL.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
         do {
             _ = try Provider(baseURL: profile.provider.baseURL, model: "x").validatedBaseURL()
             return nil
@@ -332,7 +370,8 @@ private struct ProfileEditor: View {
             ])
             let elapsed = (ContinuousClock.now - start).components
             let seconds = Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18
-            test = .success("\(profile.provider.model) answered in \(seconds.formatted(.number.precision(.fractionLength(1)))) s")
+            let model = profile.provider.model.isEmpty ? profile.displayName : profile.provider.model
+            test = .success("\(model) answered in \(seconds.formatted(.number.precision(.fractionLength(1)))) s")
         } catch {
             test = .failure((error as? LocalizedError)?.errorDescription ?? String(describing: error))
         }

@@ -22,6 +22,9 @@ public struct ProblemReport: Equatable, Sendable {
     public static func postProcessing(provider: Provider?, isUsed: Bool) -> String {
         guard isUsed else { return "Not used" }
         guard let provider else { return "No Provider profile" }
+        if let cli = provider.agentCLI {
+            return "\(cli.name), \(provider.model.isEmpty ? "its default model" : provider.model)"
+        }
         return "\(provider.model) (\(provider.isOnThisMac ? "on this Mac" : "remote"))"
     }
 
