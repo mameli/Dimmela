@@ -18,6 +18,11 @@ final class UpdateChecker {
 
     /// A release newer than the running app, shown in the menu.
     private(set) var available: Release?
+    /// When GitHub last answered, for Settings › About; nil before the first answer.
+    private(set) var lastChecked: Date?
+    /// Why the last check failed; nil when it worked.
+    private(set) var lastProblem: String?
+    private(set) var isChecking = false
 
     func start() {
         Task { [weak self] in
@@ -33,7 +38,11 @@ final class UpdateChecker {
         if let available { NSWorkspace.shared.open(available.page) }
     }
 
-    private func check() async {
+    /// From Settings › About, whether or not the daily check is on.
+    func check() async {
+        guard !isChecking else { return }
+        isChecking = true
+        defer { isChecking = false }
         struct Reply: Decodable {
             let tag: String
             let page: URL
@@ -48,6 +57,8 @@ final class UpdateChecker {
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             let reply = try JSONDecoder().decode(Reply.self, from: data)
+            lastChecked = .now
+            lastProblem = nil
             let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
             guard let version = AppVersion.fromTag(reply.tag), AppVersion.isNewer(version, than: current) else {
                 available = nil
@@ -55,6 +66,7 @@ final class UpdateChecker {
             }
             available = Release(version: version, page: reply.page)
         } catch {
+            lastProblem = error.localizedDescription
             // Offline or rate-limited: nothing to show, tried again tomorrow.
             logger.notice("Update check failed: \(error.localizedDescription)")
         }

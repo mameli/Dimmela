@@ -4,6 +4,7 @@ import SwiftUI
 
 struct SettingsView: View {
     let speechModel: SpeechModel
+    let updates: UpdateChecker
 
     var body: some View {
         TabView {
@@ -11,6 +12,7 @@ struct SettingsView: View {
             Tab("Transcription", systemImage: "waveform") { TranscriptionSettings(model: speechModel) }
             Tab("Post-processing", systemImage: "sparkles") { PostProcessingSettings() }
             Tab("Modes", systemImage: "list.number") { ModeSettings() }
+            Tab("About", systemImage: "info.circle") { AboutSettings(updates: updates) }
         }
         .frame(width: 560, height: 460)
     }

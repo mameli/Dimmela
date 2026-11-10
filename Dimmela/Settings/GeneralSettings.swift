@@ -187,9 +187,6 @@ struct GeneralSettings: View {
     var body: some View {
         Form {
             Section {
-                AppIdentity().padding(.vertical, 8)
-            }
-            Section {
                 LaunchAtLoginToggle()
             } footer: {
                 Text("Dimmela loads the speech model when it starts, so it is ready for the first Dictation after login.")
@@ -203,28 +200,7 @@ struct GeneralSettings: View {
                 Text("In ~/.dimmela/vocabulary.md, one per line: `- Jira = gira, ira | the issue tracker at work`. The variants are fixed in the Transcript; Post-processing gets the terms too. Dimmela reads the file at every Dictation.")
                     .foregroundStyle(.secondary)
             }
-            Section {
-                UpdatesToggle()
-            }
-
-            // At the bottom, in grey: seen by those who scroll this far, not first thing (from Takku).
-            Section {
-            } footer: {
-                Text(Self.supportNote)
-                    .foregroundStyle(.secondary)
-                    .tint(.secondary)
-                    .frame(maxWidth: .infinity)
-            }
         }
         .formStyle(.grouped)
-    }
-
-    /// The link is grey like the text around it, so it is underlined to show it is one.
-    private static var supportNote: AttributedString {
-        var note = AttributedString(localized: "Dimmela is free. If it is useful to you, [buy me a coffee](https://buymeacoffee.com/mameli.dev).")
-        for run in note.runs where run.link != nil {
-            note[run.range].underlineStyle = .single
-        }
-        return note
     }
 }
