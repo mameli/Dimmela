@@ -51,6 +51,17 @@ private struct MenuContent: View {
             Button("Allow the Microphone…") { model.openMicrophoneSettings() }
         }
         Divider()
+        // Holding ⌥ copies the Transcript instead, before Post-processing.
+        Button("Copy Last Dictation") {
+            if let last = model.history.entries.first { model.copy(last.text) }
+        }
+        .disabled(model.history.entries.isEmpty)
+        .modifierKeyAlternate(.option) {
+            Button("Copy Last Transcript") {
+                if let last = model.history.entries.first { model.copy(last.transcript) }
+            }
+            .disabled(model.history.entries.isEmpty)
+        }
         if !model.history.entries.isEmpty {
             Menu("History") {
                 ForEach(model.history.entries) { entry in
