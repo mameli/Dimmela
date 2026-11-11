@@ -14,7 +14,7 @@ It is a lighter alternative to [Handy](https://handy.computer): with the speech 
 brew install --cask mameli/dimmela/dimmela
 ```
 
-Or download `Dimmela.zip` from the [latest release](https://github.com/mameli/Dimmela/releases/latest), open it and move Dimmela to Applications.
+Or download `Dimmela.dmg` from the [latest release](https://github.com/mameli/Dimmela/releases/latest), open it and drag Dimmela into Applications.
 
 ## How it works
 

@@ -161,6 +161,11 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 - [ ] With a GitHub release of `mameli/Dimmela` newer than the running version, the menu shows "Dimmela X is available…" and opens the release page. Turned off in Settings › General, no request is made.
 - [ ] Settings › About › Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.
 
+### Disk image
+
+- [ ] `scripts/release.sh --dry-run`, then open `build/release/Dimmela-<version>.dmg`: the green window says "Drag Dimmela into Applications", Dimmela on the left, Applications on the right, the arrow between them, the shortcut line under them. Dragging Dimmela onto Applications copies it, and it opens without a Gatekeeper warning.
+- [ ] After changing `scripts/dmg/background.py` or the icon positions: `python3 scripts/dmg/background.py`, then `scripts/dmg/make-dmg.sh --layout <Dimmela.app> /tmp/x.dmg` to save the window layout again.
+
 ### Coding agents as Provider profiles (v2 ticket 04)
 
 Before every release, with each CLI installed and signed in (these CLIs update themselves):
