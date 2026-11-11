@@ -137,12 +137,6 @@ enum AppSettings {
         enabledModes += builtIn.filter { !enabledModes.contains($0) }
     }
 
-    /// The built-in Clean Mode, if it is enabled: the Default Mode onboarding suggests.
-    static var builtInCleanMode: Mode? {
-        let clean = ModeCatalog.modes(in: [builtInModesFolder]).first { $0.url.lastPathComponent == "clean.md" }
-        return enabledModes.first { $0 == clean }
-    }
-
     /// The Modes found in the Mode sources now.
     static var availableModes: [Mode] {
         ModeCatalog.modes(in: modeSources.map { URL(fileURLWithPath: $0, isDirectory: true) })

@@ -19,6 +19,8 @@ struct DimmelaApp: App {
         Window("Welcome to Dimmela", id: WelcomeView.windowID) {
             WelcomeView(model: delegate.model)
         }
+        // The hero's green reaches the top of the window, as on dimmela.app.
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .restorationBehavior(.disabled)
         .defaultLaunchBehavior(WelcomeView.isNeededAtLaunch ? .presented : .suppressed)
@@ -90,11 +92,9 @@ private struct MenuContent: View {
                 ForEach(profiles.all) { Text($0.displayName).tag(Optional($0.id)) }
             }
         }
-        if !onboardingDone {
-            Button("Set Up Dimmela…") {
-                NSApplication.shared.activate()
-                openWindow(id: WelcomeView.windowID)
-            }
+        Button(onboardingDone ? "Welcome Tour…" : "Set Up Dimmela…") {
+            NSApplication.shared.activate()
+            openWindow(id: WelcomeView.windowID)
         }
         if let release = model.updates.available {
             Button("Dimmela \(release.version) is available…") { model.updates.openReleasePage() }

@@ -135,20 +135,22 @@ private struct ModeList: View {
 }
 
 /// Five bars that rise with the voice, the middle ones most.
-private struct LevelBars: View {
+struct LevelBars: View {
     let level: Float
+    var color: Color = .red
+    var scale: CGFloat = 1
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let weights: [CGFloat] = [0.45, 0.75, 1, 0.75, 0.45]
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 3 * scale) {
             ForEach(weights.indices, id: \.self) { index in
                 Capsule()
-                    .fill(.red)
-                    .frame(width: 3, height: 4 + 14 * CGFloat(level) * weights[index])
+                    .fill(color)
+                    .frame(width: 3 * scale, height: (4 + 14 * CGFloat(level) * weights[index]) * scale)
             }
         }
-        .frame(height: 18)
+        .frame(height: 18 * scale)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: level)
     }
 }

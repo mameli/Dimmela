@@ -31,6 +31,12 @@ Transcribe a file without microphone or keyboard. It prints the Transcript, the 
 build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -transcribeFile <audio file>
 ```
 
+To look at one page of the welcome tour without clicking through it (`-welcomePage` 0–4: hello, setup, try it, Modes, small things):
+
+```bash
+build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -showWelcome YES -welcomePage 2
+```
+
 ## Checklist
 
 ### Hold Dictation (ticket 02)
@@ -172,4 +178,15 @@ Before every release, with each CLI installed and signed in (these CLIs update t
 - [ ] With no Default Mode, the welcome window offers *Start Every Dictation with Clean*.
 - [ ] Markdown: "voglio scrivere una lista della spesa latte uova pane" pastes a list; "fai una tabella con nome e ruolo…" a table; "cose da fare come checklist…" `- [ ]` items; a plain sentence stays a sentence.
 - [ ] Edit `clean.md`, relaunch: the edit stays. Delete `markdown.md`, relaunch: it does not come back.
+
+
+
+### Welcome tour
+
+- [ ] First launch: the tour opens on "Just say it.", the green reaching the top of the window; the fn and space keys press themselves now and then (still with Reduce Motion).
+- [ ] Setup: each card ticks itself as the permission is granted or the model is ready, also when coming back from System Settings.
+- [ ] Try it: with everything allowed, hold fn+Space in the tour: the keys turn green with the level bars, and the text lands in the box. Return types a new line there instead of going on.
+- [ ] Modes: the list shows the enabled Modes; *Start every Dictation with* sets the Default Mode (the menu shows it).
+- [ ] *Start Dictating* closes it; the menu then offers *Welcome Tour…* instead of *Set Up Dimmela…*.
+- [ ] Dark mode: the hero is dark green with light text, every page readable.
 
