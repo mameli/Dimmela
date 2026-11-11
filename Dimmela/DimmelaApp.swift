@@ -62,6 +62,18 @@ private struct MenuContent: View {
             }
             .disabled(model.history.entries.isEmpty)
         }
+        let modes = AppSettings.lines(of: enabled).map(Mode.init(id:))
+        if !model.history.entries.isEmpty, !modes.isEmpty {
+            // One click when the provider failed and the Transcript was pasted instead.
+            if let mode = model.lastDictationMode {
+                Button("Post-process Last Dictation Again (\(mode.name))") { model.postProcessLastAgain(with: mode) }
+            }
+            Menu("Post-process Last Dictation With") {
+                ForEach(modes) { mode in
+                    Button(mode.name) { model.postProcessLastAgain(with: mode) }
+                }
+            }
+        }
         if !model.history.entries.isEmpty {
             Menu("History") {
                 ForEach(model.history.entries) { entry in

@@ -23,6 +23,7 @@ final class AppModel {
     @ObservationIgnored private let shortcut = ShortcutMonitor()
     @ObservationIgnored private var permissionPoll: Task<Void, Never>?
     @ObservationIgnored private var overlay: OverlayPanel?
+    @ObservationIgnored private var notificationActions: NotificationActions?
 
     init() {
         AppSettings.registerDefaults()
@@ -112,6 +113,7 @@ final class AppModel {
             logger.error("Built-in Modes not written: \(error.localizedDescription)")
         }
         overlay = OverlayPanel(controller: controller)
+        notificationActions = NotificationActions { [weak self] in self?.postProcessLastAgain() }
         updates.start()
         Task { try? await speechModel.prepare() }
         Task { await speechDetector.prepare() }
@@ -233,6 +235,20 @@ final class AppModel {
         }
     }
 
+    /// The Mode the last Dictation was Post-processed with, or the Default Mode if it was not
+    /// (or that Mode is no longer enabled): what *Post-process Last Dictation Again* uses.
+    var lastDictationMode: Mode? {
+        guard let last = history.entries.first else { return nil }
+        let enabled = AppSettings.enabledModes
+        return last.mode.flatMap { mode in enabled.first { $0 == mode } } ?? AppSettings.defaultMode
+    }
+
+    /// The last Dictation Post-processed again, with `mode` or `lastDictationMode`.
+    func postProcessLastAgain(with mode: Mode? = nil) {
+        guard let last = history.entries.first, let mode = mode ?? lastDictationMode else { return }
+        postProcessAgain(last, with: mode)
+    }
+
     private static func show(_ problem: DictationProblem) {
         let message = switch problem {
         case .microphoneUnavailable(let detail): "Can't record: \(detail)"
@@ -243,13 +259,18 @@ final class AppModel {
         case .postProcessingFellBack(let failed, let detail, let answeredBy): "\(failed) failed, \(answeredBy) answered instead: \(detail)"
         }
         logger.error(message)
-        notify(message)
+        if case .postProcessingFailed = problem {
+            notify(message, category: NotificationActions.postProcessingFailed)
+        } else {
+            notify(message)
+        }
     }
 
-    private static func notify(_ message: String) {
+    private static func notify(_ message: String, category: String? = nil) {
         let content = UNMutableNotificationContent()
         content.title = "Dimmela"
         content.body = message
+        if let category { content.categoryIdentifier = category }
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
     }
 }
