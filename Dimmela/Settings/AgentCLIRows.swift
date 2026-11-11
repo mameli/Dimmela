@@ -23,6 +23,12 @@ struct AgentCLIRows: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
+            // On a row always there: the status row below is empty until the first check.
+            .task(id: cli) { await check() }
+            // Back from Terminal after the CLI's login.
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                Task { await check() }
+            }
         if let groups = providerGroups {
             groupedModelMenu(groups)
         } else {
@@ -75,11 +81,6 @@ struct AgentCLIRows: View {
         .font(.caption)
         .foregroundStyle(problem == nil ? .secondary : .primary)
         .textSelection(.enabled)
-        .task { await check() }
-        // Back from Terminal after the CLI's login.
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            Task { await check() }
-        }
     }
 
     /// What the agent does with the Transcript, and how long a Dictation waits for it: measured
