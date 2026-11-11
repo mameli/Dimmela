@@ -13,18 +13,16 @@ struct AboutSettings: View {
             }
 
             Section {
-                UpdatesToggle()
+                UpdatesToggle(updates: updates)
                 HStack {
-                    Button("Check Now") { Task { await updates.check() } }
-                        .disabled(updates.isChecking)
-                    if updates.isChecking { ProgressView().controlSize(.small) }
-                    Spacer()
                     if let release = updates.available {
-                        Button("Download Dimmela \(release.version)…") { updates.openReleasePage() }
+                        Text("Dimmela \(release.version) is available.")
+                        Spacer()
+                        Button("Install…") { updates.check() }
+                    } else {
+                        Spacer()
+                        Button("Check Now") { updates.check() }
                     }
-                }
-                if let status {
-                    Text(status).font(.caption).foregroundStyle(.secondary)
                 }
             } header: {
                 Text("Updates")
@@ -61,13 +59,6 @@ struct AboutSettings: View {
             }
         }
         .formStyle(.grouped)
-    }
-
-    private var status: String? {
-        if let problem = updates.lastProblem { return "The last check failed: \(problem)" }
-        guard let checked = updates.lastChecked else { return nil }
-        let when = checked.formatted(date: .abbreviated, time: .shortened)
-        return updates.available == nil ? "Up to date, checked \(when)." : "A new version is available, checked \(when)."
     }
 
     /// The link is grey like the text around it, so it is underlined to show it is one.

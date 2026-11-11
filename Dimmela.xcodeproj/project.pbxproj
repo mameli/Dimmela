@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000022 /* DimmelaCore in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000021 /* DimmelaCore */; };
 		A10000000000000000000028 /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000027 /* FluidAudio */; };
+		A1000000000000000000002E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000002D /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			files = (
 				A10000000000000000000022 /* DimmelaCore in Frameworks */,
 				A10000000000000000000028 /* FluidAudio in Frameworks */,
+				A1000000000000000000002E /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -82,6 +84,7 @@
 			packageProductDependencies = (
 				A10000000000000000000021 /* DimmelaCore */,
 				A10000000000000000000027 /* FluidAudio */,
+				A1000000000000000000002D /* Sparkle */,
 			);
 			productName = Dimmela;
 			productReference = A10000000000000000000005 /* Dimmela.app */;
@@ -110,6 +113,7 @@
 			packageReferences = (
 				A10000000000000000000020 /* XCLocalSwiftPackageReference "DimmelaCore" */,
 				A10000000000000000000026 /* XCRemoteSwiftPackageReference "FluidAudio" */,
+				A1000000000000000000002C /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A10000000000000000000002 /* Products */;
@@ -226,6 +230,14 @@
 				minimumVersion = 0.17.5;
 			};
 		};
+		A1000000000000000000002C /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -237,6 +249,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A10000000000000000000026 /* XCRemoteSwiftPackageReference "FluidAudio" */;
 			productName = FluidAudio;
+		};
+		A1000000000000000000002D /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000000000000000000002C /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

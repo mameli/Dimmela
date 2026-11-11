@@ -114,6 +114,8 @@ final class AppModel {
         }
         overlay = OverlayPanel(controller: controller)
         notificationActions = NotificationActions { [weak self] in self?.postProcessLastAgain() }
+        // A relaunch in the middle of a Dictation would lose it.
+        updates.isBusy = { [weak self] in self?.controller.phase != .idle }
         updates.start()
         Task { try? await speechModel.prepare() }
         Task { await speechDetector.prepare() }

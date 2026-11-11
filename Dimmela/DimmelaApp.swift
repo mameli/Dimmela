@@ -93,7 +93,7 @@ private struct MenuContent: View {
         }
         Divider()
         if let release = model.updates.available {
-            Button("Dimmela \(release.version) is available…") { model.updates.openReleasePage() }
+            Button("Dimmela \(release.version) is available…") { model.updates.check() }
         }
         Button("Settings…") {
             // No Dock icon: without activating, the window would stay behind the others.

@@ -68,14 +68,16 @@ struct LaunchAtLoginToggle: View {
     }
 }
 
-/// The daily question to GitHub about a newer release (from Takku).
+/// The daily look at the latest release's appcast (from Takku).
 struct UpdatesToggle: View {
+    let updates: UpdateChecker
     @AppStorage(AppSettings.checkForUpdatesKey) private var checkForUpdates = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Toggle("Check for updates", isOn: $checkForUpdates)
-            Text("Once a day Dimmela asks GitHub for the latest version; nothing about you or your Dictations is sent.")
+                .onChange(of: checkForUpdates) { updates.setChecksAutomatically(checkForUpdates) }
+            Text("Once a day Dimmela reads the latest version on GitHub; nothing about you or your Dictations is sent. A new version shows in the menu: Dimmela installs it and opens again.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

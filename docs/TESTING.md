@@ -158,7 +158,7 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 
 ### Update check and problem report (ticket 14)
 
-- [ ] With a GitHub release of `mameli/Dimmela` newer than the running version, the menu shows "Dimmela X is available…" and opens the release page. Turned off in Settings › General, no request is made.
+- [ ] With a GitHub release of `mameli/Dimmela` newer than the running version (and its appcast.xml), the menu shows "Dimmela X is available…"; choosing it opens Sparkle's window, and Install Update replaces Dimmela and opens it again. During a Dictation the relaunch waits for it to end. Turned off in Settings › About, no daily request is made. In a Debug build: `-testUpdateFeed <URL>` with an appcast served locally.
 - [ ] Settings › About › Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.
 
 ### Disk image

@@ -10,4 +10,5 @@
 - **A new welcome tour**, with a test Dictation, and a card to drag Dimmela into System Settings' Accessibility list.
 - Settings: **About** with updates and **Report a Problem**; Reasoning, Extra parameters and the Post-processing log under **Advanced**; **Edit With** and **Move to Trash** for each Mode.
 - A shorter menu: History, Copy, Reprocess, Default Mode, Settings.
+- **Updates itself**: when a new version is out, *Dimmela … is available…* in the menu installs it and opens Dimmela again, never in the middle of a Dictation. This is the last version to install by hand.
 - Installed from a disk image: drag Dimmela into Applications.

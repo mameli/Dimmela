@@ -7,7 +7,9 @@
 # ../homebrew-dimmela or $DIMMELA_TAP) to it. A published version is never replaced: Homebrew checks
 # the disk image's SHA-256. The Release also carries a copy named Dimmela.dmg, so
 # releases/latest/download/Dimmela.dmg always gives the latest version, and Dimmela.zip, the app
-# zipped, for the links to it made up to 0.1.7. Adapted from Takku's script.
+# zipped, for the links to it made up to 0.1.7. From 0.2.0 the Release carries appcast.xml too:
+# Dimmela reads releases/latest/download/appcast.xml with Sparkle and installs the disk image after
+# checking its EdDSA signature (ADR 0007). Adapted from Takku's script.
 #
 #   scripts/release.sh            build, sign and pack into build/release/, then ask before publishing
 #                                 (a dry-run of the same commit is reused: no second build and notarization)
@@ -15,17 +17,23 @@
 #
 # Once per Mac: the certificate from Xcode → Settings → Accounts → Manage Certificates, and
 #   xcrun notarytool store-credentials dimmela --apple-id <Apple ID> --team-id <Team ID>
-# with an app-specific password from account.apple.com.
+# with an app-specific password from account.apple.com. The Sparkle signing key is in the
+# keychain too (account "dimmela", made with Sparkle's generate_keys; back it up with
+# generate_keys --account dimmela -x <file>): without it no Dimmela can install the update.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 version=$(sed -n 's/^MARKETING_VERSION = //p' Config/Base.xcconfig)
+build=$(sed -n 's/^CURRENT_PROJECT_VERSION = //p' Config/Base.xcconfig)
+minimum_macos=$(sed -n 's/^MACOSX_DEPLOYMENT_TARGET = //p' Config/Base.xcconfig)
 tag="v$version"
 app=build/release/DerivedData/Build/Products/Release/Dimmela.app
 zip=build/release/Dimmela.zip
 dmg="build/release/Dimmela-$version.dmg"
 latest=build/release/Dimmela.dmg
 built=build/release/commit
+appcast=build/release/appcast.xml
+sparkle_bin=build/release/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin
 tap=${DIMMELA_TAP:-../homebrew-dimmela}
 cask="$tap/Casks/dimmela.rb"
 identity="Developer ID Application"
@@ -82,6 +90,17 @@ else
         CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO OTHER_CODE_SIGN_FLAGS=--timestamp \
         clean build | grep -E "error: |BUILD"
 
+    # Xcode signs Sparkle.framework but leaves its helpers ad-hoc, which notarization refuses:
+    # each is signed with the Developer ID, inside out, then the framework and the app again.
+    sparkle=$app/Contents/Frameworks/Sparkle.framework/Versions/B
+    sign() { codesign --force --sign "$identity" --timestamp --options runtime "$@"; }
+    sign "$sparkle/XPCServices/Installer.xpc"
+    sign --preserve-metadata=entitlements "$sparkle/XPCServices/Downloader.xpc"
+    sign "$sparkle/Autoupdate"
+    sign "$sparkle/Updater.app"
+    sign "$app/Contents/Frameworks/Sparkle.framework"
+    sign --preserve-metadata=entitlements,requirements,flags "$app"
+
     codesign --verify --strict --deep "$app"
     [[ $(codesign -dvv "$app" 2>&1) == *"Authority=$identity"* ]] || { echo "Not signed with the $identity certificate." >&2; exit 1; }
 
@@ -115,6 +134,30 @@ else
     echo "Ready: $dmg (notarized)"
 fi
 
+# The appcast Sparkle reads: this version only, with what's new and the disk image's EdDSA
+# signature. Made in the dry-run too, so a missing key shows before publishing.
+signature=$("$sparkle_bin/sign_update" --account dimmela "$dmg") \
+    || { echo "No Sparkle key \"dimmela\" in the keychain: see the top of this script." >&2; exit 1; }
+notes_html=$(gh api markdown -f mode=gfm -f context=mameli/Dimmela -f text="$changes")
+cat > "$appcast" <<APPCAST
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Dimmela</title>
+    <item>
+      <title>Dimmela $version</title>
+      <pubDate>$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")</pubDate>
+      <sparkle:version>$build</sparkle:version>
+      <sparkle:shortVersionString>$version</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>$minimum_macos</sparkle:minimumSystemVersion>
+      <description><![CDATA[$notes_html]]></description>
+      <enclosure url="https://github.com/mameli/Dimmela/releases/download/$tag/Dimmela-$version.dmg" $signature type="application/octet-stream"/>
+    </item>
+  </channel>
+</rss>
+APPCAST
+xmllint --noout "$appcast"
+
 [[ ${1:-} == --dry-run ]] && exit 0
 read -r -p "Publish $tag on GitHub? [y/N] " answer
 [[ $answer == y ]] || exit 0
@@ -123,7 +166,7 @@ if [[ $(git rev-parse HEAD) != $(gh api "repos/{owner}/{repo}/commits/main" --jq
     echo "Push main first: the tag is created on the commit GitHub has." >&2
     exit 1
 fi
-gh release create "$tag" "$dmg" "$latest" "$zip" --target main --title "Dimmela $version" --notes-file - <<NOTES
+gh release create "$tag" "$dmg" "$latest" "$zip" "$appcast" --target main --title "Dimmela $version" --notes-file - <<NOTES
 ### What's new
 
 $changes
@@ -131,6 +174,10 @@ $changes
 ---
 
 ### How to install or update
+
+From Dimmela 0.2.0 on: in Dimmela's menu choose **Dimmela … is available…**, then **Install Update**. Dimmela updates itself and opens again.
+
+From 0.1.7 or earlier, once:
 
 1. Download **[Dimmela-$version.dmg](https://github.com/mameli/Dimmela/releases/download/$tag/Dimmela-$version.dmg)**.
 2. If Dimmela is running, quit it from its menu at the top of the screen.
@@ -142,11 +189,15 @@ With Homebrew: \`brew install --cask mameli/dimmela/dimmela\` (or \`brew upgrade
 Apple Silicon Mac, macOS 15 or later. Dimmela is notarized by Apple: it opens like any other app. At the first launch a window walks you through the permissions and downloads the speech model (about 490 MB).
 NOTES
 
-# The cask points to this version's disk image. Pushed through gh, like the Release.
+# The cask points to this version's disk image. Pushed through gh, like the Release. Dimmela
+# updates itself, so the cask says so (auto_updates): brew upgrade leaves it to Dimmela.
 sha=$(shasum -a 256 "$dmg" | cut -d ' ' -f 1)
 git -C "$tap" pull --ff-only -q
 sed -i '' -e "s/^  version \".*\"/  version \"$version\"/" -e "s/^  sha256 \".*\"/  sha256 \"$sha\"/" \
     -e 's/Dimmela-#{version}\.zip"/Dimmela-#{version}.dmg"/' "$cask"
+grep -q '^  auto_updates true$' "$cask" || sed -i '' 's/^  depends_on arch: :arm64$/  auto_updates true\
+\
+&/' "$cask"
 git -C "$tap" commit -q -am "Dimmela $version"
 git -C "$tap" -c credential.helper= -c 'credential.helper=!gh auth git-credential' push -q origin main
 echo "Homebrew cask updated to $version."

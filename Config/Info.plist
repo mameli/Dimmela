@@ -26,5 +26,11 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Dimmela records your voice while you dictate to transcribe it on this Mac.</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/mameli/Dimmela/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>og//2C3VFtp1Ctha2tT3TI3M9qQxSTiOgxtdQcRxiR0=</string>
 </dict>
 </plist>
