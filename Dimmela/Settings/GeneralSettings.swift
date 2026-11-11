@@ -137,19 +137,11 @@ struct VocabularyFileRow: View {
 }
 
 struct GeneralSettings: View {
-    @Environment(\.openWindow) private var openWindow
+    let model: AppModel
+    let updates: UpdateChecker
 
     var body: some View {
         Form {
-            Section {
-                HStack {
-                    Button("Set Up Dimmela…") { openWindow(id: WelcomeView.windowID) }
-                    Spacer()
-                }
-            } footer: {
-                Text("The permissions, the speech model, a test Dictation and the Modes, as at the first launch.")
-                    .foregroundStyle(.secondary)
-            }
             Section {
                 LaunchAtLoginToggle()
             } footer: {
@@ -157,14 +149,60 @@ struct GeneralSettings: View {
                     .foregroundStyle(.secondary)
             }
             Section {
-                VocabularyFileRow()
-            } header: {
-                Text("Vocabulary")
-            } footer: {
-                Text("In ~/.dimmela/vocabulary.md, one per line: `- Jira = gira, ira | the issue tracker at work`. The variants are fixed in the Transcript; Post-processing gets the terms too. Dimmela reads the file at every Dictation.")
-                    .foregroundStyle(.secondary)
+                UpdatesToggle(updates: updates)
             }
+            PermissionsSection(model: model)
         }
         .formStyle(.grouped)
+    }
+}
+
+/// What Dimmela is allowed to do, each with the way to allow it: the first place to look when
+/// fn space does nothing or no notification arrives.
+private struct PermissionsSection: View {
+    let model: AppModel
+
+    var body: some View {
+        Section {
+            row("Microphone", systemImage: "mic.fill", isAllowed: model.microphonePermission == .authorized) {
+                if model.microphonePermission == .notDetermined {
+                    Button("Allow") { Task { await model.requestMicrophone() } }
+                } else {
+                    Button("Open System Settings") { model.openMicrophoneSettings() }
+                }
+            }
+            row("Accessibility", systemImage: "accessibility", isAllowed: model.accessibilityGranted) {
+                Button("Open System Settings") { model.openAccessibilitySettings() }
+            }
+            row("Notifications", systemImage: "bell.badge.fill", isAllowed: model.notificationsAllowed) {
+                Button("Allow") { Task { await model.requestNotifications() } }
+                Button("Open System Settings") { model.openNotificationSettings() }
+            }
+        } header: {
+            Text("Permissions")
+        } footer: {
+            Text("The microphone to hear you; Accessibility to see fn space in every app and paste the text; notifications to tell you when something goes wrong.")
+                .foregroundStyle(.secondary)
+        }
+        // Back from System Settings, where one may have just been turned on.
+        .task { await model.refreshPermissions() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await model.refreshPermissions() }
+        }
+    }
+
+    private func row(
+        _ title: String, systemImage: String, isAllowed: Bool, @ViewBuilder allow: () -> some View
+    ) -> some View {
+        HStack {
+            Label(title, systemImage: systemImage)
+            Spacer()
+            if isAllowed {
+                Label("Allowed", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                allow()
+            }
+        }
     }
 }

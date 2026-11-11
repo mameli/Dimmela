@@ -15,17 +15,16 @@ enum SettingsTab: String {
 }
 
 struct SettingsView: View {
-    let speechModel: SpeechModel
-    let updates: UpdateChecker
+    let model: AppModel
     @AppStorage(SettingsTab.key) private var tab = SettingsTab.general
 
     var body: some View {
         TabView(selection: $tab) {
-            Tab("General", systemImage: "gearshape", value: .general) { GeneralSettings() }
-            Tab("Transcription", systemImage: "waveform", value: .transcription) { TranscriptionSettings(model: speechModel) }
+            Tab("General", systemImage: "gearshape", value: .general) { GeneralSettings(model: model, updates: model.updates) }
+            Tab("Transcription", systemImage: "waveform", value: .transcription) { TranscriptionSettings(model: model.speechModel) }
             Tab("Post-processing", systemImage: "sparkles", value: .postProcessing) { PostProcessingSettings() }
             Tab("Modes", systemImage: "list.number", value: .modes) { ModeSettings() }
-            Tab("About", systemImage: "info.circle", value: .about) { AboutSettings(updates: updates) }
+            Tab("About", systemImage: "info.circle", value: .about) { AboutSettings(updates: model.updates) }
         }
         .frame(width: 560, height: 460)
     }
@@ -84,6 +83,14 @@ private struct TranscriptionSettings: View {
                 Text("Parakeet runs on this Mac and recognizes Italian, English and 23 other European languages by itself. Each model is downloaded once from Hugging Face: no audio or text leaves the Mac. Only the chosen model stays in memory.")
                     .foregroundStyle(.secondary)
             }
+            Section {
+                VocabularyFileRow()
+            } header: {
+                Text("Vocabulary")
+            } footer: {
+                Text("In ~/.dimmela/vocabulary.md, one per line: `- Jira = gira, ira | the issue tracker at work`. The variants are fixed in the Transcript; Post-processing gets the terms too. Dimmela reads the file at every Dictation.")
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }
@@ -105,16 +112,11 @@ private struct ModeSettings: View {
 
     var body: some View {
         Form {
-            Section("Mode sources") {
-                ForEach(sourceList, id: \.self) { path in
-                    HStack {
-                        Text(path).lineLimit(1).truncationMode(.middle)
-                        Spacer()
-                        Button("Remove", role: .destructive) { removeSource(path) }
-                            .buttonStyle(.borderless)
-                    }
+            Section {
+                Picker("Default Mode", selection: $defaultModeID) {
+                    Text("None").tag("")
+                    ForEach(enabledModes) { Text($0.name).tag($0.id) }
                 }
-                Button("Add Folder…", action: addSource)
             }
             Section {
                 List {
@@ -140,10 +142,20 @@ private struct ModeSettings: View {
                 }
             }
             Section {
-                Picker("Default Mode", selection: $defaultModeID) {
-                    Text("None").tag("")
-                    ForEach(enabledModes) { Text($0.name).tag($0.id) }
+                ForEach(sourceList, id: \.self) { path in
+                    HStack {
+                        Text(path).lineLimit(1).truncationMode(.middle)
+                        Spacer()
+                        Button("Remove", role: .destructive) { removeSource(path) }
+                            .buttonStyle(.borderless)
+                    }
                 }
+                Button("Add Folder…", action: addSource)
+            } header: {
+                Text("Mode sources")
+            } footer: {
+                Text("Folders of prompt files (Markdown) or skills (folders with a SKILL.md). Clean and Markdown are in ~/.dimmela/modes.")
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

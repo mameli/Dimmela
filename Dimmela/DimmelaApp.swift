@@ -13,7 +13,7 @@ struct DimmelaApp: App {
         }
 
         Settings {
-            SettingsView(speechModel: delegate.model.speechModel, updates: delegate.model.updates)
+            SettingsView(model: delegate.model)
         }
 
         Window("Welcome to Dimmela", id: WelcomeView.windowID) {

@@ -117,7 +117,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -showW
 ### Vocabulary (ticket 09)
 
 - [ ] At launch `~/.dimmela/vocabulary.md` exists: the syntax on top, then the entries once written in Settings (if any).
-- [ ] Settings › General › Vocabulary shows how many terms were read and the first ones ("No terms yet" if none); the footer names the file and shows the syntax. Edit Vocabulary With lists the apps that edit text, with icons, the system's default first and marked. After saving and coming back, the count and the terms are updated; a line without `- ` does not show up.
+- [ ] Settings › Transcription › Vocabulary shows how many terms were read and the first ones ("No terms yet" if none); the footer names the file and shows the syntax. Edit Vocabulary With lists the apps that edit text, with icons, the system's default first and marked. After saving and coming back, the count and the terms are updated; a line without `- ` does not show up.
 - [ ] Add `- Jira = ira, gira | the issue tracker at work` and dictate "apro ira" with Default Mode None, without relaunching: "apro Jira" is pasted. A word that only contains a variant ("Lira", "girare") is untouched.
 - [ ] With a Default Mode, the History's Copy Transcript shows the corrected term.
 - [ ] Lines that do not start with `- ` are ignored, so notes can sit in the file.
@@ -144,13 +144,13 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 - [ ] Allow Accessibility: System Settings opens; after turning Dimmela on and coming back, step 2 is ticked and `fn+space` works without relaunching.
 - [ ] Allow Notifications: step 3 is ticked; if denied, Open System Settings goes to the Notifications pane.
 - [ ] With no model on disk, step 4 shows the download progress, then "Preparing the model for this Mac", then ready (about a minute on an M3 Pro).
-- [ ] Done closes the window; it does not open at the next launch; Settings › General › Set Up Dimmela… opens it again.
+- [ ] Done closes the window; it does not open at the next launch; Settings › About › Welcome Tour… opens it again.
 - [ ] Settings › Transcription: Delete the Model removes it (the next Dictation downloads it again); Download Again replaces it.
 - [ ] Quit Dimmela halfway through the download and relaunch: the download starts again from scratch.
 
 ### Launch at login (ticket 13)
 
-- [ ] Settings › General shows the icon, the name and the version, and "Open at login".
+- [ ] Settings › General shows "Open at login", "Check for updates" and Permissions: Microphone, Accessibility and Notifications, each Allowed or with the button to allow it; turned on in System Settings, the row says Allowed on coming back.
 - [ ] Turn it on: Dimmela appears in System Settings › General › Login Items. If macOS asks for approval, the toggle shows "Open Login Items".
 - [ ] Log out and back in: Dimmela is in the menu bar and the menu says Ready without opening it by hand.
 - [ ] Turn it off: Dimmela leaves the Login Items.
@@ -158,7 +158,7 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 
 ### Update check and problem report (ticket 14)
 
-- [ ] With a GitHub release of `mameli/Dimmela` newer than the running version (and its appcast.xml), the menu shows "Dimmela X is available…"; choosing it opens Sparkle's window, and Install Update replaces Dimmela and opens it again. During a Dictation the relaunch waits for it to end. Turned off in Settings › About, no daily request is made. In a Debug build: `-testUpdateFeed <URL>` with an appcast served locally.
+- [ ] With a GitHub release of `mameli/Dimmela` newer than the running version (and its appcast.xml), the menu shows "Dimmela X is available…"; choosing it opens Sparkle's window, and Install Update replaces Dimmela and opens it again. During a Dictation the relaunch waits for it to end. Turned off in Settings › General, no daily request is made; Settings › About › Check Now still checks. In a Debug build: `-testUpdateFeed <URL>` with an appcast served locally.
 - [ ] Settings › About › Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.
 
 ### Disk image
@@ -192,6 +192,6 @@ Before every release, with each CLI installed and signed in (these CLIs update t
 - [ ] Setup: each card ticks itself as the permission is granted or the model is ready, also when coming back from System Settings.
 - [ ] Try it: with everything allowed, hold fn+Space in the tour: the keys turn green with the level bars, and the text lands in the box. Return types a new line there instead of going on.
 - [ ] Modes: the list shows the enabled Modes; *Start every Dictation with* sets the Default Mode (the menu shows it).
-- [ ] *Start Dictating* closes it; Settings › General offers *Set Up Dimmela…* and Settings › About *Welcome Tour…*; the menu offers neither.
+- [ ] *Start Dictating* closes it; Settings › About offers *Welcome Tour…*; the menu does not.
 - [ ] Dark mode: the hero is dark green with light text, every page readable.
 

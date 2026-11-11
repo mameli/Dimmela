@@ -13,13 +13,14 @@ struct AboutSettings: View {
             }
 
             Section {
-                UpdatesToggle(updates: updates)
                 HStack {
                     if let release = updates.available {
                         Text("Dimmela \(release.version) is available.")
                         Spacer()
                         Button("Install…") { updates.check() }
                     } else {
+                        Text("Check for a new version now, also with the daily check off.")
+                            .foregroundStyle(.secondary)
                         Spacer()
                         Button("Check Now") { updates.check() }
                     }
