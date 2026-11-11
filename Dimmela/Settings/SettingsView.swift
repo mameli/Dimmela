@@ -2,17 +2,30 @@ import AppKit
 import DimmelaCore
 import SwiftUI
 
+/// The Settings tabs. Stored, so other windows can open Settings on one of them.
+enum SettingsTab: String {
+    case general, transcription, postProcessing, modes, about
+
+    static let key = "settingsTab"
+
+    /// The next time Settings opens, or now if it is open.
+    @MainActor static func select(_ tab: SettingsTab) {
+        UserDefaults.standard.set(tab.rawValue, forKey: key)
+    }
+}
+
 struct SettingsView: View {
     let speechModel: SpeechModel
     let updates: UpdateChecker
+    @AppStorage(SettingsTab.key) private var tab = SettingsTab.general
 
     var body: some View {
-        TabView {
-            Tab("General", systemImage: "gearshape") { GeneralSettings() }
-            Tab("Transcription", systemImage: "waveform") { TranscriptionSettings(model: speechModel) }
-            Tab("Post-processing", systemImage: "sparkles") { PostProcessingSettings() }
-            Tab("Modes", systemImage: "list.number") { ModeSettings() }
-            Tab("About", systemImage: "info.circle") { AboutSettings(updates: updates) }
+        TabView(selection: $tab) {
+            Tab("General", systemImage: "gearshape", value: .general) { GeneralSettings() }
+            Tab("Transcription", systemImage: "waveform", value: .transcription) { TranscriptionSettings(model: speechModel) }
+            Tab("Post-processing", systemImage: "sparkles", value: .postProcessing) { PostProcessingSettings() }
+            Tab("Modes", systemImage: "list.number", value: .modes) { ModeSettings() }
+            Tab("About", systemImage: "info.circle", value: .about) { AboutSettings(updates: updates) }
         }
         .frame(width: 560, height: 460)
     }

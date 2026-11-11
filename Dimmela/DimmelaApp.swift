@@ -38,8 +38,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private struct MenuContent: View {
     let model: AppModel
     @Environment(\.openSettings) private var openSettings
-    @Environment(\.openWindow) private var openWindow
-    @AppStorage(AppSettings.onboardingDoneKey) private var onboardingDone = false
     @AppStorage(AppSettings.enabledModesKey) private var enabled = ""
     @AppStorage(AppSettings.defaultModeKey) private var defaultModeID = ""
     @AppStorage(AppSettings.providerProfilesKey) private var profiles = ProviderProfiles()
@@ -53,6 +51,13 @@ private struct MenuContent: View {
             Button("Allow the Microphone…") { model.openMicrophoneSettings() }
         }
         Divider()
+        if !model.history.entries.isEmpty {
+            Menu("History") {
+                ForEach(model.history.entries) { entry in
+                    HistoryMenu(model: model, entry: entry, modes: AppSettings.lines(of: enabled).map(Mode.init(id:)))
+                }
+            }
+        }
         // Holding ⌥ copies the Transcript instead, before Post-processing.
         Button("Copy Last Dictation") {
             if let last = model.history.entries.first { model.copy(last.text) }
@@ -68,38 +73,28 @@ private struct MenuContent: View {
         if !model.history.entries.isEmpty, !modes.isEmpty {
             // One click when the provider failed and the Transcript was pasted instead.
             if let mode = model.lastDictationMode {
-                Button("Post-process Last Dictation Again (\(mode.name))") { model.postProcessLastAgain(with: mode) }
+                Button("Reprocess Last Dictation (\(mode.name))") { model.postProcessLastAgain(with: mode) }
             }
-            Menu("Post-process Last Dictation With") {
+            Menu("Reprocess Last Dictation With") {
                 ForEach(modes) { mode in
                     Button(mode.name) { model.postProcessLastAgain(with: mode) }
                 }
             }
         }
-        if !model.history.entries.isEmpty {
-            Menu("History") {
-                ForEach(model.history.entries) { entry in
-                    HistoryMenu(model: model, entry: entry, modes: AppSettings.lines(of: enabled).map(Mode.init(id:)))
-                }
-            }
-        }
+        Divider()
         Picker("Default Mode", selection: $defaultModeID) {
             Text("None").tag("")
-            ForEach(AppSettings.lines(of: enabled).map(Mode.init(id:))) { Text($0.name).tag($0.id) }
+            ForEach(modes) { Text($0.name).tag($0.id) }
         }
         if profiles.all.count > 1 {
             Picker("Provider", selection: Binding(get: { profiles.selected?.id }, set: { profiles.selectedID = $0 })) {
                 ForEach(profiles.all) { Text($0.displayName).tag(Optional($0.id)) }
             }
         }
-        Button(onboardingDone ? "Welcome Tour…" : "Set Up Dimmela…") {
-            NSApplication.shared.activate()
-            openWindow(id: WelcomeView.windowID)
-        }
+        Divider()
         if let release = model.updates.available {
             Button("Dimmela \(release.version) is available…") { model.updates.openReleasePage() }
         }
-        Button("Report a Problem…") { ProblemReporter.report() }
         Button("Settings…") {
             // No Dock icon: without activating, the window would stay behind the others.
             NSApplication.shared.activate()
@@ -140,7 +135,7 @@ private struct HistoryMenu: View {
                 Button("Copy Transcript") { model.copy(entry.transcript) }
             }
             if !modes.isEmpty {
-                Menu("Post-process Again With") {
+                Menu("Reprocess With") {
                     ForEach(modes) { mode in
                         Button(mode.name) { model.postProcessAgain(entry, with: mode) }
                     }

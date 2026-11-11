@@ -362,6 +362,7 @@ private struct ModesPage: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Set Up Post-processing…") {
+                        SettingsTab.select(.postProcessing)
                         NSApplication.shared.activate()
                         openSettings()
                     }

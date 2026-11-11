@@ -1,9 +1,10 @@
 import AppKit
 import SwiftUI
 
-/// Settings › About: who Dimmela is, updates, and where to report a problem.
+/// Settings › About: who Dimmela is, updates, the welcome tour, and where to report a problem.
 struct AboutSettings: View {
     let updates: UpdateChecker
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Form {
@@ -31,13 +32,14 @@ struct AboutSettings: View {
 
             Section {
                 HStack {
+                    Button("Welcome Tour…") { openWindow(id: WelcomeView.windowID) }
                     Button("Report a Problem…") { ProblemReporter.report() }
                     Spacer()
                 }
             } header: {
-                Text("Problems")
+                Text("Help")
             } footer: {
-                Text("Writes a report with the version, macOS, the model in use and Dimmela's recent log, shows it in Finder and opens the GitHub bug form with the same fields filled in. Nothing is sent: check the file and attach it. It holds no Transcripts and no text you dictated.")
+                Text("The tour shows the shortcut, the permissions and the Modes again. Report a Problem writes a report with the version, macOS, the model in use and Dimmela's recent log, shows it in Finder and opens the GitHub bug form with the same fields filled in. Nothing is sent: check the file and attach it. It holds no Transcripts and no text you dictated.")
                     .foregroundStyle(.secondary)
             }
 

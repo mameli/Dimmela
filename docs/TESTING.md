@@ -110,7 +110,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -showW
 
 - [ ] After a Dictation, the menu has a History submenu; the entry shows time, Mode and the start of the text.
 - [ ] Copy Text and Copy Transcript put the right text on the clipboard (Copy Transcript only when they differ).
-- [ ] Post-process Again With another Mode: a notification says the new text is on the clipboard, and ⌘V pastes it.
+- [ ] History › Reprocess With another Mode: a notification says the new text is on the clipboard, and ⌘V pastes it.
 - [ ] After six Dictations only five entries are listed; `~/Library/Application Support/Dimmela/History` holds five folders, each with `entry.json` and a playable `audio.wav`.
 - [ ] A Dictation cancelled with `Esc` does not appear. The History is still there after quitting and reopening Dimmela.
 
@@ -144,7 +144,7 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 - [ ] Allow Accessibility: System Settings opens; after turning Dimmela on and coming back, step 2 is ticked and `fn+space` works without relaunching.
 - [ ] Allow Notifications: step 3 is ticked; if denied, Open System Settings goes to the Notifications pane.
 - [ ] With no model on disk, step 4 shows the download progress, then "Preparing the model for this Mac", then ready (about a minute on an M3 Pro).
-- [ ] Done closes the window; it does not open at the next launch and "Set Up Dimmela…" leaves the menu.
+- [ ] Done closes the window; it does not open at the next launch; Settings › General › Set Up Dimmela… opens it again.
 - [ ] Settings › Transcription: Delete the Model removes it (the next Dictation downloads it again); Download Again replaces it.
 - [ ] Quit Dimmela halfway through the download and relaunch: the download starts again from scratch.
 
@@ -159,7 +159,7 @@ To see the first launch again: `defaults delete app.dimmela.Dimmela onboardingDo
 ### Update check and problem report (ticket 14)
 
 - [ ] With a GitHub release of `mameli/Dimmela` newer than the running version, the menu shows "Dimmela X is available…" and opens the release page. Turned off in Settings › General, no request is made.
-- [ ] Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.
+- [ ] Settings › About › Report a Problem…: a "Dimmela report <date>.txt" file is shown in Finder with version, Mac, install method, Post-processing model (no address, no key) and recent logs; the GitHub bug form opens with the same fields filled in.
 
 ### Coding agents as Provider profiles (v2 ticket 04)
 
@@ -187,6 +187,6 @@ Before every release, with each CLI installed and signed in (these CLIs update t
 - [ ] Setup: each card ticks itself as the permission is granted or the model is ready, also when coming back from System Settings.
 - [ ] Try it: with everything allowed, hold fn+Space in the tour: the keys turn green with the level bars, and the text lands in the box. Return types a new line there instead of going on.
 - [ ] Modes: the list shows the enabled Modes; *Start every Dictation with* sets the Default Mode (the menu shows it).
-- [ ] *Start Dictating* closes it; the menu then offers *Welcome Tour…* instead of *Set Up Dimmela…*.
+- [ ] *Start Dictating* closes it; Settings › General offers *Set Up Dimmela…* and Settings › About *Welcome Tour…*; the menu offers neither.
 - [ ] Dark mode: the hero is dark green with light text, every page readable.
 

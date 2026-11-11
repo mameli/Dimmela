@@ -1,6 +1,6 @@
 import UserNotifications
 
-/// The buttons on Dimmela's notifications. *Post-process Again* sits on "Post-processing failed":
+/// The buttons on Dimmela's notifications. *Reprocess* sits on "Post-processing failed":
 /// once the provider is back, one click instead of the History submenu.
 final class NotificationActions: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let postProcessingFailed = "postProcessingFailed"
@@ -15,7 +15,7 @@ final class NotificationActions: NSObject, UNUserNotificationCenterDelegate, @un
         center.setNotificationCategories([
             UNNotificationCategory(
                 identifier: Self.postProcessingFailed,
-                actions: [UNNotificationAction(identifier: Self.postProcessAgain, title: "Post-process Again")],
+                actions: [UNNotificationAction(identifier: Self.postProcessAgain, title: "Reprocess")],
                 intentIdentifiers: []
             ),
         ])

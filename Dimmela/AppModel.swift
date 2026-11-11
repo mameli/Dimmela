@@ -203,6 +203,7 @@ final class AppModel {
                 try? await Task.sleep(for: .seconds(2))
                 guard let self, AXIsProcessTrusted() else { continue }
                 accessibilityGranted = true
+                SettingsDragCard.shared.close()
                 if shortcut.start() { break }
             }
             self?.permissionPoll = nil
@@ -213,8 +214,14 @@ final class AppModel {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
     }
 
+    /// With a card to drag Dimmela into the list: the way in when it is not listed, or when the
+    /// row there is another copy of Dimmela, which macOS tells apart by its signature.
     func openAccessibilitySettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+        SettingsDragCard.shared.show(
+            opening: URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!,
+            list: "Accessibility"
+        )
+        startWatchingWhenAllowed()
     }
 
     func openNotificationSettings() {

@@ -184,8 +184,19 @@ struct VocabularyFileRow: View {
 }
 
 struct GeneralSettings: View {
+    @Environment(\.openWindow) private var openWindow
+
     var body: some View {
         Form {
+            Section {
+                HStack {
+                    Button("Set Up Dimmela…") { openWindow(id: WelcomeView.windowID) }
+                    Spacer()
+                }
+            } footer: {
+                Text("The permissions, the speech model, a test Dictation and the Modes, as at the first launch.")
+                    .foregroundStyle(.secondary)
+            }
             Section {
                 LaunchAtLoginToggle()
             } footer: {
