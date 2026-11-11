@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done
+**Status:** ready-for-human
 
 - [x] Disabled when the History is empty
 - [x] Copies the final text; when it differs from the Transcript, a second item (or ⌥ alternate) copies the Transcript

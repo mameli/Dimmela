@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 02
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [x] The user chooses which profiles take part in the fallback and in what order (off by default: a single profile behaves as today)
 - [x] Fallback also on non-transient failures that a different provider can fix (401, 402, 404 model not found), not on Esc

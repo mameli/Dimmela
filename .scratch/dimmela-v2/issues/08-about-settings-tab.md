@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [x] *Report a Problem…* stays in the menu bar menu too
 - [x] Shows when the last update check ran and its result

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [x] Retried: network errors and timeouts, HTTP 408, 429, 5xx. Not retried: 400, 401, 403, 404, 422, empty or truncated reply
 - [x] Waits short enough for a Dictation (proposed 1 s, then 3 s); `Retry-After` honoured only when it is within that budget

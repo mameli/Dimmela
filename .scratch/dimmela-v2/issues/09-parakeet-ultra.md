@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [x] Measure Parakeet Ultra's memory with the model loaded and the latency on short Dictations; the spec's target is under 450 MB
 - [x] Switching models unloads the old one; the old one's files can be deleted

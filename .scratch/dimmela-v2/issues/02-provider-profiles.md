@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [x] The current Provider and its key migrate to a first profile on upgrade, with nothing for the user to redo
 - [x] Presets for the common providers (OpenRouter, OpenAI, Mistral, a local LM Studio / Ollama) fill address and model
