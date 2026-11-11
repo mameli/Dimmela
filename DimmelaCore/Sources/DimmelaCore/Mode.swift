@@ -55,6 +55,9 @@ public struct Mode: Identifiable, Hashable, Sendable {
         return parts.joined(separator: "\n\n")
     }
 
+    /// The file to edit: the prompt file, or the skill's `SKILL.md`.
+    public var editableFile: URL { isSkill ? skillFile : url }
+
     private var skillFile: URL { url.appending(path: "SKILL.md") }
 
     private var references: [URL] {

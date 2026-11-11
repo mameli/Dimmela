@@ -11,8 +11,9 @@ struct AgentCLIRows: View {
 
     /// Why the CLI cannot be used now (not installed, not signed in), `nil` when it can.
     @State private var problem: String?
-    /// The models the agent offers, `nil` when they could not be read.
-    @State private var models: [AgentCLI.Model]?
+    /// The models the agent offers, `nil` when they could not be read; the Reasoning menu, in
+    /// Advanced, reads them too.
+    @Binding var models: [AgentCLI.Model]?
     /// The model is typed (*Other…*) rather than chosen in the menu.
     @State private var typesModel = false
     /// The executable Dimmela runs and its version, to tell two installs apart.
@@ -25,6 +26,11 @@ struct AgentCLIRows: View {
             .fixedSize(horizontal: false, vertical: true)
             // On a row always there: the status row below is empty until the first check.
             .task(id: cli) { await check() }
+            // Here, not in Advanced, which may be closed: a level the new model refuses would make
+            // every Post-processing fail.
+            .onChange(of: cli.reasoningLevels(for: provider.model, in: models), initial: true) { _, levels in
+                if let reasoning = provider.reasoning, let levels, !levels.contains(reasoning) { provider.reasoning = nil }
+            }
             // Back from Terminal after the CLI's login.
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                 Task { await check() }
@@ -53,19 +59,6 @@ struct AgentCLIRows: View {
             Text("\(cli.name)'s own default, not the model chosen in your \(cli.name) settings: Dimmela does not read them.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-        }
-        if let levels = cli.reasoningLevels(for: provider.model, in: models) {
-            Picker("Reasoning", selection: $provider.reasoning) {
-                Text("Model default").tag(Provider.ReasoningEffort?.none)
-                ForEach(levels, id: \.self) { effort in
-                    Text(effort.displayName).tag(Provider.ReasoningEffort?.some(effort))
-                }
-            }
-            .disabled(levels.isEmpty)
-            .onChange(of: levels, initial: true) {
-                // A level the new model refuses would make every Post-processing fail.
-                if let reasoning = provider.reasoning, !levels.contains(reasoning) { provider.reasoning = nil }
-            }
         }
         Group {
             if let problem {
@@ -173,5 +166,24 @@ struct AgentCLIRows: View {
         let version = executable == nil ? nil : await runner.version()
         install = executable.map { (path: ($0.path as NSString).abbreviatingWithTildeInPath, version: version) }
         if unavailability != .notInstalled(cli) && (models == nil || changed) { models = await runner.models() }
+    }
+}
+
+/// How much an agent's model reasons, for the levels the CLI offers for it.
+struct AgentReasoningPicker: View {
+    let cli: AgentCLI
+    @Binding var provider: Provider
+    let models: [AgentCLI.Model]?
+
+    var body: some View {
+        if let levels = cli.reasoningLevels(for: provider.model, in: models) {
+            Picker("Reasoning", selection: $provider.reasoning) {
+                Text("Model default").tag(Provider.ReasoningEffort?.none)
+                ForEach(levels, id: \.self) { effort in
+                    Text(effort.displayName).tag(Provider.ReasoningEffort?.some(effort))
+                }
+            }
+            .disabled(levels.isEmpty)
+        }
     }
 }

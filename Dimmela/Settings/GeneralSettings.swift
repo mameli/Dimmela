@@ -88,9 +88,8 @@ struct UpdatesToggle: View {
 struct VocabularyFileRow: View {
     @State private var vocabulary = AppSettings.vocabulary
     @State private var error: String?
-    /// The apps that can open the file, read when the row appears.
-    @State private var editors: [URL] = []
-    @State private var defaultEditor: URL?
+    /// The apps that can edit the file, read when the row appears.
+    @State private var editors = TextEditors.none
 
     var body: some View {
         HStack {
@@ -109,22 +108,12 @@ struct VocabularyFileRow: View {
                 }
             }
             Spacer()
-            Menu("Edit Vocabulary With") {
-                ForEach(editors, id: \.self) { app in
-                    Button {
-                        edit(with: app)
-                    } label: {
-                        Label {
-                            Text(verbatim: app == defaultEditor ? "\(Self.name(of: app)) (default)" : Self.name(of: app))
-                        } icon: {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: app.path(percentEncoded: false)))
-                        }
-                    }
-                }
-            }
-            .fixedSize()
+            EditWithMenu(title: "Edit Vocabulary With", editors: editors, edit: edit(with:))
         }
-        .onAppear(perform: findEditors)
+        .onAppear {
+            try? AppSettings.createVocabularyFileIfNeeded()
+            editors = .markdown()
+        }
         // Back from the editor: the entries may have changed.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             vocabulary = AppSettings.vocabulary
@@ -134,52 +123,14 @@ struct VocabularyFileRow: View {
         }
     }
 
-    private func findEditors() {
-        try? AppSettings.createVocabularyFileIfNeeded()
-        let file = AppSettings.vocabularyFile
-        defaultEditor = NSWorkspace.shared.urlForApplication(toOpen: file)
-        var seen = Set<String>()
-        let others = NSWorkspace.shared.urlsForApplications(toOpen: file)
-            .filter { $0 != defaultEditor && Self.editsText($0) && seen.insert(Self.name(of: $0)).inserted }
-            .sorted { Self.name(of: $0).localizedStandardCompare(Self.name(of: $1)) == .orderedAscending }
-        editors = (defaultEditor.map { [$0] } ?? []) + others
-    }
-
     private func edit(with app: URL) {
         do {
             try AppSettings.createVocabularyFileIfNeeded()
-            NSWorkspace.shared.open([AppSettings.vocabularyFile], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+            TextEditors.open(AppSettings.vocabularyFile, with: app)
             error = nil
         } catch {
             self.error = error.localizedDescription
         }
-    }
-
-    private static let textTypes: Set<String> = [
-        "net.daringfireball.markdown", "public.markdown", "public.plain-text", "public.text", "public.utf8-plain-text",
-    ]
-    private static let textExtensions: Set<String> = ["md", "markdown", "txt", "text"]
-    /// Declare text editing but open it as a table.
-    private static let notTextEditors: Set<String> = ["com.apple.iWork.Numbers"]
-
-    /// Whether the app declares the Editor role for Markdown or plain text, not only Viewer, and
-    /// not merely for any file at all.
-    private static func editsText(_ app: URL) -> Bool {
-        guard let bundle = Bundle(url: app),
-              !notTextEditors.contains(bundle.bundleIdentifier ?? ""),
-              let types = bundle.object(forInfoDictionaryKey: "CFBundleDocumentTypes") as? [[String: Any]]
-        else { return false }
-        return types.contains { type in
-            guard type["CFBundleTypeRole"] as? String == "Editor" else { return false }
-            let contentTypes = Set(type["LSItemContentTypes"] as? [String] ?? [])
-            let extensions = Set((type["CFBundleTypeExtensions"] as? [String] ?? []).map { $0.lowercased() })
-            return !contentTypes.isDisjoint(with: textTypes) || !extensions.isDisjoint(with: textExtensions)
-        }
-    }
-
-    private static func name(of app: URL) -> String {
-        FileManager.default.displayName(atPath: app.path(percentEncoded: false))
-            .replacingOccurrences(of: ".app", with: "")
     }
 }
 

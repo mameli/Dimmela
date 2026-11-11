@@ -95,6 +95,10 @@ private struct ModeSettings: View {
     @AppStorage(AppSettings.defaultModeKey) private var defaultModeID = ""
     /// Read again when the window appears, so new files in a source show up.
     @State private var available: [Mode] = []
+    /// Read when the tab appears: apps come and go.
+    @State private var editors = TextEditors.none
+    @State private var pendingDeletion: Mode?
+    @State private var trashError: String?
 
     private var sourceList: [String] { AppSettings.lines(of: sources) }
     private var enabledModes: [Mode] { AppSettings.lines(of: enabled).map(Mode.init(id:)) }
@@ -115,7 +119,7 @@ private struct ModeSettings: View {
             Section {
                 List {
                     ForEach(enabledModes) { mode in
-                        ModeRow(mode: mode, isEnabled: true) { toggle(mode) }
+                        ModeRow(mode: mode, isEnabled: true, editors: editors, trash: { pendingDeletion = mode }) { toggle(mode) }
                     }
                     .onMove(perform: move)
                 }
@@ -123,7 +127,7 @@ private struct ModeSettings: View {
             } header: {
                 Text("Enabled Modes")
             } footer: {
-                Text("Drag to reorder.").foregroundStyle(.secondary)
+                Text("Drag to reorder; ⋯ edits a Mode in your editor.").foregroundStyle(.secondary)
             }
             Section("Available") {
                 let others = available.filter { !enabledModes.contains($0) }
@@ -132,7 +136,7 @@ private struct ModeSettings: View {
                         .foregroundStyle(.secondary)
                 }
                 ForEach(others) { mode in
-                    ModeRow(mode: mode, isEnabled: false) { toggle(mode) }
+                    ModeRow(mode: mode, isEnabled: false, editors: editors, trash: { pendingDeletion = mode }) { toggle(mode) }
                 }
             }
             Section {
@@ -143,8 +147,40 @@ private struct ModeSettings: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear(perform: reload)
+        .onAppear {
+            editors = .markdown()
+            reload()
+        }
         .onChange(of: sources) { reload() }
+        // Back from the editor or Finder, where Modes can be added or renamed.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in reload() }
+        .confirmationDialog(
+            "Move the Mode \"\(pendingDeletion?.name ?? "")\" to the Trash?",
+            isPresented: Binding(get: { pendingDeletion != nil }, set: { if !$0 { pendingDeletion = nil } })
+        ) {
+            Button("Move to Trash", role: .destructive) {
+                if let mode = pendingDeletion { moveToTrash(mode) }
+            }
+        } message: {
+            Text("Its file goes to the Trash, where you can put it back.")
+        }
+        .alert("The Mode could not be moved to the Trash", isPresented: Binding(get: { trashError != nil }, set: { if !$0 { trashError = nil } })) {
+        } message: {
+            Text(trashError ?? "")
+        }
+    }
+
+    /// The file, or the skill's folder, goes to the Trash; the Mode stops being enabled.
+    private func moveToTrash(_ mode: Mode) {
+        do {
+            try FileManager.default.trashItem(at: mode.url, resultingItemURL: nil)
+        } catch {
+            trashError = error.localizedDescription
+            return
+        }
+        AppSettings.enabledModes = enabledModes.filter { $0 != mode }
+        if defaultModeID == mode.id { defaultModeID = "" }
+        reload()
     }
 
     private func reload() {
@@ -186,6 +222,8 @@ private struct ModeSettings: View {
 private struct ModeRow: View {
     let mode: Mode
     let isEnabled: Bool
+    let editors: TextEditors
+    let trash: () -> Void
     let toggle: () -> Void
 
     var body: some View {
@@ -205,6 +243,16 @@ private struct ModeRow: View {
                 }
             }
             .toggleStyle(.checkbox)
+            Spacer()
+            if !mode.isMissing {
+                MoreMenu {
+                    EditWithMenu(title: "Edit With", editors: editors) { app in
+                        TextEditors.open(mode.editableFile, with: app)
+                    }
+                    Divider()
+                    Button("Move to Trash…", role: .destructive, action: trash)
+                }
+            }
         }
     }
 }

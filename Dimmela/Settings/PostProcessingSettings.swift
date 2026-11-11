@@ -6,9 +6,9 @@ import SwiftUI
 /// and the Post-processing log.
 struct PostProcessingSettings: View {
     @AppStorage(AppSettings.providerProfilesKey) private var profiles = ProviderProfiles()
-    @AppStorage(AppSettings.keepsPostProcessingLogKey) private var keepsPostProcessingLog = false
     /// The profile open in the editor, not necessarily the one in use.
     @State private var editedID: UUID?
+    @State private var showsAdvanced = false
 
     var body: some View {
         Form {
@@ -41,23 +41,10 @@ struct PostProcessingSettings: View {
                     use: { profiles.selectedID = profiles.all[index].id }
                 )
                 .id(profiles.all[index].id)
-            }
-
-            Section {
-                Toggle("Keep a Post-processing log", isOn: $keepsPostProcessingLog)
-                if keepsPostProcessingLog {
-                    Button("Show in Finder") {
-                        let log = AppSettings.postProcessingLog.url
-                        if FileManager.default.fileExists(atPath: log.path(percentEncoded: false)) {
-                            NSWorkspace.shared.activateFileViewerSelecting([log])
-                        } else {
-                            NSWorkspace.shared.open(log.deletingLastPathComponent())
-                        }
-                    }
+            } else {
+                Section("Advanced", isExpanded: $showsAdvanced) {
+                    PostProcessingLogRows()
                 }
-            } footer: {
-                Text("Each Transcript with the Mode, the prompt version, the model and the LLM's answer, one JSON line per Post-processing in ~/.dimmela/post-processing.jsonl, about 1 MB at most: to improve your Modes' prompts with a model of your choice, adding your own \"comment\" where the answer was not what you wanted. Dimmela only adds lines at the end. It holds what you dictate, so it is never part of Report a Problem.")
-                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -164,6 +151,9 @@ private struct ProfileEditor: View {
     @State private var keyError: String?
     @State private var test: TestResult?
     @State private var isTesting = false
+    @State private var showsAdvanced = false
+    /// An agent's models, read by its rows, for the Reasoning menu in Advanced.
+    @State private var agentModels: [AgentCLI.Model]?
 
     private enum TestResult {
         case success(String)
@@ -177,7 +167,7 @@ private struct ProfileEditor: View {
                     .labelsHidden()
             }
             if let cli = profile.agentCLI {
-                AgentCLIRows(cli: cli, provider: $profile.provider)
+                AgentCLIRows(cli: cli, provider: $profile.provider, models: $agentModels)
             } else {
                 providerRows
             }
@@ -193,10 +183,6 @@ private struct ProfileEditor: View {
                 }
                 .foregroundStyle(.secondary)
             }
-        }
-
-        if profile.agentCLI == nil {
-            reasoningAndExtraParameters
         }
 
         Section {
@@ -239,6 +225,8 @@ private struct ProfileEditor: View {
         .onChange(of: profile.provider.model) { test = nil }
         .onChange(of: profile.provider.reasoning) { test = nil }
         .onChange(of: extraParameters) { saveExtraParameters() }
+
+        advanced
     }
 
     /// An OpenAI-compatible server: its address, model and key.
@@ -262,24 +250,42 @@ private struct ProfileEditor: View {
         }
     }
 
-    private var reasoningAndExtraParameters: some View {
-        Section {
-            Picker("Reasoning", selection: $profile.provider.reasoning) {
-                Text("Model default").tag(Provider.ReasoningEffort?.none)
-                ForEach(Provider.ReasoningEffort.allCases, id: \.self) { effort in
-                    Text(effort.displayName).tag(Optional(effort))
+    /// Reasoning, Extra parameters and the log, at the bottom and closed: most people need none.
+    private var advanced: some View {
+        Section("Advanced", isExpanded: $showsAdvanced) {
+            if let cli = profile.agentCLI {
+                if cli.reasoningLevels(for: profile.provider.model, in: agentModels) != nil {
+                    AgentReasoningPicker(cli: cli, provider: $profile.provider, models: agentModels)
+                    caption("Model default is \(cli.name)'s own; the levels are those it offers for the model.")
                 }
+            } else {
+                providerAdvancedRows
             }
-            LabeledContent("Extra parameters") {
-                CodeTextField(placeholder: #"JSON, e.g. {"reasoning_effort": "xhigh"}"#, text: $extraParameters)
-            }
-            if let extraParametersProblem {
-                Text(extraParametersProblem).font(.caption).foregroundStyle(.red)
-            }
-        } footer: {
-            Text("Model default sends nothing. OpenRouter gets the level in its own format, every other provider as reasoning_effort, which not every model accepts. Extra parameters are added to every request as written, each key in place of what Dimmela sends for it: for what a model needs beyond the Reasoning menu, see the provider's documentation.")
-                .foregroundStyle(.secondary)
+            PostProcessingLogRows()
         }
+        // Open when the user set something, so a profile never sends what the editor hides; an
+        // agent's reasoning is chosen by Dimmela for a new profile (`AgentCLI.profile()`).
+        .onAppear {
+            showsAdvanced = profile.agentCLI == nil
+                && (profile.provider.reasoning != nil || profile.provider.extraParameters != nil)
+        }
+    }
+
+    @ViewBuilder private var providerAdvancedRows: some View {
+        Picker("Reasoning", selection: $profile.provider.reasoning) {
+            Text("Model default").tag(Provider.ReasoningEffort?.none)
+            ForEach(Provider.ReasoningEffort.allCases, id: \.self) { effort in
+                Text(effort.displayName).tag(Optional(effort))
+            }
+        }
+        caption("Model default sends nothing. OpenRouter gets the level in its own format, every other provider as reasoning_effort, which not every model accepts.")
+        LabeledContent("Extra parameters") {
+            CodeTextField(placeholder: #"JSON, e.g. {"reasoning_effort": "xhigh"}"#, text: $extraParameters)
+        }
+        if let extraParametersProblem {
+            Text(extraParametersProblem).font(.caption).foregroundStyle(.red)
+        }
+        caption("Added to every request as written, each key in place of what Dimmela sends for it: for what a model needs beyond the Reasoning menu, see the provider's documentation.")
     }
 
     @ViewBuilder private var apiKeyRow: some View {
@@ -374,6 +380,38 @@ private struct ProfileEditor: View {
             test = .success("\(model) answered in \(seconds.formatted(.number.precision(.fractionLength(1)))) s")
         } catch {
             test = .failure((error as? LocalizedError)?.errorDescription ?? String(describing: error))
+        }
+    }
+}
+
+/// A grey line under a row, as wide as the row.
+private func caption(_ text: String) -> some View {
+    Text(text)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+}
+
+/// The Post-processing log, in Advanced: for improving prompts, and it holds what the user dictates.
+private struct PostProcessingLogRows: View {
+    @AppStorage(AppSettings.keepsPostProcessingLogKey) private var keepsPostProcessingLog = false
+
+    var body: some View {
+        Toggle("Keep a Post-processing log", isOn: $keepsPostProcessingLog)
+        caption("Each Transcript with the Mode, the prompt version, the model and the LLM's answer, one JSON line per Post-processing in ~/.dimmela/post-processing.jsonl, about 1 MB at most: to improve your Modes' prompts with a model of your choice, adding your own \"comment\" where the answer was not what you wanted. Dimmela only adds lines at the end. It holds what you dictate, so it is never part of Report a Problem.")
+        if keepsPostProcessingLog {
+            HStack {
+                Button("Show in Finder") {
+                    let log = AppSettings.postProcessingLog.url
+                    if FileManager.default.fileExists(atPath: log.path(percentEncoded: false)) {
+                        NSWorkspace.shared.activateFileViewerSelecting([log])
+                    } else {
+                        NSWorkspace.shared.open(log.deletingLastPathComponent())
+                    }
+                }
+                Spacer()
+            }
         }
     }
 }
