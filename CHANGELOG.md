@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A *Support* section in *Settings › About*, with *Support Dimmela…*: an optional payment that supports Dimmela, in place of the Buy Me a Coffee note. The app is free and the same without it.
+
 ## 0.2.0
 
 - **Provider profiles**: keep several providers, each with its own key, and switch between them from the menu. A busy provider is asked again; if it still fails, the profiles marked **Fallback** are tried in order, and after 20 seconds the Transcript is pasted.
