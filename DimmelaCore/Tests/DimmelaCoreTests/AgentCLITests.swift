@@ -553,6 +553,20 @@ struct AgentCLITests {
         #expect(fake.calls.first?.value(after: "--thinking") == "medium")
     }
 
+    @Test("a Pi Profile with no reasoning level runs with thinking off, never the level in the user's Pi settings")
+    func piWithoutLevel() async throws {
+        let fake = try FakeCLI(.pi, [.init(pattern: "-p*", script: FakeCLI.prints(Self.piReply))])
+        var profile = Self.piProfile
+        profile.provider.reasoning = nil
+
+        _ = try await fake.runner().client(for: profile).complete(Self.dictation)
+
+        #expect(fake.calls.first?.value(after: "--thinking") == "off")
+        #expect(!AgentCLI.pi.offersDefaultReasoning)
+        let others = AgentCLI.allCases.filter { $0 != .pi }.map(\.offersDefaultReasoning)
+        #expect(!others.contains(false))
+    }
+
     @Test("a failed Pi run, which exits with 0, gives the provider's message after Pi's own retries")
     func piFailure() async throws {
         let fake = try FakeCLI(.pi, [.init(pattern: "-p*", script: FakeCLI.prints(#"""

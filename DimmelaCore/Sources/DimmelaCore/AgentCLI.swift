@@ -176,6 +176,10 @@ public enum AgentCLI: String, CaseIterable, Sendable {
         }
     }
 
+    /// Whether the Profile editor offers "Model default": not for Pi, whose default is the level in
+    /// the user's Pi settings and which always gets one (Off when the Profile names none).
+    public var offersDefaultReasoning: Bool { self != .pi }
+
     /// Copilot's own choice of model, empty or named: it refuses any reasoning level.
     private static func isCopilotAuto(_ model: String) -> Bool {
         let model = model.trimmingCharacters(in: .whitespaces).lowercased()
@@ -265,14 +269,17 @@ public enum AgentCLI: String, CaseIterable, Sendable {
             if !model.isEmpty { arguments += ["-m", model] }
             return arguments
         case .pi:
-            // Its settings file stays (it holds the default model and level, both always given here).
+            // Its settings file stays: it holds the default model, and a default thinking level set
+            // for coding (often high), which made a Dictation wait seconds for reasoning it never
+            // needed. The level is therefore always given, off when the Profile names none.
             var arguments = [
                 "-p", "--mode", "json", "--no-session", "--no-tools", "--no-extensions", "--no-skills",
                 "--no-prompt-templates", "--no-themes", "--no-context-files", "--no-approve", "--offline",
                 "--system-prompt", Self.systemPrompt,
             ]
             if !model.isEmpty { arguments += ["--model", model] }
-            if let reasoning { arguments += ["--thinking", reasoning == .off ? "off" : reasoning.rawValue] }
+            let level = reasoning ?? .off
+            arguments += ["--thinking", level == .off ? "off" : level.rawValue]
             return arguments
         }
     }

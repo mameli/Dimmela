@@ -177,8 +177,14 @@ struct AgentReasoningPicker: View {
 
     var body: some View {
         if let levels = cli.reasoningLevels(for: provider.model, in: models) {
-            Picker("Reasoning", selection: $provider.reasoning) {
-                Text("Model default").tag(Provider.ReasoningEffort?.none)
+            // Pi runs with Off when the Profile names no level: the menu shows it as Off.
+            Picker("Reasoning", selection: Binding(
+                get: { provider.reasoning ?? (cli.offersDefaultReasoning ? nil : .off) },
+                set: { provider.reasoning = $0 }
+            )) {
+                if cli.offersDefaultReasoning {
+                    Text("Model default").tag(Provider.ReasoningEffort?.none)
+                }
                 ForEach(levels, id: \.self) { effort in
                     Text(effort.displayName).tag(Provider.ReasoningEffort?.some(effort))
                 }
