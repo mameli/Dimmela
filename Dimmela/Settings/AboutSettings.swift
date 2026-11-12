@@ -49,7 +49,6 @@ struct AboutSettings: View {
             Section {
                 Link("dimmela.app", destination: URL(string: "https://dimmela.app")!)
                 Link("Source code and documentation", destination: URL(string: "https://github.com/mameli/Dimmela")!)
-                Link("Prompts to use as Modes", destination: URL(string: "https://github.com/mameli/dimmela-config")!)
             } header: {
                 Text("Links")
             }

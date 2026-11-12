@@ -38,10 +38,15 @@ public struct ProviderProfile: Codable, Identifiable, Equatable, Hashable, Senda
     /// it changes too often to suggest one.
     public static let presets: [ProviderProfile] = [
         ProviderProfile(name: "OpenRouter", provider: .openRouter),
+        ProviderProfile(name: "Ollama", provider: Provider(baseURL: "http://localhost:11434/v1", model: "")),
+    ]
+
+    /// The servers named when a Provider of 0.1.7 becomes a profile: the presets, and the ones
+    /// that are no longer offered.
+    private static let knownServers: [ProviderProfile] = presets + [
         ProviderProfile(name: "OpenAI", provider: Provider(baseURL: "https://api.openai.com/v1", model: "")),
         ProviderProfile(name: "Mistral", provider: Provider(baseURL: "https://api.mistral.ai/v1", model: "")),
         ProviderProfile(name: "LM Studio", provider: Provider(baseURL: "http://localhost:1234/v1", model: "")),
-        ProviderProfile(name: "Ollama", provider: Provider(baseURL: "http://localhost:11434/v1", model: "")),
     ]
 
     /// A copy of a preset with an identifier of its own.
@@ -58,7 +63,7 @@ public struct ProviderProfile: Codable, Identifiable, Equatable, Hashable, Senda
     static func name(for baseURL: String) -> String? {
         guard let url = URL(string: baseURL.trimmingCharacters(in: .whitespaces)), let host = url.host()?.lowercased(), !host.isEmpty
         else { return nil }
-        if let preset = presets.first(where: { preset in
+        if let preset = knownServers.first(where: { preset in
             URL(string: preset.provider.baseURL).map { $0.host() == host && $0.port == url.port } ?? false
         }) {
             return preset.name

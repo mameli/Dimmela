@@ -4,13 +4,17 @@ import Observation
 
 private let logger = AppLog(category: "speech-model")
 
-/// A speech model Dimmela offers, through FluidAudio. Both know the same 25 European languages.
+/// A speech model Dimmela offers, through FluidAudio. All know the same 25 European languages.
 enum SpeechModelChoice: String, CaseIterable, Identifiable, Sendable {
     /// NVIDIA Parakeet TDT v3: the only model up to 0.1.7, still the default.
     case v3 = "parakeet-tdt-0.6b-v3"
     /// Parakeet v3 trained further by moondream: same speed, fewer mistakes (FLEURS mean error
     /// 14.8% → 11.7%), sometimes an unrecognised word (`<unk>`, dropped).
     case ultra = "parakeet-ultra"
+    /// Parakeet v3 retrained by moondream with 2-bit weights: less than half the download. Better
+    /// than v3 on the mean of FLEURS' languages (13.1% against 14.8%), worse on English, about a
+    /// third slower, and macOS 15 or later. The first load compiles it for the Neural Engine: minutes.
+    case redux = "parakeet-redux"
 
     var id: String { rawValue }
 
@@ -18,6 +22,7 @@ enum SpeechModelChoice: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .v3: "Parakeet v3"
         case .ultra: "Parakeet Ultra"
+        case .redux: "Parakeet Redux"
         }
     }
 
@@ -25,6 +30,7 @@ enum SpeechModelChoice: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .v3: 490
         case .ultra: 632
+        case .redux: 220
         }
     }
 
@@ -32,6 +38,7 @@ enum SpeechModelChoice: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .v3: "Very fast and accurate."
         case .ultra: "The most accurate, as fast as v3; a larger download."
+        case .redux: "The smallest download. A little less accurate on English; the first time it is prepared for this Mac it takes several minutes."
         }
     }
 
@@ -39,6 +46,7 @@ enum SpeechModelChoice: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .v3: .v3
         case .ultra: .ultra
+        case .redux: .redux
         }
     }
 

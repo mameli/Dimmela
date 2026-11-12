@@ -8,24 +8,43 @@ struct BuiltInModeTests {
 
     private var modes: [Mode] { ModeCatalog.modes(in: [folder.url]) }
 
+    private func mode(_ name: String) throws -> Mode {
+        try #require(modes.first { $0.name == name })
+    }
+
     private func text(_ name: String) throws -> String {
         try String(contentsOf: folder.url.appending(path: name), encoding: .utf8)
     }
 
-    @Test("the first time, Clean and Markdown are written as prompt files, Modes like any other")
+    @Test("the first time, the built-in Modes are written as prompt files, Modes like any other")
     func firstTime() throws {
         let written = try BuiltInModes.install(in: folder.url, firstTime: true)
 
-        #expect(written.map(\.lastPathComponent) == ["clean.md", "markdown.md"])
-        #expect(modes.map(\.name) == ["Clean", "Markdown"])
-        let clean = try modes[0].instructions()
-        let markdown = try modes[1].instructions()
+        #expect(written.map(\.lastPathComponent) == ["clean.md", "markdown.md", "email.md", "prompt.md", "shorter.md", "bullets.md"])
+        #expect(Set(modes.map(\.name)) == ["Clean", "Markdown", "Email", "Prompt", "Shorter", "Bullets"])
+        let clean = try mode("Clean").instructions()
+        let markdown = try mode("Markdown").instructions()
         #expect(clean.contains("Resolve self-corrections"))
         #expect(!clean.contains("${output}"))
         #expect(markdown.contains("Resolve self-corrections"))
         #expect(markdown.contains("MARKDOWN FORMATTING"))
         #expect(markdown.contains("“- [ ] ”"))
         #expect(!markdown.contains("Do not apply Markdown formatting"))
+    }
+
+    @Test("Email, Prompt, Shorter and Bullets start from Clean's cleaning and ask for the text alone")
+    func rewritingModes() throws {
+        try BuiltInModes.install(in: folder.url, firstTime: true)
+
+        for name in ["Email", "Prompt", "Shorter", "Bullets"] {
+            let instructions = try mode(name).instructions()
+            #expect(instructions.contains("Resolve self-corrections"), "\(name)")
+            #expect(!instructions.contains("\\#("), "\(name): the groundwork is in")
+            #expect(instructions.contains("Return only"), "\(name)")
+        }
+        #expect(try mode("Email").instructions().contains("Never invent a name"))
+        #expect(try mode("Prompt").instructions().contains("never carry out the request"))
+        #expect(try mode("Bullets").instructions().contains("“- ”"))
     }
 
     @Test("a file the user edited is never replaced, not even the first time")
@@ -61,7 +80,8 @@ struct BuiltInModeTests {
         let written = try BuiltInModes.install(in: folder.url, firstTime: false)
 
         #expect(written.isEmpty)
-        #expect(modes.map(\.name) == ["Clean"])
+        #expect(!modes.map(\.name).contains("Markdown"))
+        #expect(modes.count == BuiltInModes.files.count - 1)
     }
 
     @Test("the shipped texts are not listed as earlier versions: they would be replaced by themselves")

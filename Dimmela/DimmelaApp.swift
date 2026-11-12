@@ -39,8 +39,6 @@ private struct MenuContent: View {
     let model: AppModel
     @Environment(\.openSettings) private var openSettings
     @AppStorage(AppSettings.enabledModesKey) private var enabled = ""
-    @AppStorage(AppSettings.defaultModeKey) private var defaultModeID = ""
-    @AppStorage(AppSettings.providerProfilesKey) private var profiles = ProviderProfiles()
 
     var body: some View {
         Text(status)
@@ -59,7 +57,7 @@ private struct MenuContent: View {
             }
         }
         // Holding ⌥ copies the Transcript instead, before Post-processing.
-        Button("Copy Last Dictation") {
+        Button("Copy Last") {
             if let last = model.history.entries.first { model.copy(last.text) }
         }
         .disabled(model.history.entries.isEmpty)
@@ -73,22 +71,12 @@ private struct MenuContent: View {
         if !model.history.entries.isEmpty, !modes.isEmpty {
             // One click when the provider failed and the Transcript was pasted instead.
             if let mode = model.lastDictationMode {
-                Button("Reprocess Last Dictation (\(mode.name))") { model.postProcessLastAgain(with: mode) }
+                Button("Reprocess Last (\(mode.name))") { model.postProcessLastAgain(with: mode) }
             }
-            Menu("Reprocess Last Dictation With") {
+            Menu("Reprocess Last With") {
                 ForEach(modes) { mode in
                     Button(mode.name) { model.postProcessLastAgain(with: mode) }
                 }
-            }
-        }
-        Divider()
-        Picker("Default Mode", selection: $defaultModeID) {
-            Text("None").tag("")
-            ForEach(modes) { Text($0.name).tag($0.id) }
-        }
-        if profiles.all.count > 1 {
-            Picker("Provider", selection: Binding(get: { profiles.selected?.id }, set: { profiles.selectedID = $0 })) {
-                ForEach(profiles.all) { Text($0.displayName).tag(Optional($0.id)) }
             }
         }
         Divider()

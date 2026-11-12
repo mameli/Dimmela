@@ -374,7 +374,7 @@ private struct ModesPage: View {
     }
 
     private var providerLine: String {
-        let options = "A provider key (OpenRouter, Mistral, a model on this Mac) or a coding agent you already pay for (Claude Code, Codex, Copilot, OpenCode, Pi), in Settings › Post-processing."
+        let options = "A provider key (OpenRouter, a model on this Mac) or a coding agent you already pay for (Claude Code, Codex, Copilot, OpenCode, Pi), in Settings › Post-processing."
         guard let profile = profiles.selected else { return "Modes need an LLM. " + options }
         return "Modes go to \(profile.displayName) now. Only the text is sent. " + options
     }

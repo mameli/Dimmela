@@ -132,8 +132,12 @@ enum AppSettings {
         let folder = builtInModesFolder.standardizedFileURL.path(percentEncoded: false)
         let trimmed = { (path: String) in path.hasSuffix("/") ? String(path.dropLast()) : path }
         if !modeSources.contains(where: { trimmed($0) == folder }) { modeSources.append(folder) }
-        let names = Set(BuiltInModes.files.map(\.name))
-        let builtIn = ModeCatalog.modes(in: [builtInModesFolder]).filter { names.contains($0.url.lastPathComponent) }
+        // In the order they ship, Clean first, not by name: the digits of a new install.
+        let names = BuiltInModes.files.map(\.name)
+        let builtIn = ModeCatalog.modes(in: [builtInModesFolder])
+            .compactMap { mode in names.firstIndex(of: mode.url.lastPathComponent).map { (mode, $0) } }
+            .sorted { $0.1 < $1.1 }
+            .map(\.0)
         enabledModes += builtIn.filter { !enabledModes.contains($0) }
     }
 

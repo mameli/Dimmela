@@ -71,7 +71,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -showW
 - [ ] Settings › Post-processing › Keep a Post-processing log on, then dictate with a Mode: `~/.dimmela/post-processing.jsonl` gets one line with the Transcript, the answer, the Mode, `promptVersion`, model and reasoning. Edit the prompt file and dictate again: the new line has another `promptVersion`. Post-process a History entry again from the menu: its line has `"isAgain":true`. Add `"comment":"…"` by hand to a line, save, dictate again: the comment is still there. Turn the log off: no new lines.
 - [ ] Extra parameters `{"reasoning_effort": "banana"}` on a provider that checks it: Test connection fails with the provider's message followed by "Settings › Post-processing sets Extra parameters."
 - [ ] Settings › Modes: Add Folder… with the `handy-config` folder; its prompt files are listed, README excluded.
-- [ ] Enable some Modes, drag to reorder, choose a Default Mode; the menu's Default Mode picker shows the same.
+- [ ] Enable some Modes, drag to reorder, choose a Default Mode.
 - [ ] With a Default Mode, `fn+space` in TextEdit pastes the LLM's answer; with Default Mode None it pastes only the Transcript.
 - [ ] Edit the Default Mode's file (e.g. "answer in uppercase"); the next Dictation follows the edit without relaunching.
 - [ ] Turn Wi-Fi off and dictate with a Default Mode: the Transcript is pasted and a notification explains why.
@@ -104,7 +104,7 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -showW
 - [ ] `shift` during a Dictation opens the list with the current Mode highlighted; `shift` again closes it.
 - [ ] With the list open, ↑/↓ move the highlight (from Transcript to the last Mode) and the pill follows; `Return` or a digit closes the list. Arrows and `Return` never reach TextEdit while the list is open, and work normally otherwise.
 - [ ] With more than nine enabled Modes, only the first nine are listed.
-- [ ] The Mode chosen during a Dictation (digit or arrows) is the Default Mode for the next one, and the menu's Default Mode shows it; after `0`, the next Dictation gives the Transcript alone.
+- [ ] The Mode chosen during a Dictation (digit or arrows) is the Default Mode for the next one, and Settings shows it; after `0`, the next Dictation gives the Transcript alone.
 
 ### History (ticket 08)
 
@@ -179,9 +179,13 @@ Before every release, with each CLI installed and signed in (these CLIs update t
 
 ### Built-in Modes (v2 ticket 07)
 
-- [ ] First launch of this version: `~/.dimmela/modes` holds `clean.md` and `markdown.md`; Settings › Modes lists the folder as a Mode source and Clean and Markdown enabled after the Modes you had, with the same digits as before.
+- [ ] First launch of this version: `~/.dimmela/modes` holds `clean.md`, `markdown.md`, `email.md`, `prompt.md`, `shorter.md` and `bullets.md`; Settings › Modes lists the folder as a Mode source and the six enabled after the Modes you had, in that order (Clean first), with the same digits as before.
 - [ ] With no Default Mode, the welcome window offers *Start Every Dictation with Clean*.
 - [ ] Markdown: "voglio scrivere una lista della spesa latte uova pane" pastes a list; "fai una tabella con nome e ruolo…" a table; "cose da fare come checklist…" `- [ ]` items; a plain sentence stays a sentence.
+- [ ] Email: "ciao Marco ti scrivo per la riunione di giovedì, anzi no venerdì alle 10, fammi sapere" pastes a short email in Italian, with the greeting said and no invented sign-off; Friday, not Thursday.
+- [ ] Prompt: "allora vorrei che aggiungessi un retry all'upload in source slash upload dot ts e poi non toccare i test" pastes imperative sentences with `src/upload.ts` in code and the instruction about the tests; the assistant's work is not done in the answer.
+- [ ] Shorter: a long rambling Dictation comes back much shorter with every number, name and date.
+- [ ] Bullets: three ideas dictated in a row come back as three "- " lines, in order, with no title.
 - [ ] Edit `clean.md`, relaunch: the edit stays. Delete `markdown.md`, relaunch: it does not come back.
 
 
@@ -191,7 +195,7 @@ Before every release, with each CLI installed and signed in (these CLIs update t
 - [ ] First launch: the tour opens on "Just say it.", the green reaching the top of the window; the fn and space keys press themselves now and then (still with Reduce Motion).
 - [ ] Setup: each card ticks itself as the permission is granted or the model is ready, also when coming back from System Settings.
 - [ ] Try it: with everything allowed, hold fn+Space in the tour: the keys turn green with the level bars, and the text lands in the box. Return types a new line there instead of going on.
-- [ ] Modes: the list shows the enabled Modes; *Start every Dictation with* sets the Default Mode (the menu shows it).
+- [ ] Modes: the list shows the enabled Modes; *Start every Dictation with* sets the Default Mode.
 - [ ] *Start Dictating* closes it; Settings › About offers *Welcome Tour…*; the menu does not.
 - [ ] Dark mode: the hero is dark green with light text, every page readable.
 

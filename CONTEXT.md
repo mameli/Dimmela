@@ -53,7 +53,7 @@ A named set of instructions for Post-processing. Its source is either a prompt f
 _Avoid_: prompt, skill, template, preset (when talking about the concept)
 
 **Built-in Mode** (`BuiltInModes`):
-One of the Modes Dimmela ships, Clean and Markdown: prompt files copied to `~/.dimmela/modes` at the first launch, where the user can edit them. Dimmela updates a copy only while the user has not changed it (ADR 0006).
+One of the Modes Dimmela ships (Clean, Markdown, Email, Prompt, Shorter, Bullets): prompt files copied to `~/.dimmela/modes` at the first launch, where the user can edit them. Dimmela updates a copy only while the user has not changed it (ADR 0006).
 _Avoid_: default Mode (that is the Mode every Dictation starts with), preset
 
 **Mode source** (`ModeSource`):
@@ -61,7 +61,7 @@ A folder the user points Dimmela at, where it looks for skills and prompt files 
 _Avoid_: library, skills folder
 
 **Default Mode** (`defaultMode`):
-The Mode every Dictation starts with: the last one chosen, from the menu or during a Dictation. It can be none: the Dictation then gives the Transcript alone.
+The Mode every Dictation starts with: the last one chosen, in Settings or during a Dictation. It can be none: the Dictation then gives the Transcript alone.
 _Avoid_: active mode, selected prompt
 
 **Mode digit**:

@@ -26,6 +26,11 @@ struct ProviderProfileTests {
         #expect(ProviderProfile(name: "Work", provider: .openRouter).displayName == "Work")
     }
 
+    @Test("the presets are OpenRouter and Ollama")
+    func presets() {
+        #expect(ProviderProfile.presets.map(\.name) == ["OpenRouter", "Ollama"])
+    }
+
     @Test("a preset's copy has an identifier of its own")
     func presetCopy() {
         let preset = ProviderProfile.presets[0]
