@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.2
+
+Faster Dictations with Pi, and an overlay that goes away sooner.
 
 - **Faster with Pi**: a Pi profile with no reasoning level now runs with thinking off, instead of the level in Pi's own settings (often High for coding), which made each Dictation wait 4–7 seconds for reasoning it did not need: about 1.5 seconds now. Settings shows Off for it.
 - The overlay goes away as soon as the text is pasted, about 0.3 seconds sooner: the clipboard gets back what it held a moment later, unless something was copied meanwhile.
