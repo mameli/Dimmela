@@ -35,10 +35,16 @@ enum Paster {
             event?.post(tap: .cghidEventTap)
         }
 
-        // The app reads the pasteboard when it handles ⌘V, not when it is posted.
-        try? await Task.sleep(for: .milliseconds(300))
-        pasteboard.clearContents()
-        if !saved.isEmpty { pasteboard.writeObjects(saved) }
+        // The app reads the pasteboard when it handles ⌘V, not when it is posted: what it held is
+        // put back a moment later, without holding up the Dictation. Only if nothing wrote to it
+        // meanwhile, such as the next Dictation's paste or a copy by the user.
+        let ours = pasteboard.changeCount
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard pasteboard.changeCount == ours else { return }
+            pasteboard.clearContents()
+            if !saved.isEmpty { pasteboard.writeObjects(saved) }
+        }
     }
 
     /// A copy of every item on the pasteboard, in every type it offers.

@@ -46,6 +46,8 @@ build/DerivedData/Build/Products/Debug/Dimmela.app/Contents/MacOS/Dimmela -showW
 - [ ] In TextEdit, hold `fn+space`, speak Italian, release: the menu-bar icon goes recording → processing → idle and the Transcript appears at the cursor followed by a space.
 - [ ] No space is typed by the shortcut itself, also when holding it for several seconds.
 - [ ] Copy something before dictating: after the paste the clipboard still holds it.
+- [ ] Dictate twice in a row, the second right after the first is pasted: both texts land, and the clipboard then holds what was copied before.
+- [ ] Copy something right after a paste: the clipboard keeps the new copy, not what it held before the Dictation.
 - [ ] Dictate with AirPods connected: they stay in high-quality mode (no call-mode audio drop).
 - [ ] Dictate with the MacBook's built-in microphone (three channels) and with a one-channel microphone (AirPods): both are transcribed.
 - [ ] Switch the input device in System Settings between two Dictations: the second still works.

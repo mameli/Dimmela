@@ -316,13 +316,14 @@ public final class DictationController {
             guard !Task.isCancelled else { return }
         }
 
-        // Kept even if the paste fails: the text can still be copied from the History.
-        try? boundaries.history.add(id: dictationID, transcript: transcript, text: text, mode: mode, samples: samples)
+        // Pasted first, then kept: the History's audio takes a moment to write. Kept even if the
+        // paste fails: the text can still be copied from the History.
         do {
             try await boundaries.paste(text + " ")
         } catch {
             boundaries.report(.pasteFailed(String(describing: error)))
         }
+        try? boundaries.history.add(id: dictationID, transcript: transcript, text: text, mode: mode, samples: samples)
         end()
     }
 
