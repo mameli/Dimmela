@@ -8,7 +8,7 @@
 
 A native macOS menu-bar app for dictation. Hold or tap `fn+Space`, speak, and Dimmela pastes the text where you are typing. Speech is transcribed on your Mac by Parakeet (v3, Ultra for fewer mistakes, or Redux for a smaller download) on the Neural Engine. Optionally, an LLM rewrites each Dictation with your own prompts and skills.
 
-It is a lighter alternative to [Handy](https://handy.computer): with the speech model loaded, Activity Monitor shows 43 MB right after Dimmela starts and about 130 MB after a day of dictating (an M3 Pro), against 922 MB for Handy 0.9.7 with the same model. The model's weights are held by the Neural Engine and are not in these numbers; counting what it held in our tests, Dimmela stays under half.
+While it waits, Activity Monitor shows about 100 MB for Dimmela, with the speech model ready. When you dictate, the model on the Neural Engine is counted too, and for 6 to 10 seconds Dimmela reaches about 560 MB, then gives the memory back (Dimmela 0.2.0, Parakeet v3, M3 Pro, November 2026).
 
 ```sh
 brew install --cask mameli/dimmela/dimmela
