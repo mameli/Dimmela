@@ -5,6 +5,10 @@ import SwiftUI
 struct AboutSettings: View {
     let updates: UpdateChecker
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openURL) private var openURL
+
+    /// The page where a payment supports Dimmela: optional, the app is the same without it.
+    static let support = URL(string: "https://buy.stripe.com/aFabJ09aafkNbcw3vy6wE06")!
 
     var body: some View {
         Form {
@@ -50,24 +54,17 @@ struct AboutSettings: View {
                 Text("Links")
             }
 
-            // At the bottom, in grey: seen by those who scroll this far, not first thing (from Takku).
             Section {
-            } footer: {
-                Text(Self.supportNote)
-                    .foregroundStyle(.secondary)
-                    .tint(.secondary)
-                    .frame(maxWidth: .infinity)
+                LabeledContent {
+                    Button("Support Dimmela…") { openURL(Self.support) }
+                } label: {
+                    Text("Dimmela is free and open source. If it is useful to you, you can support its development. It works the same either way.")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Support")
             }
         }
         .formStyle(.grouped)
-    }
-
-    /// The link is grey like the text around it, so it is underlined to show it is one.
-    private static var supportNote: AttributedString {
-        var note = AttributedString(localized: "Dimmela is free. If it is useful to you, [buy me a coffee](https://buymeacoffee.com/mameli.dev).")
-        for run in note.runs where run.link != nil {
-            note[run.range].underlineStyle = .single
-        }
-        return note
     }
 }

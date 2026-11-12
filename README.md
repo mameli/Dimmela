@@ -36,7 +36,7 @@ Domain tests: `cd DimmelaCore && swift test`. What needs a Mac is checked by han
 
 ## Support
 
-Dimmela is free. If it is useful to you, you can [buy me a coffee](https://buymeacoffee.com/mameli.dev): it helps cover the costs of keeping Dimmela going.
+Dimmela is free and open source, and it will stay that way. If it is useful to you, you can [support its development](https://buy.stripe.com/aFabJ09aafkNbcw3vy6wE06). It works exactly the same whether you do or not.
 
 ## License
 
