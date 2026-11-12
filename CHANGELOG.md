@@ -1,8 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.2.1
 
+A lighter Dimmela, with more Modes and a smaller speech model to choose.
+
+- **Four more built-in Modes**: *Email*, *Prompt* (an instruction for an AI assistant), *Shorter* and *Bullets*, next to Clean and Markdown. A new install gets them at its first launch; a Dimmela already set up keeps the Modes it has, and their [prompts](DimmelaCore/Sources/DimmelaCore/BuiltInModes.swift) can be copied from the source.
+- **Parakeet Redux** in Settings › Transcription: the same languages in a download of 220 MB, against 490 (v3) and 632 (Ultra). A little less accurate on English; the first time it is prepared it takes several minutes.
+- **A lighter menu**: *Default Mode* and *Provider* are only in Settings (the Mode chosen during a Dictation is still remembered), and *Copy Last*, *Reprocess Last* and *Reprocess Last With* have shorter names.
+- Settings › Post-processing › **+** offers OpenRouter and Ollama; OpenAI, Mistral and LM Studio are still added with *New Profile* and their address.
 - A *Support* section in *Settings › About*, with *Support Dimmela…*: an optional payment that supports Dimmela, in place of the Buy Me a Coffee note. The app is free and the same without it.
+- *Settings › About* no longer links the prompts in `dimmela-config`, which are personal.
 
 ## 0.2.0
 
